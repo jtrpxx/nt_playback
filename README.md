@@ -3,7 +3,7 @@
 โครงสร้างหลักของโปรเจค
 
 project-root/
-│
+│ 
 ├── backend/ # Django (API only)
 │ ├── Dockerfile
 ├── manage.py
@@ -113,4 +113,3 @@ npm run dev
 - `frontend/package.json`: สคริปต์ `dev` / `build`
 - `docker-compose.yml`: orchestration ของ `db`, `backend`, `frontend`
 
-หากต้องการ ผมช่วยเพิ่มหัวข้อ: การ deploy แบบ production, GitHub Actions CI (tests + lint + build), หรือรายละเอียด Dockerfile ให้ครบกว่านี้ได้

@@ -54,7 +54,7 @@ const filteredOptions = computed(() => {
 const selectedLabel = computed(() => {
   if (checkboxable.value && Array.isArray(props.modelValue)) {
     const labels = normalizedOptions.value.filter(o => props.modelValue.includes(o.value)).map(o => o.label)
-    if (labels.length === 0) return props.placeholder
+    if (labels.length === 0) return ''
     if (labels.length <= 3) return labels.join(', ')
     return `${labels.length} selected`
   }
@@ -67,7 +67,12 @@ function isSelected(v) {
   return v === props.modelValue
 }
 
-const hasValue = computed(() => props.modelValue !== '' && props.modelValue !== null && props.modelValue !== undefined)
+const hasValue = computed(() => {
+  if (checkboxable.value && Array.isArray(props.modelValue)) {
+    return props.modelValue.length > 0
+  }
+  return props.modelValue !== '' && props.modelValue !== null && props.modelValue !== undefined
+})
 
 function toggle() { open.value = !open.value }
 function openList() { open.value = true }

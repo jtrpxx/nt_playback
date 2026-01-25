@@ -66,7 +66,7 @@
                   <label class="title-label">Extension</label>
                 </div>
 
-                <div class="input-group" style="margin-top: 6px;">
+                <div class="input-group" >
                   <CustomSelect class="select-search select-checkbox" v-model="filters.agent"
                     :options="agentOptions"
                     placeholder="Agent" name="agent" />
@@ -89,7 +89,7 @@
                   <div class="card-body" style="padding: 8px;">
 
                     <div class="d-flex justify-content-center">
-                      <button class="btn btn-light" type="button" id="addFavorite"
+                      <button class="btn btn-light" type="button" id="addFavorite" @click="showFavoriteModal = true"
                         style="width: 100%;text-align: left;font-size: 12px;margin-bottom: 4px;">
                         <i class="fa-regular fa-bookmark"></i> My Favorite Search
                       </button>
@@ -256,14 +256,18 @@
       </div>
     </div>
   </MainLayout>
+  <ModalHome v-model="showFavoriteModal" :favorites="favoriteSearchAll" :main-db="mainDbOptions" @apply="applyFavorite" @edit="editFavorite" @delete="deleteFavorite" />
 </template>
 
 <script setup>
 import MainLayout from '../layouts/MainLayout.vue'
 import CustomSelect from '../components/CustomSelect.vue'
+import ModalHome from '../components/ModalHome.vue'
 import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { onBeforeUnmount } from 'vue'
 import { nextTick } from 'vue'
+
+import '../assets/css/modal-favorite.css'
 
 const API_AUDIO_LIST = 'http://localhost:8000/api/audio/list/'
 const API_HOME_INDEX = 'http://localhost:8000/api/home/index/'
@@ -297,6 +301,7 @@ const currentPage = ref(1)
 const perDropdownOpen = ref(false)
 const perDropdownUp = ref(false)
 const mainDbOptions = ref([])
+const favoriteSearchAll = ref([])
 const agentOptions = ref([{ label: 'All', value: 'all' }])
 
 const fetchIndex = async () => {
@@ -324,6 +329,8 @@ const fetchIndex = async () => {
       aopts.push({ label: alabel, value: avalue })
     }
     agentOptions.value = aopts
+    // server may return list of saved favorites
+    favoriteSearchAll.value = json.favorite_search_all || []
   } catch (err) {
     console.error('fetchIndex error', err)
   }
@@ -352,6 +359,7 @@ const setPerPage = (opt) => {
 }
 
 const perWrap = ref(null)
+const showFavoriteModal = ref(false)
 
 const onDocClick = (e) => {
   if (!perWrap.value) return
@@ -484,6 +492,29 @@ const onSearch = () => {
   currentPage.value = 1
   if (searchTimeout) { clearTimeout(searchTimeout); searchTimeout = null }
   fetchData()
+}
+
+function applyFavorite(fav){
+  try{
+    const raw = typeof fav.raw_data === 'string' ? JSON.parse(fav.raw_data || '{}') : (fav.raw_data || {})
+    // apply keys present in raw to filters
+    for (const k of Object.keys(filters)){
+      if (raw[k] !== undefined) filters[k] = raw[k]
+    }
+    // close modal and refresh
+    showFavoriteModal.value = false
+    fetchData()
+  }catch(e){
+    console.error('applyFavorite parse error', e)
+  }
+}
+
+function editFavorite(fav){
+  console.log('edit favorite', fav)
+}
+
+function deleteFavorite(id){
+  console.log('delete favorite', id)
 }
 
 function truncate(s, max) {

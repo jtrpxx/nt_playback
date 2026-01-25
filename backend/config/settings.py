@@ -45,8 +45,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    
     'apps.core',
+    # core sub-apps (models split into packages)
+    'apps.core.model.authorize',
+    'apps.core.model.audio',
+    'apps.core.model.customer',
+    'apps.core.model.licenses',
+    'apps.home',
 ]
 
 MIDDLEWARE = [
@@ -58,6 +63,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.MD5PasswordHasher',
 ]
 
 ROOT_URLCONF = 'config.urls'

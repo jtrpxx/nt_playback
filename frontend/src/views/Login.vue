@@ -64,13 +64,15 @@ const form = reactive({
 })
 
 const handleLogin = async () => {
-  console.log('Logging in with:', form)
+  console.log('Login:', form)
   
   const success = await authStore.login(form.username, form.password)
   if (success) {
     router.push('/dashboard')
+    router.push('/')
+
   } else {
-    alert('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง')
+    alert('error')
   }
 }
 </script>
@@ -154,6 +156,6 @@ const handleLogin = async () => {
 }
 
 .btn-submit:hover {
-  background-color: #3aa876;
+  background-color: #537acf;
 }
 </style>

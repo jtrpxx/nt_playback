@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 
 import socket
 from django.utils import timezone
-from apps.model_center.authorize.models import UserLog
+from apps.core.model.authorize.models import UserLog
 import traceback
 from user_agents import parse
 

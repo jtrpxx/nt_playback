@@ -1,0 +1,100 @@
+@font-face {
+  font-family: "THSarabun";
+  src: url("../webfonts/sarabun-v7-thai_latin-300.woff") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: "THSarabun";
+  position: fixed;
+  right: 0;
+  left: 0;
+  background-color: #f9fafb; /* replaced Tailwind bg-gray-50 */
+}
+
+.main-content {
+  flex: 1;
+  padding: 84px 0px 0px 0px; /* เว้นระยะด้านบนสำหรับ Navbar ที่เป็น fixed-top */
+}
+
+.footer {
+  background-color: #f3f4f6; /* replaced Tailwind bg-gray-100 */
+  border-top: 1px solid #e5e7eb; /* replaced Tailwind border-gray-200 */
+  padding: 2px 0;
+  margin-top: auto; /* ดัน Footer ลงไปด้านล่างสุด */
+}
+
+.justify-content-end {
+  justify-content: flex-end !important;
+}
+
+.container-fluid {
+  flex-wrap: nowrap;
+  display: flex;
+}
+
+.align-items-center {
+  -ms-flex-align: center !important;
+  align-items: center !important;
+}
+
+.text-muted {
+  font-size: 12px;
+  padding: 6px 0px 15px 0px;
+  font-family: "THSarabun";
+}
+.justify-content-center {
+  justify-content: center;
+}
+
+.page-title {
+  font-size: 13px;
+  color: #0d99ff;
+  padding: 7px 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  border-bottom: 1px solid #e2e8f0;
+}
+.no-link {
+  text-decoration: none;
+  color: inherit;
+}
+.no-link:hover {
+  text-decoration: none;
+  color: inherit;
+}
+.main-wrapper {
+  min-height: calc(100vh - 140px);
+}
+.main-wrapper .card {
+  height: 100%;
+}
+.main-wrapper .card-body {
+  height: 100%;
+  overflow: auto;
+}
+
+.container-navbar {
+  --bs-gutter-x: 1.5rem;
+  --bs-gutter-y: 0;
+  width: 100%;
+  padding-right: calc(var(--bs-gutter-x) * 0.5);
+  padding-left: calc(var(--bs-gutter-x) * 0.5);
+  margin-right: auto;
+  margin-left: auto;
+  display: flex;
+  flex-wrap: inherit;
+  align-items: center;
+  justify-content: space-between;
+}

@@ -1,72 +1,237 @@
 <template>
-  <header class="nt-navbar">
-    <div class="nt-navbar__inner">
-      <router-link class="nt-navbar__brand" to="/">
-        <img class="nt-navbar__logo" src="/logo.png" alt="logo" />
-        <div class="nt-navbar__title">NT Audio Search</div>
-        <div class="nt-navbar__subtitle">Centralized Search and Playback System</div>
-      </router-link>
+  <header>
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light navbar-custom mb-3 fixed-top">
+      <div class="container-navbar">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="site-title-container">
+            <span>
+              <a aria-current="page" href="/" class="router-link-active router-link-exact-active no-link"
+                style="text-decoration: none; display: inline-flex; align-items: center">
+                <img src="/src/assets/images/logo-nichtel.png" class="img-fluid rounded" alt="Nichetel-logo"
+                  style="width: 40px; height: auto; margin-right: 10px" />
 
-      <nav class="nt-navbar__nav">
-        <ul class="nt-navbar__links">
-          <li><router-link to="/">Home</router-link></li>
-          <li><router-link to="/users">Users</router-link></li>
-          <li><router-link to="/dashboard">Dashboard</router-link></li>
-        </ul>
-
-        <div class="nt-navbar__user" @click="toggleMenu">
-          <div class="nt-navbar__avatar">{{ initials }}</div>
-          <span class="nt-navbar__name">{{ displayName }}</span>
-          <i class="caret">▾</i>
+                <div style="display: flex; flex-direction: column; line-height: 1.2; margin: 9px 0px 2px -5px">
+                  <span style="font-size: 18px; color: #fff">NT Audio Search</span>
+                  <span style="font-size: 13px; color: #fff">Centralized Search and Playback System</span>
+                </div>
+              </a>
+            </span>
+          </div>
         </div>
-      </nav>
+
+        <div class="navbar-collapse collapse d-none d-sm-inline-flex justify-content-end">
+          <ul class="navbar-nav" id="sidebarTeamToggle" ref="sidebarToggle" @click="toggleMenu">
+            <li style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff">
+              <div class="team-toggle">
+                {{ initials }}
+              </div>
+              <span class="user-nav-name">{{ displayName }}</span>
+              <i class="fa-solid fa-angle-down" style="font-size: 12px;"></i>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="page-title text-primary-d2 text-140" id="pageTitle" style="font-size: 13px">
+      <small style="color: #6c757d; margin-right: -4px">
+        <a href="/" class="no-link"><i class="fa-solid fa-house"></i> Home</a></small>
+      <small style="color: #6c757d; margin-right: -4px"><a href="/user-management" class="no-link"><i
+            class="fa-solid fa-angle-right text-80" style="color: #6c757d"></i> User Management</a></small>
+      <small class="page-info text-dark-m3" id="pageSub"> <i class="fa-solid fa-angle-right text-80"
+          style="color: #6c757d"></i> Add User </small>
     </div>
 
-    <div v-if="menuOpen" class="nt-navbar__menu">
-      <router-link to="/profile">Profile</router-link>
-      <router-link to="/settings">Settings</router-link>
-      <a href="#/logout">Logout</a>
+    <!-- Sidebar Menu -->
+    <div class="sidebar-team-menu" id="sidebarTeamMenu" ref="sidebarMenu" :style="{ display: menuOpen ? 'block' : 'none' }">
+      <!-- Header -->
+      <div class="menu-header">
+        <div class="user-info-group">
+          <div class="menu-avatar">
+            {{ initials }}
+          </div>
+          <div class="menu-user-details">
+            <div class="menu-user-name">{{ displayName }}</div>
+            <div class="menu-user-role">User</div>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="themeSwitch" />
+          <span class="slider round">
+            <i class="fa-regular fa-moon icon-moon"></i>
+            <span class="knob" aria-hidden="true">
+              <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg"
+                role="img" aria-hidden="true">
+                <g fill="none" stroke="none" stroke-width="1" fill-rule="evenodd">
+                  <circle cx="12" cy="12" r="4.2" fill="#000" />
+                  <g transform="translate(12,12)" stroke="#000" stroke-width="1.6" stroke-linecap="round">
+                    <line x1="0" y1="-8.2" x2="0" y2="-11" />
+                    <line x1="0" y1="8.2" x2="0" y2="11" />
+                    <line x1="-8.2" y1="0" x2="-11" y2="0" />
+                    <line x1="8.2" y1="0" x2="11" y2="0" />
+                    <line x1="-5.8" y1="-5.8" x2="-8" y2="-8" />
+                    <line x1="5.8" y1="-5.8" x2="8" y2="-8" />
+                    <line x1="-5.8" y1="5.8" x2="-8" y2="8" />
+                    <line x1="5.8" y1="5.8" x2="8" y2="8" />
+                  </g>
+                </g>
+              </svg>
+            </span>
+          </span>
+        </label>
+      </div>
+
+      <!-- Menu List -->
+      <ul class="menu-list">
+        <li class="menu-item">
+          <router-link to="/user-management" class="menu-link">
+            <i class="fa-solid fa-user-lock"></i>
+            <span data-translate="set_permissions">User Management</span>
+          </router-link>
+        </li>
+
+        <li class="menu-item">
+          <router-link to="/user-management/add" class="menu-link">
+            <i class="fa-solid fa-user-plus"></i>
+            <span data-translate="add_user">Add User</span>
+          </router-link>
+        </li>
+
+        <li class="menu-item">
+          <a class="menu-link d-flex align-items-center" :class="{ collapsed: !isLogsOpen }"
+            @click.prevent="isLogsOpen = !isLogsOpen" role="button" aria-expanded="false">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span data-translate="Logs">Logs</span>
+            <i
+              class="fa-solid fa-chevron-down ms-auto"
+              :style="{ transform: isLogsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }"
+              style="font-size: 12px; margin-left: auto"></i>
+          </a>
+          <div v-show="isLogsOpen" id="collapseLogs">
+            <ul class="menu-list" style="padding-left: 12px; margin-top: 4px">
+              <li class="menu-item">
+                <router-link to="/logs/system" class="menu-link"><i class="fa-solid fa-circle-dot"
+                    style="font-size: 8px"></i> System log</router-link>
+              </li>
+              <li class="menu-item">
+                <router-link to="/logs/audit" class="menu-link"><i class="fa-solid fa-circle-dot"
+                    style="font-size: 8px"></i> Audit log</router-link>
+              </li>
+            </ul>
+          </div>
+        </li>
+      </ul>
+
+      <div class="menu-divider"></div>
+
+      <ul class="menu-list">
+        <li class="menu-item">
+          <a class="menu-link d-flex align-items-center" :class="{ collapsed: !isConfigOpen }"
+            @click.prevent="isConfigOpen = !isConfigOpen" role="button" aria-expanded="false">
+            <i class="fa-solid fa-sliders"></i>
+            <span data-translate="configuration">Configuration</span>
+            <i
+              class="fa-solid fa-chevron-down ms-auto"
+              :style="{ transform: isConfigOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }"
+              style="font-size: 12px; margin-left: auto"></i>
+          </a>
+          <div v-show="isConfigOpen" id="collapseConfig">
+            <ul class="menu-list" style="padding-left: 12px; margin-top: 4px">
+              <li class="menu-item">
+                <router-link to="/configuration/role" class="menu-link"><i class="fa-solid fa-circle-dot"
+                    style="font-size: 8px"></i> Role & Permissions</router-link>
+              </li>
+              <li class="menu-item">
+                <router-link to="/configuration/group" class="menu-link"><i class="fa-solid fa-circle-dot"
+                    style="font-size: 8px"></i> Group & Team</router-link>
+              </li>
+            </ul>
+          </div>
+        </li>
+
+        <!-- <li class="menu-item">
+          <router-link to="/set-audio-launcher" class="menu-link">
+            <i class="fa-solid fa-gear"></i>
+            <span data-translate="audio_launcher">Settings</span>
+          </router-link>
+        </li> -->
+      </ul>
+
+      <div class="menu-divider"></div>
+
+      <button @click="handleLogout" class="logout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span data-translate="logout">Logout</span>
+      </button>
+
+      <button
+        id="sidebarTeamClose"
+        style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 22px; color: #888; cursor: pointer; display: none"
+        @click="menuOpen = false"></button>
     </div>
+
+    <button id="scrollTopBtn" style="display: none">
+      <svg class="progress-circle" width="40" height="40">
+        <circle cx="20" cy="20" r="18" stroke="#e0e0e0" stroke-width="3" fill="none" />
+        <circle id="progress-ring" cx="20" cy="20" r="18" stroke="#2872fa" stroke-width="3" fill="none"
+          stroke-linecap="round" />
+      </svg>
+      <i class="bi bi-arrow-up"></i>
+    </button>
   </header>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useAuthStore } from '../stores/auth.store'
-import '../assets/css/navbar.css'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { useAuthStore } from "../stores/auth.store";
+import "../assets/css/navbar.css";
+import { useRouter } from "vue-router";
 
-const store = useAuthStore()
-const router = useRouter()
+const store = useAuthStore();
+const router = useRouter();
 
-const menuOpen = ref(false)
+const menuOpen = ref(false);
+const sidebarMenu = ref(null);
+const sidebarToggle = ref(null);
+
 function toggleMenu() {
-  menuOpen.value = !menuOpen.value
+  menuOpen.value = !menuOpen.value;
 }
 
-const displayName = computed(() => store.user?.fullName ?? 'Guest User')
-const initials = computed(() => {
-  const name = store.user?.fullName || 'U'
-  return name
-    .split(' ')
-    .map(s => s[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-})
-</script>
+function onClickOutside(e) {
+  if (!menuOpen.value) return;
+  const menuEl = sidebarMenu.value;
+  const toggleEl = sidebarToggle.value;
+  const target = e.target;
+  if (menuEl && toggleEl && !menuEl.contains(target) && !toggleEl.contains(target)) {
+    menuOpen.value = false;
+  }
+}
 
-<style scoped>
-/* small fallback if navbar.css not loaded */
-.nt-navbar { background: #fff; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; }
-.nt-navbar__inner { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; max-width:1200px; margin:0 auto; }
-.nt-navbar__brand { display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit }
-.nt-navbar__logo { width:36px; height:36px; object-fit:cover; border-radius:6px }
-.nt-navbar__title { font-weight:600 }
-.nt-navbar__subtitle { font-size:12px; color:#6b7280 }
-.nt-navbar__links { list-style:none; display:flex; gap:12px; margin:0; padding:0 }
-.nt-navbar__links a { text-decoration:none; color:#111827 }
-.nt-navbar__user { display:flex; align-items:center; gap:8px; cursor:pointer }
-.nt-navbar__avatar { width:32px; height:32px; background:#3F6ACF; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700 }
-.nt-navbar__menu { position:absolute; right:20px; top:64px; background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.08); border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:6px }
-</style>
+onMounted(() => {
+  document.addEventListener("click", onClickOutside);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", onClickOutside);
+});
+
+const isLogsOpen = ref(false);
+const isConfigOpen = ref(false);
+
+const displayName = computed(() => store.fullName() ?? "Guest User");
+const initials = computed(() => {
+  const name = store.fullName() || "U";
+  return name
+    .split(" ")
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+});
+
+const handleLogout = () => {
+  store.clear();
+  router.push("/login");
+};
+</script>

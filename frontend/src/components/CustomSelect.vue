@@ -1,28 +1,36 @@
 <template>
-  <div class="custom-select-root" :class="{'is-open': open, 'has-value': hasValue, 'up': up}" ref="root">
-    <button type="button" class="select-toggle" @click="toggle" @keydown.down.prevent="openList" @keydown.up.prevent="openList" :aria-expanded="open" :aria-haspopup="true">
+  <div class="custom-select-root" :class="{ 'is-open': open, 'has-value': hasValue, 'up': up }" ref="root">
+    <button type="button" class="select-toggle" @click="toggle" @keydown.down.prevent="openList"
+      @keydown.up.prevent="openList" :aria-expanded="open" :aria-haspopup="true">
       <span class="selected-text">{{ hasValue ? selectedLabel : '' }}</span>
       <span class="chev" aria-hidden><i class="fa-solid fa-angle-down" style="font-size: 12px;"></i></span>
     </button>
     <label class="floating-label">{{ placeholder }}</label>
 
     <ul v-if="open" class="options" role="listbox">
-      <li v-if="searchable" class="option option-search">
-        <div class="search-input-wrap">
-          <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
-          <input v-model="searchTerm" class="form-control form-control-sm select-search-input" placeholder="Search..." />
-        </div>
-      </li>
-      <li v-for="(opt, idx) in filteredOptions" :key="idx" class="option" :class="{selected: isSelected(opt.value)}" @click="onOptionClick(opt.value)" @mouseenter="hoverIndex=idx" @mouseleave="hoverIndex=null" :aria-selected="isSelected(opt.value)" role="option">
-        <template v-if="checkboxable">
-          <input type="checkbox" :checked="isSelected(opt.value)" @click.stop.prevent="select(opt.value)" />
-          <span class="opt-label">{{ opt.label }}</span>
-        </template>
-        <template v-else>
-          <span class="opt-label">{{ opt.label }}</span>
-        </template>
-        <span class="opt-check" aria-hidden v-if="!checkboxable && opt.value===modelValue"><i class="fa-solid fa-check"></i></span>
-      </li>
+        <li v-if="searchable" class="option option-search">
+          <div class="search-input-wrap">
+            <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+            <input v-model="searchTerm" class="form-control form-control-sm select-search-input"
+              placeholder="Search..." />
+          </div>
+        </li>
+      <div class="options-inner">
+        <li v-for="(opt, idx) in filteredOptions" :key="idx" class="option" :class="{ selected: isSelected(opt.value) }"
+          @click="onOptionClick(opt.value)" @mouseenter="hoverIndex = idx" @mouseleave="hoverIndex = null"
+          :aria-selected="isSelected(opt.value)" role="option">
+          <template v-if="checkboxable">
+            <input type="checkbox" :checked="isSelected(opt.value)" @click.stop.prevent="select(opt.value)" />
+            <span class="opt-label">{{ opt.label }}</span>
+          </template>
+          <template v-else>
+            <span class="opt-label">{{ opt.label }}</span>
+          </template>
+          <span class="opt-check" aria-hidden v-if="!checkboxable && opt.value === modelValue"><i
+              class="fa-solid fa-check"></i></span>
+        </li>
+      </div>
+
     </ul>
   </div>
 </template>
@@ -164,8 +172,8 @@ function onOptionClick(v) {
   select(v)
 }
 
-function onDocClick(e){ if (!root.value.contains(e.target)) open.value = false }
-onMounted(()=> {
+function onDocClick(e) { if (!root.value.contains(e.target)) open.value = false }
+onMounted(() => {
   document.addEventListener('click', onDocClick)
   if (root.value) {
     const cls = root.value.classList
@@ -173,7 +181,7 @@ onMounted(()=> {
     checkboxable.value = cls.contains('select-checkbox')
   }
 })
-onBeforeUnmount(()=> {
+onBeforeUnmount(() => {
   document.removeEventListener('click', onDocClick)
   window.removeEventListener('resize', computeUp)
   window.removeEventListener('scroll', computeUp, true)
@@ -181,7 +189,23 @@ onBeforeUnmount(()=> {
 </script>
 
 <style scoped>
-.option-search .search-input-wrap{ position: relative; }
-.option-search .search-icon{ position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9aa4ad; font-size: 10px; pointer-events: none; }
-.option-search .select-search-input{ padding-left: 26px;border-radius: 25px;font-size: 10px }
+.option-search .search-input-wrap {
+  position: relative;
+}
+
+.option-search .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9aa4ad;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.option-search .select-search-input {
+  padding-left: 26px;
+  border-radius: 25px;
+  font-size: 10px
+}
 </style>

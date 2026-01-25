@@ -267,7 +267,6 @@ import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { onBeforeUnmount } from 'vue'
 import { nextTick } from 'vue'
 
-import '../assets/css/modal-favorite.css'
 
 const API_AUDIO_LIST = 'http://localhost:8000/api/audio/list/'
 const API_HOME_INDEX = 'http://localhost:8000/api/home/index/'
@@ -319,7 +318,6 @@ const fetchIndex = async () => {
     }
     mainDbOptions.value = mopts
 
-    // build agent options from backend-provided agent list
     const agents = json.agent || []
     const aopts = [{ label: 'All', value: 'all' }]
     for (const a of agents) {
@@ -329,7 +327,7 @@ const fetchIndex = async () => {
       aopts.push({ label: alabel, value: avalue })
     }
     agentOptions.value = aopts
-    // server may return list of saved favorites
+    
     favoriteSearchAll.value = json.favorite_search_all || []
   } catch (err) {
     console.error('fetchIndex error', err)
@@ -497,9 +495,25 @@ const onSearch = () => {
 function applyFavorite(fav){
   try{
     const raw = typeof fav.raw_data === 'string' ? JSON.parse(fav.raw_data || '{}') : (fav.raw_data || {})
-    // apply keys present in raw to filters
-    for (const k of Object.keys(filters)){
-      if (raw[k] !== undefined) filters[k] = raw[k]
+    // map raw_data keys to local `filters` keys
+    const keyMap = {
+      database_name: 'databaseServer',
+      start_date: 'from',
+      end_date: 'to',
+      file_name: 'fileName',
+      duration: 'duration',
+      customer: 'customerNumber',
+      agent: 'agent',
+      call_direction: 'callDirection',
+      extension: 'extension',
+      full_name: 'fullName',
+      custom_field: 'customField'
+    }
+    for (const [rawKey, val] of Object.entries(raw)){
+      const target = keyMap[rawKey]
+      if (target && Object.prototype.hasOwnProperty.call(filters, target)){
+        filters[target] = val
+      }
     }
     // close modal and refresh
     showFavoriteModal.value = false

@@ -22,7 +22,7 @@ from datetime import timedelta
 from apps.core.model.authorize.models import UserAuth,MainDatabase,SetAudio,UserLog,UserProfile,Agent
 from apps.core.model.audio.models import AudioInfo
 from .models import FavoriteSearch, ViewAudio,tbSetColumn, PlaybackLog,ConfigKey
-# from .serializers import FavoriteSearchSerializer
+from .serializers import FavoriteSearchSerializer
 
 #serializer
 from apps.core.model.authorize.serializers import MainDatabaseSerializer
@@ -60,17 +60,18 @@ def ApiIndexHome(request):
     agent = Agent.objects.all()
     raw_data = favorite_search.raw_data if favorite_search else {}
 
-    # serialize minimal fields for main_db to keep response lightweight
-    main_db_list = [{'id': m.id, 'database_name': m.database_name} for m in main_db]
+    main_db_serialized = MainDatabaseSerializer(main_db, many=True).data
+    favorite_search_all_serialized = FavoriteSearchSerializer(favorite_search_all, many=True).data
+    favorite_search_serialized = FavoriteSearchSerializer(favorite_search).data if favorite_search else None
 
     return JsonResponse({
         'show_toast': show_toast,
-        'main_db': main_db_list,
+        'main_db': main_db_serialized,
         'set_audio': set_audio.audio_path if set_audio else None,
         'user_profile': {'id': user_profile.user.id, 'username': user_profile.user.username} if user_profile else None,
-        'favorite_search': favorite_search.raw_data if favorite_search else None,
+        'favorite_search': favorite_search_serialized,
         'raw_data': raw_data,
-        'favorite_search_all': [fs.raw_data for fs in favorite_search_all],
+        'favorite_search_all': favorite_search_all_serialized,
         'audio_column': audio_column.raw_data if audio_column else 0,
         'agent': list(agent.values('id', 'agent_code', 'first_name', 'last_name')),
     })

@@ -153,7 +153,7 @@
   cursor: pointer;
   font-size: 10px;
   color: #333;
-  display: flex;
+  display: list-item;
   align-items: center;
   justify-content: center;
 }
@@ -203,6 +203,13 @@
 .option.selected .opt-label {
   font-weight: 600;
   padding: 0px 4px;
+}
+
+.option-search {
+  display: list-item;
+}
+.option-search:hover {
+  background: none;
 }
 /* end select dropdown */
 
@@ -649,7 +656,6 @@
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
-  padding-right: 4px;
 }
 
 .custom-roles-list::-webkit-scrollbar {
@@ -746,6 +752,7 @@
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
+  margin-bottom: 8px;
 }
 
 .custom-role-item:hover {
@@ -896,8 +903,8 @@
 }
 
 .btn-sm {
-  padding: 8px 16px;
-  font-size: 13px;
+  padding: 6px 16px;
+  font-size: 12px;
 }
 
 /* Footer */
@@ -1342,3 +1349,5 @@ hr {
 .swal2-container {
   font-family: "THSarabun";
 }
+
+

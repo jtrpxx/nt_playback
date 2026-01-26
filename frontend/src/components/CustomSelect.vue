@@ -16,18 +16,23 @@
           </div>
         </li>
       <div class="options-inner">
-        <li v-for="(opt, idx) in filteredOptions" :key="idx" class="option" :class="{ selected: isSelected(opt.value) }"
-          @click="onOptionClick(opt.value)" @mouseenter="hoverIndex = idx" @mouseleave="hoverIndex = null"
-          :aria-selected="isSelected(opt.value)" role="option">
-          <template v-if="checkboxable">
-            <input type="checkbox" :checked="isSelected(opt.value)" @click.stop.prevent="select(opt.value)" />
-            <span class="opt-label">{{ opt.label }}</span>
+        <li v-for="(opt, idx) in filteredOptions" :key="idx" :class="[ opt.isGroup ? 'option-group' : 'option', { selected: !opt.isGroup && isSelected(opt.value) } ]"
+          @mouseenter="hoverIndex = idx" @mouseleave="hoverIndex = null" role="option">
+          <template v-if="opt.isGroup">
+            <div class="opt-group-label">{{ opt.label }}</div>
           </template>
           <template v-else>
-            <span class="opt-label">{{ opt.label }}</span>
+            <div @click="onOptionClick(opt.value)" class="option-row">
+              <template v-if="checkboxable">
+                <input type="checkbox" :checked="isSelected(opt.value)" @click.stop.prevent="select(opt.value)" />
+                <span class="opt-label">{{ opt.label }}</span>
+              </template>
+              <template v-else>
+                <span class="opt-label">{{ opt.label }}</span>
+              </template>
+              <span class="opt-check" aria-hidden v-if="!checkboxable && opt.value === modelValue"><i class="fa-solid fa-check"></i></span>
+            </div>
           </template>
-          <span class="opt-check" aria-hidden v-if="!checkboxable && opt.value === modelValue"><i
-              class="fa-solid fa-check"></i></span>
         </li>
       </div>
 
@@ -52,11 +57,44 @@ const searchable = ref(false)
 const checkboxable = ref(false)
 const searchTerm = ref('')
 
-const normalizedOptions = computed(() => props.options.map(o => (typeof o === 'string' ? { label: o, value: o } : o)))
+// Normalize props.options into a flat list that may include group headers.
+// Supported input shapes:
+// - Simple list: [{ label, value }, ...] or ['a', 'b']
+// - Grouped: [{ group: 'Base Roles', options: [...] }, { group: 'Custom Roles', options: [...] }]
+const normalizedOptions = computed(() => {
+  const out = []
+  for (const o of props.options) {
+    if (o && Array.isArray(o.options)) {
+      out.push({ isGroup: true, label: o.group || '' })
+      for (const item of o.options) {
+        out.push(typeof item === 'string' ? { label: item, value: item } : item)
+      }
+    } else {
+      out.push(typeof o === 'string' ? { label: o, value: o } : o)
+    }
+  }
+  return out
+})
+
 const filteredOptions = computed(() => {
   const q = String(searchTerm.value || '').trim().toLowerCase()
   if (!searchable.value || !q) return normalizedOptions.value
-  return normalizedOptions.value.filter(o => String(o.label).toLowerCase().includes(q))
+  const items = normalizedOptions.value
+  const res = []
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i]
+    if (it.isGroup) {
+      // include group header only if at least one following non-group matches
+      let found = false
+      for (let j = i + 1; j < items.length && !items[j].isGroup; j++) {
+        if (String(items[j].label).toLowerCase().includes(q)) { found = true; break }
+      }
+      if (found) res.push(it)
+    } else {
+      if (String(it.label).toLowerCase().includes(q)) res.push(it)
+    }
+  }
+  return res
 })
 
 const selectedLabel = computed(() => {
@@ -208,4 +246,19 @@ onBeforeUnmount(() => {
   border-radius: 25px;
   font-size: 10px
 }
+
+/* Group header styling inside the dropdown */
+.option-group {
+  list-style: none;
+  padding: 0;
+}
+.option-group .opt-group-label {
+  font-weight: 700;
+  padding: 8px 12px;
+  background: linear-gradient(90deg, rgba(255,235,205,1) 0%, rgba(255,250,240,1) 100%);
+  color: #444;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.option .option-row { display: flex; align-items: center; gap: 8px; padding: 6px 2px; cursor: pointer }
+.option .opt-label { flex: 1 }
 </style>

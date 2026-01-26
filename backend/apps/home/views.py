@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
-# from utils.function import create_user_log,get_user_os_browser_architecture
+from apps.core.utils.function import create_user_log, get_user_os_browser_architecture
 
 # models
 from apps.core.model.authorize.models import UserAuth,MainDatabase,SetAudio,UserLog,UserProfile,Agent

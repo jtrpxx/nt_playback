@@ -17,8 +17,8 @@
 }
 
 .main-content {
-  flex: 1;
-  padding: 84px 0px 0px 0px; /* เว้นระยะด้านบนสำหรับ Navbar ที่เป็น fixed-top */
+  flex: 1 1 auto;
+  padding: 83.5px 0px 0px 0px; /* เว้นระยะด้านบนสำหรับ Navbar ที่เป็น fixed-top */
 }
 
 .footer {
@@ -101,8 +101,26 @@
 
 .main-wrapper-container {
   padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  /* allow cards inside to stretch vertically when needed */
+  min-height: calc(100vh - 140px);
 }
 
 .main-wrapper-container .card {
-margin-bottom: 14px;
+  margin-bottom: 14px;
+}
+
+/* Ensure custom role card can expand to fill available vertical space
+   and allow its body to scroll when content overflows */
+.main-wrapper-container .card.card-custom-role {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  margin-bottom: -16px;
+}
+
+.main-wrapper-container .card.card-custom-role .card-body {
+  flex: 1 1 auto;
+  overflow: auto;
 }

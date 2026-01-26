@@ -256,7 +256,7 @@
       </div>
     </div>
   </MainLayout>
-  <ModalHome v-model="showFavoriteModal" :favorites="favoriteSearchAll" :main-db="mainDbOptions" @apply="applyFavorite" @edit="editFavorite" @delete="deleteFavorite" />
+    <ModalHome v-model="showFavoriteModal" :favorites="favoriteSearchAll" :mainDbOptions="mainDbOptions" :agentOptions="agentOptions" @apply="applyFavorite" @edit="editFavorite" @delete="deleteFavorite" />
 </template>
 
 <script setup>
@@ -303,35 +303,41 @@ const mainDbOptions = ref([])
 const favoriteSearchAll = ref([])
 const agentOptions = ref([{ label: 'All', value: 'all' }])
 
-const fetchIndex = async () => {
-  try {
-    const res = await fetch(API_HOME_INDEX, { credentials: 'include' })
-    if (!res.ok) return
-    const json = await res.json()
-    const mdb = json.main_db || []
-    const mopts = []
+import { registerRequest } from '../utils/pageLoad'
 
-    for (const m of mdb) {
-      const mlabal = m.database_name
-      const mvalue = m.id
-      mopts.push({ label: mlabal, value: mvalue })
-    }
-    mainDbOptions.value = mopts
+const fetchIndexHome = async () => {
+  const task = (async () => {
+    try {
+      const res = await fetch(API_HOME_INDEX, { credentials: 'include' })
+      if (!res.ok) return
+      const json = await res.json()
+      const mdb = json.main_db || []
+      const mopts = []
 
-    const agents = json.agent || []
-    const aopts = [{ label: 'All', value: 'all' }]
-    for (const a of agents) {
-      const name = `${a.first_name || ''} ${a.last_name || ''}`.trim()
-      const alabel = a.agent_code ? `${a.agent_code} - ${name}` : name
-      const avalue = a.id
-      aopts.push({ label: alabel, value: avalue })
+      for (const m of mdb) {
+        const mlabal = m.database_name
+        const mvalue = m.id
+        mopts.push({ label: mlabal, value: mvalue })
+      }
+      mainDbOptions.value = mopts
+
+      const agents = json.agent || []
+      const aopts = [{ label: 'All', value: 'all' }]
+      for (const a of agents) {
+        const name = `${a.first_name || ''} ${a.last_name || ''}`.trim()
+        const alabel = a.agent_code ? `${a.agent_code} - ${name}` : name
+        const avalue = a.id
+        aopts.push({ label: alabel, value: avalue })
+      }
+      agentOptions.value = aopts
+      
+      favoriteSearchAll.value = json.favorite_search_all || []
+    } catch (err) {
+      console.error('fetchIndexHome error', err)
     }
-    agentOptions.value = aopts
-    
-    favoriteSearchAll.value = json.favorite_search_all || []
-  } catch (err) {
-    console.error('fetchIndex error', err)
-  }
+  })()
+  registerRequest(task)
+  await task
 }
 
 const togglePerDropdown = () => {
@@ -365,8 +371,9 @@ const onDocClick = (e) => {
 }
 
 onMounted(() => {
-  fetchIndex()
-  fetchData()
+  // fetchIndexHome registers itself with pageLoad; ensure the initial data fetch is registered too
+  fetchIndexHome()
+  registerRequest(fetchData())
   document.addEventListener('click', onDocClick)
 })
 

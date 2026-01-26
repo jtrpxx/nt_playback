@@ -256,7 +256,7 @@ import { defineProps, defineEmits, ref, computed, reactive, onMounted, watch } f
 import CustomSelect from './CustomSelect.vue'
 import '../assets/css/modal-favorite.css'
 
-const props = defineProps({ modelValue: { type: Boolean, default: false }, favorites: { type: Array, default: () => [] }, main_db: { type: Array, default: () => [] } })
+const props = defineProps({ modelValue: { type: Boolean, default: false }, favorites: { type: Array, default: () => [] }, mainDbOptions: { type: Array, default: () => [] }, agentOptions: { type: Array, default: () => [] } })
 const emit = defineEmits(['update:modelValue', 'apply', 'edit', 'delete'])
 const activeTab = ref('list')
 const searchTerm = ref('')
@@ -264,53 +264,9 @@ const searchTerm = ref('')
 // local filter state for the add form (so CustomSelect v-model has a target)
 const filters = reactive({ databaseServer: '' })
 
-// fetch fallback main_db and agents from API if parent didn't provide them
-const fetchedMainDb = ref([])
-const fetchedAgents = ref([])
-const API_HOME_INDEX = 'http://localhost:8000/api/home/index/'
-
-onMounted(async () => {
-  try {
-    const needMainDb = (!props.main_db || props.main_db.length === 0)
-    const needAgents = true // always fetch agents fallback (parent doesn't pass agents prop)
-    if (needMainDb || needAgents) {
-      const res = await fetch(API_HOME_INDEX, { credentials: 'include' })
-      if (!res.ok) return
-      const json = await res.json()
-      if (needMainDb) fetchedMainDb.value = json.main_db || []
-      if (needAgents) fetchedAgents.value = json.agent || []
-    }
-  } catch (e) {
-    console.error('ModalHome fetch main_db error', e)
-  }
-})
-
-// expose main DB options derived from the parent prop (transform to {label,value} like Home.vue)
-const mainDbOptions = computed(() => {
-  const src = (props.main_db && props.main_db.length) ? props.main_db : fetchedMainDb.value || []
-  const out = []
-  for (const m of src) {
-    const label = m.database_name ?? m.databaseName ?? m.label ?? m.name ?? ''
-    const value = m.id ?? m.value ?? ''
-    out.push({ label, value })
-  }
-  return out
-
-  
-})
-
-// agent options derived from fetchedAgents (match Home.vue shape)
-const agentOptions = computed(() => {
-  const src = fetchedAgents.value || []
-  const out = [{ label: 'All', value: 'all' }]
-  for (const a of src) {
-    const name = `${a.first_name || ''} ${a.last_name || ''}`.trim()
-    const label = a.agent_code ? `${a.agent_code} - ${name}` : name
-    const value = a.id
-    out.push({ label, value })
-  }
-  return out
-})
+// Modal receives `mainDbOptions` and `agentOptions` as props from parent `Home.vue`.
+// It uses those props directly in the template. No fallback fetch here to avoid
+// duplicate network calls when parent already loaded the data.
 
 const filteredFavorites = computed(() => {
   const q = String(searchTerm.value || '').trim().toLowerCase()

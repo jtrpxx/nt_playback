@@ -45,13 +45,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'apps.core',
+    
     # core sub-apps (models split into packages)
+    'apps.core',
     'apps.core.model.authorize',
     'apps.core.model.audio',
     'apps.core.model.customer',
     'apps.core.model.licenses',
     'apps.home',
+    'apps.configuration',
+    
 ]
 
 MIDDLEWARE = [

@@ -28,5 +28,6 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('login/', include('apps.login.urls')),
     path('', include('apps.home.urls')),
+    path('', include('apps.configuration.urls')),
     
 ]

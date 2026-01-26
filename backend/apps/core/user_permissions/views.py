@@ -2,7 +2,7 @@
 from django.shortcuts import render, redirect
 from functools import wraps
 from django.contrib.auth.decorators import login_required
-from apps.page_notfound.views import page_not_found
+# from apps.page_notfound.views import page_not_found
 from utils.function import BaseListAPIView,PageNumberPagination
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt

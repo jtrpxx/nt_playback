@@ -98,3 +98,11 @@
   align-items: center;
   justify-content: space-between;
 }
+
+.main-wrapper-container {
+  padding: 16px 12px;
+}
+
+.main-wrapper-container .card {
+margin-bottom: 14px;
+}

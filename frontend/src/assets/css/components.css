@@ -888,7 +888,6 @@
   background: linear-gradient(135deg, #416fd6, #3b5fc0);
   border: none;
   color: #fff;
-  box-shadow: 0 4px 15px rgba(65, 111, 214, 0.3);
 }
 
 .btn-primary:hover {
@@ -1299,6 +1298,12 @@ hr {
     align-items: center;
     gap: 8px;
     transition: background 0.2s;
+}
+
+/* Ensure Font Awesome icons render even when ancestor sets a different font-family */
+.fa, .fa-solid, .fa-regular, .fas, .far, .fab, .fa-brands, .fa-classic {
+  font-family: var(--_fa-family, "Font Awesome 7 Free") !important;
+  speak: none;
 }
 
 .group-edit-btn:hover {

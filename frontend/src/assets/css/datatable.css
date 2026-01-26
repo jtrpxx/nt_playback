@@ -69,8 +69,11 @@
 /* Responsive design*/
 @media (min-width: 1200px) {
   .card-body-datatable .table-container .table-scroll {
-    max-height: calc(100vh - 268px);
+    max-height: calc(100vh - 272px);
   }
+      .col-lg-10 {
+        min-height: calc(100vh - 156px);
+      }
 }
 
 @media (max-width: 991.98px) {

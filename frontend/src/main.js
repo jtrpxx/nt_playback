@@ -11,10 +11,10 @@ import flatpickrDirective from './directives/flatpickr.js'
 import hasValueDirective from './directives/hasValue.js'
 
 // css
-import './assets/css/all.min.css'
 import './assets/css/base.css'
 import './assets/css/bootstrap.min.css'
 import './assets/css/components.css'
+import './assets/css/all.min.css'
 import './assets/css/flatpickr.min.css'
 import './assets/css/datatable.css'
 

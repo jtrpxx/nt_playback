@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
+import Role from '../views/Role.vue'
 import { useAuthStore } from '../stores/auth.store'
 
 const routes = [
 	{ path: '/', name: 'Home', component: Home },
+	{ path: '/configuration/role', name: 'role', component: Role },
 	{ path: '/login', name: 'Login', component: () => import('../views/Login.vue') },
 	{ path: '/users', name: 'Users', component: () => import('../views/Users.vue').catch(() => ({ template: '<div>Users Page</div>' })) },
 	{ path: '/dashboard', name: 'Dashboard', component: () => import('../views/Dashboard.vue').catch(() => ({ template: '<div>Dashboard Page</div>' })) },

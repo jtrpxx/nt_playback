@@ -1,7 +1,7 @@
 <template>
 
   <MainLayout>
-    <div class="main-wrapper container-fluid py-3">
+    <div class="main-wrapper container-fluid-home py-3">
       <div class="row col-lg-12">
         <div class="col-lg-2">
           <div class="card">

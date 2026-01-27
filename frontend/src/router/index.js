@@ -6,10 +6,13 @@ import { useAuthStore } from '../stores/auth.store'
 const routes = [
 	{ path: '/', name: 'Home', component: Home },
 	{ path: '/configuration/role', name: 'role', component: Role },
+	{ path: '/configuration/group', name: 'Group', component: () => import('../views/GroupAndTeam.vue').catch(() => ({ template: '<div>Group Page</div>' })) },
 	{ path: '/login', name: 'Login', component: () => import('../views/Login.vue') },
-	{ path: '/users', name: 'Users', component: () => import('../views/Users.vue').catch(() => ({ template: '<div>Users Page</div>' })) },
+	{ path: '/configuration/users', name: 'Users', component: () => import('../views/Users.vue').catch(() => ({ template: '<div>Users Page</div>' })) },
 	{ path: '/dashboard', name: 'Dashboard', component: () => import('../views/Dashboard.vue').catch(() => ({ template: '<div>Dashboard Page</div>' })) },
 	{ path: '/profile', name: 'Profile', component: () => import('../views/Profile.vue').catch(()=>({ template: '<div>Profile</div>' })) },
+	{ path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('../views/NotFound.vue') },
+
 ]
 
 const router = createRouter({

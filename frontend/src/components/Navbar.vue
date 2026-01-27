@@ -33,14 +33,7 @@
       </div>
     </nav>
 
-    <div class="page-title text-primary-d2 text-140" id="pageTitle" style="font-size: 13px">
-      <small style="color: #6c757d; margin-right: -4px">
-        <a href="/" class="no-link"><i class="fa-solid fa-house"></i> Home</a></small>
-      <small style="color: #6c757d; margin-right: -4px"><a href="/user-management" class="no-link"><i
-            class="fa-solid fa-angle-right text-80" style="color: #6c757d"></i> User Management</a></small>
-      <small class="page-info text-dark-m3" id="pageSub"> <i class="fa-solid fa-angle-right text-80"
-          style="color: #6c757d"></i> Add User </small>
-    </div>
+    <!-- Breadcrumbs removed from Navbar — pages render breadcrumbs via `Breadcrumbs` component -->
 
     <!-- Sidebar Menu -->
     <div class="sidebar-team-menu" id="sidebarTeamMenu" ref="sidebarMenu" :style="{ display: menuOpen ? 'block' : 'none' }">
@@ -234,4 +227,6 @@ const handleLogout = () => {
   store.clear();
   router.push("/login");
 };
+
+// Breadcrumbs are now handled by individual page components using the `Breadcrumbs` component.
 </script>

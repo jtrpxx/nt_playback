@@ -9,7 +9,7 @@
                     </div>
                     <h3 class="modal-title ad" id="baseRoleModalTitle">{{ title }}</h3>
                 </div>
-                <button type="button" class="btn-close" @click="close">×</button>
+                <button type="button" class="btn-close" @click="close"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group-modal">
@@ -63,7 +63,7 @@
                     </div>
                     <h3 class="modal-title ad" id="createRoleModalTitle">Create New Role</h3>
                 </div>
-                <button type="button" class="btn-close" @click="close">×</button>
+                <button type="button" class="btn-close" @click="close"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group-modal">
@@ -132,7 +132,7 @@
                     </div>
                     <h3 class="modal-title ad" id="editRoleModalTitle">Edit Role</h3>
                 </div>
-                <button type="button" class="btn-close" @click="close">×</button>
+                <button type="button" class="btn-close" @click="close"></button>
             </div>
             <div class="modal-body">
                 <div class="form-group-modal">
@@ -187,6 +187,7 @@ import { watch, computed, ref } from 'vue'
 import CustomSelect from './CustomSelect.vue'
 import '../assets/css/components.css'
 
+import { API_GET_DETAILS_ROLE, API_INDEX_ROLE } from '../api/paths'
 
 const props = defineProps({
     modelValue: { type: Boolean, default: false },
@@ -206,8 +207,7 @@ const onSave = () => {
     if (window && typeof window.updateBaseRole === 'function') window.updateBaseRole()
 }
 
-const API_GET_DETAILS_ROLE = 'http://localhost:8000/api/role/get-details/'
-const API_INDEX_ROLE = 'http://localhost:8000/api/role/index/'
+// using centralized endpoint functions from src/api/paths.js
 
 const loading = ref(false)
 const roleNameInput = ref('')
@@ -222,7 +222,7 @@ const filters = ref({ roleAll: [] })
 
 async function fetchIndexRoles() {
     try {
-        const res = await fetch(API_INDEX_ROLE, { credentials: 'include' })
+        const res = await fetch(API_INDEX_ROLE(), { credentials: 'include' })
         if (!res.ok) throw new Error('Failed to fetch index roles')
         const json = await res.json()
         const customs = Array.isArray(json.user_permission_other) ? json.user_permission_other : []
@@ -260,7 +260,7 @@ watch(() => filters.value.roleAll, async (val) => {
         const id = String(sel).split(':')[1]
         // fetch the base role details and set rolePermissions
         try {
-            const res = await fetch(API_GET_DETAILS_ROLE + id, { credentials: 'include' })
+            const res = await fetch(API_GET_DETAILS_ROLE() + id, { credentials: 'include' })
             if (!res.ok) throw new Error('Failed to fetch role details')
             const data = await res.json()
             const rp = Array.isArray(data.role_permissions) ? data.role_permissions : []
@@ -271,7 +271,7 @@ watch(() => filters.value.roleAll, async (val) => {
     } else if (String(sel).startsWith('custom:')) {
         const id = String(sel).split(':')[1]
         try {
-            const res = await fetch(API_GET_DETAILS_ROLE + id, { credentials: 'include' })
+            const res = await fetch(API_GET_DETAILS_ROLE() + id, { credentials: 'include' })
             if (!res.ok) throw new Error('Failed to fetch custom role details')
             const data = await res.json()
             const rp = Array.isArray(data.role_permissions) ? data.role_permissions : []
@@ -287,7 +287,7 @@ async function fetchRoleDetails(roleId) {
     loading.value = true
     const startTime = Date.now()
     try {
-        const res = await fetch(API_GET_DETAILS_ROLE + roleId, { credentials: 'include' })
+        const res = await fetch(API_GET_DETAILS_ROLE() + roleId, { credentials: 'include' })
         if (!res.ok) throw new Error('Failed to fetch role details')
         const data = await res.json()
         if (data && data.status) {
@@ -392,72 +392,6 @@ const groupedPermissions = computed(() => {
 </script>
 
 <style scoped>
-.modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000
-}
-
-.overlay-box {
-    /* small centered badge-style box that fits its content */
-    font-size: 14px;
-    display: inline-block;
-    white-space: nowrap;
-    background: #fff;
-    padding: 8px 12px;
-    border-radius: 8px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    font-weight: 600;
-    z-index: 5;
-}
-
-.modal-box {
-    background: #fff;
-    border-radius: 8px;
-    width: 800px;
-    max-width: 90%;
-    /* height: 606px; */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-}
-
-.modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    border-bottom: 1px solid #eee
-}
-
-.modal-title {
-    margin: 0;
-    font-size: 16px
-}
-
-.btn-close {
-    background: transparent;
-    border: none;
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer
-}
-
-.modal-body {
-    padding: 20px;
-    font-size: 13px;
-}
-
-.modal-footer {
-    padding: 12px 16px;
-    border-top: 1px solid #eee;
-    text-align: right
-}
-
 /* Permissions layout */
 .permission-group {
     margin-bottom: 22px !important;

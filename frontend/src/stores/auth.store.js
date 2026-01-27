@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { API_LOGIN } from '../api/paths'
 
 export const useAuthStore = defineStore('auth', () => {
 	// Initialize state from localStorage to enable persistence
@@ -39,7 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
 	async function login(username, password) {
 		try {
 			// Corrected URL to match the new backend endpoint at /login/
-			const response = await fetch('http://localhost:8000/login/', {
+			const response = await fetch(API_LOGIN(), {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ username, password })

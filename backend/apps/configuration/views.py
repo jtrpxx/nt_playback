@@ -58,37 +58,41 @@ def ApiIndexRole(request):
         'user_permission_detail': user_permission_detail,
     })
 
+@login_required(login_url='/login')
 def ApiGetRoleDetails(request, role_id):
-    
-    # 1. Find the role object by type
-    role = UserPermission.objects.filter(id=role_id).first()
-    
-    if not role:
-        return JsonResponse({'status': False, 'message': 'Role not found'})
+    try:
+        role_id = int(role_id)
+    except (ValueError, TypeError):
+        return JsonResponse({'status': False, 'message': 'Invalid role_id'}, status=400)
 
-    # 2. Get details (actions) for this role
-    # Assuming UserPermissionDetail contains rows for all actions (active and inactive)
-    details = UserPermissionDetail.objects.filter(user_permission=role).order_by('action').order_by('id')
-    
+    role = UserPermission.objects.filter(pk=role_id).first()
+    if not role:
+        return JsonResponse({'status': False, 'message': 'Role not found'}, status=404)
+
+    # Basic permission check: only staff or users with explicit permission may view role details
+    user = request.user
+    if not (user.is_staff or user.has_perm('configuration.view_userpermission')):
+        return JsonResponse({'status': False, 'message': 'Permission denied'}, status=403)
+
+    details = UserPermissionDetail.objects.filter(user_permission=role).order_by('action', 'id')
+
     all_permissions = []
     role_permissions = []
     default_permissions = []
-    
+
     for detail in details:
-        # Use 'action' (int) as the identifier (action)
-        # Since model has no name for action, we generate one or use the ID
         all_permissions.append({
             'action': detail.action,
-            'name': f"{detail.action}",  # Or map this to a real name if you have a mapping
+            'name': f"{detail.action}",
             'type': detail.type
         })
-        
+
         if detail.status:
             role_permissions.append(detail.action)
-        
+
         if detail.default:
             default_permissions.append(detail.action)
-        
+
     return JsonResponse({
         'status': True,
         'role_name': role.name,
@@ -97,5 +101,39 @@ def ApiGetRoleDetails(request, role_id):
         'role_permissions': role_permissions,
         'default_permissions': default_permissions
     })
+    
+def ApiIndexGroup(request):
+    user_group = UserGroup.objects.filter(status=1).order_by('group_name')
+    user_team = UserTeam.objects.filter(status=1).order_by('name')
+    database = MainDatabase.objects.filter(status=1)
+    
+    return JsonResponse({
+        'user_group': list(user_group.values()),
+        'user_team': list(user_team.values()),
+        'database': list(database.values()),
+    })
+    
+def ApiGetTeamByGroup(request, group_id):
+    try:
+        group_id = int(group_id)
+    except (ValueError, TypeError):
+        return JsonResponse({'status': False, 'message': 'Invalid group_id'}, status=400)
+    
+    teams = UserTeam.objects.filter(user_group_id=group_id, status=1).select_related('user_group').order_by('name')
+    
+    team_list = []
+    for team in teams:
+        team_list.append({
+            'id': team.id,
+            'name': team.name,
+            'group_name': team.user_group.group_name
+        })
+        
+    return JsonResponse({'status': 'success', 'teams': team_list})
 
+class MainDatabaseAPIView(BaseListAPIView):
+    serializer_class = MainDatabaseSerializer
 
+    def get_queryset(self):
+        queryset = MainDatabase.objects.all()
+        return queryset

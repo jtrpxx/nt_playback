@@ -1,27 +1,29 @@
-// Simple API wrapper for home-related calls
-export async function getAudioList({ start = 0, length = 50, search = '' } = {}, token) {
-  const params = new URLSearchParams({
-    draw: '1',
-    start: String(start),
-    length: String(length),
-    'search[value]': search || ''
-  })
+// // Simple API wrapper for home-related calls
+// import { API_AUDIO_LIST } from './paths'
 
-  const headers = {}
-  if (token) headers['Authorization'] = `Bearer ${token}`
+// export async function getAudioList({ start = 0, length = 50, search = '' } = {}, token) {
+//   const params = new URLSearchParams({
+//     draw: '1',
+//     start: String(start),
+//     length: String(length),
+//     'search[value]': search || ''
+//   })
 
-  // If token provided, send Authorization header. If not, assume session-cookie auth and
-  // include cookies for cross-origin requests via credentials: 'include'.
-  const res = await fetch(`http://localhost:8000/api/audio/list/?${params.toString()}`, {
-    method: 'GET',
-    headers,
-    credentials: token ? 'omit' : 'include'
-  })
+//   const headers = {}
+//   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  if (!res.ok) {
-    const txt = await res.text().catch(() => '')
-    throw new Error(`API error ${res.status}: ${txt}`)
-  }
+//   // If token provided, send Authorization header. If not, assume session-cookie auth and
+//   // include cookies for cross-origin requests via credentials: 'include'.
+//   const res = await fetch(`${API_AUDIO_LIST()}?${params.toString()}`, {
+//     method: 'GET',
+//     headers,
+//     credentials: token ? 'omit' : 'include'
+//   })
 
-  return res.json()
-}
+//   if (!res.ok) {
+//     const txt = await res.text().catch(() => '')
+//     throw new Error(`API error ${res.status}: ${txt}`)
+//   }
+
+//   return res.json()
+// }

@@ -3,7 +3,7 @@
     <div class="modal-box">
       <div class="modal-header">
         <h5 class="modal-title">My Favorite Search</h5>
-        <button type="button" class="btn-close" @click="close">×</button>
+        <button type="button" class="btn-close" @click="close"></button>
       </div>
       <div class="modal-body">
         <div class="tabs-header">
@@ -377,57 +377,6 @@ function deleteFavorite(id) { emit('delete', id) }
 </script>
 
 <style scoped>
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000
-}
-
-.modal-box {
-  background: #fff;
-  border-radius: 8px;
-  width: 800px;
-  max-width: 90%;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  overflow: hidden
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #eee
-}
-
-.modal-title {
-  margin: 0;
-  font-size: 14px
-}
-
-.btn-close {
-  background: transparent;
-  border: none;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer
-}
-
-.modal-body {
-  padding: 16px;
-  font-size: 13px
-}
-
-.modal-footer {
-  padding: 12px 16px;
-  border-top: 1px solid #eee;
-  text-align: right
-}
-
 .tabs-header {
   display: flex;
   justify-content: space-between;

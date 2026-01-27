@@ -1,6 +1,7 @@
 <template>
   <MainLayout>
     <div class="main-wrapper-container">
+      <Breadcrumbs :items="[{ text: 'Home', to: '/' }, { text: 'Role & Permissions Configuration' }]" />
       <div class="card">
         <div class="card-body">
           <div class="d-flex align-items-start justify-content-between" style="margin-bottom: 6px">
@@ -106,13 +107,13 @@
   <ModalConfiguration v-model="showBaseRoleModal" :role-id="selectedBaseRoleId" :role-name="selectedBaseRoleName" :mode="selectedModalMode" />
 </template>
 <script setup>
-import MainLayout from "../layouts/MainLayout.vue";
+import MainLayout from '../layouts/MainLayout.vue';
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { ref, onMounted, computed } from 'vue'
 import { registerRequest } from '../utils/pageLoad'
 
 import ModalConfiguration from '../components/ModalConfiguration.vue'
-
-const API_INDEX_ROLE = 'http://localhost:8000/api/role/index/'
+import { API_INDEX_ROLE } from '../api/paths'
 
 const userPermissionOther = ref([])
 const loading = ref(true)
@@ -132,7 +133,7 @@ const fetchIndexRoles = async () => {
   const task = (async () => {
     loading.value = true
     try {
-      const res = await fetch(API_INDEX_ROLE, { credentials: 'include' })
+      const res = await fetch(API_INDEX_ROLE(), { credentials: 'include' })
       if (!res.ok) {
         console.error('Failed to fetch roles', res.status)
         return

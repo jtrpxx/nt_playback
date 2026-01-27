@@ -2,6 +2,7 @@
 
   <MainLayout>
     <div class="main-wrapper container-fluid-home py-3">
+      <Breadcrumbs :items="[{ text: 'Home', to: '/' }]" />
       <div class="row col-lg-12">
         <div class="col-lg-2">
           <div class="card">
@@ -261,15 +262,13 @@
 
 <script setup>
 import MainLayout from '../layouts/MainLayout.vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
 import CustomSelect from '../components/CustomSelect.vue'
 import ModalHome from '../components/ModalHome.vue'
 import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { onBeforeUnmount } from 'vue'
 import { nextTick } from 'vue'
-
-
-const API_AUDIO_LIST = 'http://localhost:8000/api/audio/list/'
-const API_HOME_INDEX = 'http://localhost:8000/api/home/index/'
+import { API_AUDIO_LIST, API_HOME_INDEX } from '../api/paths'
 
 const filters = reactive({
   databaseServer: '',
@@ -308,7 +307,7 @@ import { registerRequest } from '../utils/pageLoad'
 const fetchIndexHome = async () => {
   const task = (async () => {
     try {
-      const res = await fetch(API_HOME_INDEX, { credentials: 'include' })
+      const res = await fetch(API_HOME_INDEX(), { credentials: 'include' })
       if (!res.ok) return
       const json = await res.json()
       const mdb = json.main_db || []
@@ -446,7 +445,7 @@ const fetchData = async () => {
     if (cf) params.set('custom_field', cf)
 
     // include credentials so session cookie (from backend at localhost:8000) is sent
-    const res = await fetch(`${API_AUDIO_LIST}?${params.toString()}`, { credentials: 'include' })
+    const res = await fetch(`${API_AUDIO_LIST()}?${params.toString()}`, { credentials: 'include' })
     if (!res.ok) throw new Error('Failed to fetch')
     const json = await res.json()
     records.value = json.data || []

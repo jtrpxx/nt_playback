@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import { loadRuntimeConfig } from './api/runtimeConfig'
 
 //JS
 import './assets/js/flatpickr.min.js'
@@ -21,9 +22,12 @@ import './assets/css/datatable.css'
 
 
 
-const app = createApp(App)
-app.use(createPinia())
-app.use(router)
-app.directive('flatpickr', flatpickrDirective)
-app.directive('has-value', hasValueDirective)
-app.mount('#app')
+;(async () => {
+	await loadRuntimeConfig()
+	const app = createApp(App)
+	app.use(createPinia())
+	app.use(router)
+	app.directive('flatpickr', flatpickrDirective)
+	app.directive('has-value', hasValueDirective)
+	app.mount('#app')
+})()

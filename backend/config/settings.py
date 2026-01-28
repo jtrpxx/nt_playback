@@ -63,8 +63,7 @@ INSTALLED_APPS = [
     'apps.home',
     'apps.configuration',
     'apps.user_management',
-    
-    
+    'apps.log_user',
 ]
 
 MIDDLEWARE = [
@@ -109,7 +108,7 @@ DATABASES = {
         'NAME': os.environ.get('POSTGRES_DB', 'app_playback'),
         'USER': os.environ.get('POSTGRES_USER', 'postgres'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD', '123456'),
-        'HOST': os.environ.get('POSTGRES_HOST', '127.0.0.1'),
+        'HOST': os.environ.get('POSTGRES_HOST', '192.168.1.90'),
         'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
 }

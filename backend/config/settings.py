@@ -30,8 +30,16 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-h6k8sm!93!(=$fmii-x3j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*', '127.0.0.1']
-ESSION_COOKIE_DOMAIN = None  # ให้ Django ใช้ host จาก request
+ALLOWED_HOSTS = ['*', '127.0.0.1', '172.27.96.1']
+# CORS Configuration
+# อนุญาตให้ Frontend (เช่น localhost:8001) ยิง API เข้ามาได้
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8001",
+    "http://127.0.0.1:8001",
+    "http://localhost:3000",
+    "http://172.27.96.1:8001",
+]
+SESSION_COOKIE_DOMAIN = None  # ให้ Django ใช้ host จาก request
 
 
 # Application definition
@@ -150,13 +158,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS Configuration
-# อนุญาตให้ Frontend (เช่น localhost:8001) ยิง API เข้ามาได้
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8001",
-    "http://127.0.0.1:8001",
-    "http://localhost:3000",
-]
+
 
 # ถ้าต้องการส่ง Cookie/Token ข้าม Domain
 CORS_ALLOW_CREDENTIALS = True

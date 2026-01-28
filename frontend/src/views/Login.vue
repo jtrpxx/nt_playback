@@ -11,7 +11,7 @@
             type="text" 
             id="username" 
             v-model="form.username" 
-            placeholder="กรอกชื่อผู้ใช้งาน"
+            placeholder="Username"
             required
           />
         </div>
@@ -24,7 +24,7 @@
               :type="showPassword ? 'text' : 'password'" 
               id="password" 
               v-model="form.password" 
-              placeholder="กรอกรหัสผ่าน"
+              placeholder="Password"
               required
             />
             <button type="button" class="toggle-password" @click="showPassword = !showPassword">

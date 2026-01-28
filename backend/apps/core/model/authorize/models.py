@@ -23,14 +23,14 @@ class UserAuth(models.Model):
     maindatabase = models.ForeignKey(MainDatabase, on_delete=models.CASCADE)
     allow = models.BooleanField()
 
-    # user_permission = models.ForeignKey(
-    #     'configuration.UserPermission',
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     db_column='user_permisson_id',  
-    #     verbose_name='User Permission'
-    # )
+    user_permission = models.ForeignKey(
+        'configuration.UserPermission',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='user_permisson_id',  
+        verbose_name='User Permission'
+    )
 
     class Meta:
         db_table = 'tb_userauth'

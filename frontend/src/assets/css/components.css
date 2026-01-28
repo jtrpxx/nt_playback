@@ -1290,7 +1290,7 @@ hr {
 .group-card-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 4px;
     flex-shrink: 0;
 }
 
@@ -1374,4 +1374,45 @@ hr {
 .permission-item:has(input:checked):has(input:disabled) .perm-checkbox {
     background: #c5c5c5 !important;
     border-color: transparent;
+}
+
+/* Role Badge */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.role-badge.administrator {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.role-badge.other {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+}
+
+.role-badge.admin {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.role-badge.auditor {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.role-badge.operator {
+  background: rgba(65, 111, 214, 0.1);
+  color: #416fd6;
+}
+
+.role-badge.custom {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
 }

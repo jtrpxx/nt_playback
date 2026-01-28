@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'apps.core.model.licenses',
     'apps.home',
     'apps.configuration',
+    'apps.user_management',
+    
     
 ]
 

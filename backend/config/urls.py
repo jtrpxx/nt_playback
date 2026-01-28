@@ -29,5 +29,7 @@ urlpatterns = [
     path('login/', include('apps.login.urls')),
     path('', include('apps.home.urls')),
     path('', include('apps.configuration.urls')),
+    path('', include('apps.user_management.urls')),
+    
     
 ]

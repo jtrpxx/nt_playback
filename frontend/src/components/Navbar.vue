@@ -45,7 +45,7 @@
           </div>
           <div class="menu-user-details">
             <div class="menu-user-name">{{ displayName }}</div>
-            <div class="menu-user-role">User</div>
+            <div class="menu-user-role">Administrator</div>
           </div>
         </div>
         <label class="switch">

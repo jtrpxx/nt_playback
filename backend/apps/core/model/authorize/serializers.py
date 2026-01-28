@@ -3,20 +3,48 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import MainDatabase,UserAuth,UserLog,SetAudio,Department,UserProfile,UserGroup,UserTeam
 
+class MainDatabaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MainDatabase
+        fields = '__all__'
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email']
+        
+class UserGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserGroup
+        fields = '__all__'
+
+
+class UserTeamSerializer(serializers.ModelSerializer):
+    user_group = UserGroupSerializer(read_only=True)
+    
+    class Meta:
+        model = UserTeam
+        fields = '__all__'
 
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = ['id', 'name_th', 'name_en']
 
-class MainDatabaseSerializer(serializers.ModelSerializer):
+        
+class UserProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    department = DepartmentSerializer(read_only=True)
+    team = UserTeamSerializer(read_only=True)
+    is_active = serializers.BooleanField(
+        source='user.is_active',
+        read_only=True
+    )
+
     class Meta:
-        model = MainDatabase
-        fields = '__all__'
+        model = UserProfile
+        fields = ['id', 'user', 'department','team', 'user_code', 'phone', 'create_at', 'update_at', 'is_active']
+
 
 class UserAuthSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -41,21 +69,7 @@ class SetAudioSerializer(serializers.ModelSerializer):
         model = SetAudio
         fields = ['id', 'user', 'audio_path', 'create_at', 'update_at']
 
-class UserProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    department = DepartmentSerializer(read_only=True)
 
-    class Meta:
-        model = UserProfile
-        fields = ['id', 'user', 'department', 'user_code', 'phone', 'create_at', 'update_at']
 
-class UserGroupSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserGroup
-        fields = '__all__'
 
-class UserTeamSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserTeam
-        fields = '__all__'
 

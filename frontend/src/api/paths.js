@@ -23,3 +23,6 @@ export const API_TEAM_INDEX = () => `${getApiBase()}/api/team/index/`
 export const API_GET_TEAM_BY_GROUP = (groupId) => `${getApiBase()}/api/group/get/team-by-group/${groupId}/`
 export const API_GET_DATABASE = () => `${getApiBase()}/api/get/database/`
 
+// หน้า  User Management
+export const API_USER_MANAGEMENT_INDEX = () => `${getApiBase()}/api/user-management/index/`
+export const API_USER_MANAGEMENT_CHANGE_STATUS = (id) => `${getApiBase()}/api/user-management/change-status/${id}/`

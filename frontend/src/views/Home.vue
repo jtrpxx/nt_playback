@@ -159,95 +159,21 @@
                 </div>
               </div>
 
-              <div class="table-container">
-                <div class="table-responsive table-scroll">
-                  <table class="table table-sm table-striped">
-                    <thead class="table-primary">
-                      <tr>
-                        <th>#</th>
-                        <th>Database Server</th>
-                        <th>START DATE & TIME</th>
-                        <th>END DATE & TIME</th>
-                        <th>Duration</th>
-                        <th>File Name</th>
-                        <th>Call Direction</th>
-                        <th>Customer Number</th>
-                        <th>Extension</th>
-                        <th>Agent</th>
-                        <th>Full Name</th>
-                        <th>Custom Field</th>
-
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(r, idx) in paginatedRecords" :key="r.no">
-                        <td>{{ startIndex + idx + 1 }}</td>
-                        <td>{{ r.main_db }}</td>
-                        <td>{{ r.start_datetime }}</td>
-                        <td>{{ r.end_datetime }}</td>
-                        <td>{{ r.duration }}</td>
-                        <td>
-                          <div class="file-name-cell" :class="{ 'is-active': activeTooltip === idx }" @mouseenter="activeTooltip = idx"
-                            @mouseleave="activeTooltip = null">
-                            <span class="truncated">{{ truncate(r.file_name, 20) }}</span>
-                            <div v-if="activeTooltip === idx" :class="['tooltip','bs-tooltip-top','show', { 'tooltip-down': activeTooltip === idx && idx === 0 }]" role="tooltip"
-                              @mousedown.stop @mouseup.stop @click.stop>
-                              <div class="tooltip-inner d-flex align-items-center">
-                                <span class="file-full me-2">{{ r.file_name }}</span>
-                                <button class="btn btn-sm btn-outline-secondary btn-copy" @click="copyFileName(r.file_name, idx)" :aria-label="copiedIndex===idx ? 'Copied' : 'Copy'">
-                                  <i :class="copiedIndex === idx ? 'fa-solid fa-check' : 'fa-regular fa-copy'"></i>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td><span :class="['badge', callDirectionClass(r.call_direction)]">{{ r.call_direction }}</span>
-                        </td>
-                        <td>{{ r.customer_number }}</td>
-                        <td>{{ r.extension }}</td>
-                        <td>{{ r.agent }}</td>
-                        <td>{{ r.full_name }}</td>
-                        <td>{{ r.custom_field_1 }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <div v-if="loading" class="table-overlay">
-                  <div class="overlay-box">Processing...</div>
-                </div>
-              </div>
-
-              <div class="d-flex justify-content-between align-items-center mt-2 pagination-div">
-                <div>
-                  <div class="show-entries">
-                    Show
-                    <div class="custom-select-wrap" ref="perWrap" :class="{ up: perDropdownUp, open: perDropdownOpen }">
-                      <button type="button" class="custom-select-toggle" @click="togglePerDropdown">
-                        <span class="selected">{{ perPage }}</span>
-                        <i class="fa-solid fa-caret-down "></i>
-                      </button>
-                      <ul v-if="perDropdownOpen" class="custom-select-menu">
-                        <li v-for="opt in perPageOptions" :key="opt" :class="{ active: opt === perPage }"
-                          @click="setPerPage(opt)">{{ opt }}</li>
-                      </ul>
-                    </div>
-                    entries per page, Showing {{ startItem }} to {{ endItem }} of {{ totalItems }} entries
-                  </div>
-                </div>
-                <nav>
-                  <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item" :class="{ disabled: currentPage === 1 }"><button class="page-link"
-                        @click="changePage(currentPage - 1)">Previous</button></li>
-                    <li class="page-item" v-for="p in pagesToShow" :key="String(p)"
-                      :class="[{ active: p === currentPage }, { disabled: p === '...' }]">
-                      <button v-if="p !== '...'" class="page-link" @click="changePage(p)">{{ p }}</button>
-                      <span v-else class="page-link">…</span>
-                    </li>
-                    <li class="page-item" :class="{ disabled: currentPage === totalPages }"><button class="page-link"
-                        @click="changePage(currentPage + 1)">Next</button></li>
-                  </ul>
-                </nav>
-              </div>
+              <TableTemplate
+                    :columns="columns"
+                    :rows="paginatedRecords"
+                    :start-index="startIndex"
+                    :loading="loading"
+                    call-direction-key="call_direction"
+                    :per-page="perPage"
+                    :per-page-options="perPageOptions"
+                    :current-page="currentPage"
+                    :total-items="totalItems"
+                    @edit="onRowEdit"
+                    @delete="onRowDelete"
+                    @page-change="changePage"
+                    @per-change="setPerPage"
+                  />
 
               <!-- Content Audio Records-->
             </div>
@@ -265,7 +191,10 @@ import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import CustomSelect from '../components/CustomSelect.vue'
 import ModalHome from '../components/ModalHome.vue'
+import TableTemplate from '../components/TableTemplate.vue'
 import { reactive, ref, computed, watch, onMounted } from 'vue'
+import { registerRequest } from '../utils/pageLoad'
+
 import { onBeforeUnmount } from 'vue'
 import { nextTick } from 'vue'
 import { API_AUDIO_LIST, API_HOME_INDEX } from '../api/paths'
@@ -302,7 +231,6 @@ const mainDbOptions = ref([])
 const favoriteSearchAll = ref([])
 const agentOptions = ref([{ label: 'All', value: 'all' }])
 
-import { registerRequest } from '../utils/pageLoad'
 
 const fetchIndexHome = async () => {
   const task = (async () => {
@@ -339,23 +267,6 @@ const fetchIndexHome = async () => {
   await task
 }
 
-const togglePerDropdown = () => {
-  perDropdownOpen.value = !perDropdownOpen.value
-  if (perDropdownOpen.value) {
-    // decide whether to open upwards based on available space
-    const wrap = perWrap.value
-    if (wrap) {
-      const rect = wrap.getBoundingClientRect()
-      const spaceBelow = window.innerHeight - rect.bottom
-      // estimate menu height (items * approx item height + padding)
-      const estimatedMenuHeight = Math.min(300, perPageOptions.length * 40 + 12)
-      perDropdownUp.value = spaceBelow < estimatedMenuHeight
-    } else {
-      perDropdownUp.value = false
-    }
-  }
-}
-
 const setPerPage = (opt) => {
   perPage.value = opt
   perDropdownOpen.value = false
@@ -383,8 +294,6 @@ onBeforeUnmount(() => {
 const records = ref([])
 const totalItems = ref(0)
 const loading = ref(false)
-const activeTooltip = ref(null)
-const copiedIndex = ref(null)
 
 const fetchData = async () => {
   loading.value = true
@@ -395,8 +304,7 @@ const fetchData = async () => {
     params.set('start', start)
     params.set('length', perPage.value)
     params.set('search[value]', searchQuery.value || '')
-    // include filters
-    // databaseServer may be a single value or an array (multi-select)
+
     if (Array.isArray(filters.databaseServer)) {
       const vals = filters.databaseServer.filter(v => String(v).toLowerCase() !== 'all')
       if (vals.length) params.set('database_name', vals.join(','))
@@ -404,7 +312,6 @@ const fetchData = async () => {
       params.set('database_name', filters.databaseServer)
     }
 
-    // callDirection may be multi-select (checkbox-only)
     if (Array.isArray(filters.callDirection)) {
       const vals = filters.callDirection.filter(v => String(v).toLowerCase() !== 'all')
       if (vals.length) params.set('call_direction', vals.join(','))
@@ -412,7 +319,6 @@ const fetchData = async () => {
       params.set('call_direction', filters.callDirection)
     }
 
-    // agent may be multi-select
     if (Array.isArray(filters.agent)) {
       const vals = filters.agent.filter(v => String(v).toLowerCase() !== 'all')
       if (vals.length) params.set('agent_id', vals.join(','))
@@ -422,7 +328,6 @@ const fetchData = async () => {
     if (filters.from) params.set('start_date', filters.from)
     if (filters.to) params.set('end_date', filters.to)
 
-    // helper to normalize multi-value inputs (comma separated or arrays)
     function norm(v){
       if (Array.isArray(v)) return v.join(',')
       if (v == null) return ''
@@ -444,12 +349,10 @@ const fetchData = async () => {
     const cf = norm(filters.customField)
     if (cf) params.set('custom_field', cf)
 
-    // include credentials so session cookie (from backend at localhost:8000) is sent
     const res = await fetch(`${API_AUDIO_LIST()}?${params.toString()}`, { credentials: 'include' })
     if (!res.ok) throw new Error('Failed to fetch')
     const json = await res.json()
     records.value = json.data || []
-    // prefer recordsFiltered, fallback to recordsTotal
     totalItems.value = json.recordsFiltered ?? json.recordsTotal ?? records.value.length
   } catch (e) {
     console.error('fetchData error', e)
@@ -544,26 +447,7 @@ function truncate(s, max) {
   return str.slice(0, max - 3) + '...'
 }
 
-async function copyFileName(text, idx) {
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text)
-    } else {
-      const ta = document.createElement('textarea')
-      ta.value = text
-      ta.style.position = 'fixed'
-      ta.style.left = '-9999px'
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-    }
-    copiedIndex.value = idx
-    setTimeout(() => { if (copiedIndex.value === idx) copiedIndex.value = null }, 1400)
-  } catch (e) {
-    console.error('copy failed', e)
-  }
-}
+
 
 onMounted(() => {
   // moved fetchData to combined onMounted above to ensure dropdown listener setup
@@ -581,86 +465,22 @@ const callDirectionClass = (dir) => {
   return 'bg-secondary'
 }
 
+const columns = [
+  { key: 'index', label: '#', isIndex: true },
+  { key: 'main_db', label: 'Database Server' },
+  { key: 'start_datetime', label: 'START DATE & TIME' },
+  { key: 'end_datetime', label: 'END DATE & TIME' },
+  { key: 'duration', label: 'Duration' },
+  { key: 'file_name', label: 'File Name', tooltip: true },
+  { key: 'call_direction', label: 'Call Direction' },
+  { key: 'customer_number', label: 'Customer Number' },
+  { key: 'extension', label: 'Extension' },
+  { key: 'agent', label: 'Agent' },
+  { key: 'full_name', label: 'Full Name' },
+  { key: 'custom_field_1', label: 'Custom Field' }
+]
+
+const onRowEdit = (row) => { console.log('edit row', row) }
+const onRowDelete = (row) => { console.log('delete row', row) }
+
 </script>
-
-<style scoped>
-.file-name-cell {
-  position: relative;
-  display: inline-block;
-  font-size: 10px;
-  cursor: pointer;
-}
-
-.truncated {
-  display: inline-block;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-.file-name-cell .tooltip {
-  font-size: 10px;
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translate(-50%, -6px);
-  z-index: 1050;
-  display: inline-block;
-  border-radius: 6px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-}
-
-.file-name-cell .tooltip .tooltip-inner {
-  display: inline-block;
-  max-width: 560px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.85);
-  padding: 6px 8px;
-  border-radius: 6px;
-}
-
-.file-name-cell .tooltip .file-full {
-  display: inline-block;
-  max-width: 460px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #fff;
-  user-select: text
-}
-
-.file-name-cell .btn-copy {
-  font-size: 10px;
-  padding: 2px 6px;
-  margin-left: 8px
-}
-.file-name-cell .tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  border-width: 6px;
-  border-style: solid;
-  border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
-}
-.file-name-cell .tooltip.tooltip-down {
-  bottom: auto;
-  border-width: 8px;
-  top: 100%;
-  transform: translate(-50%, 5px);
-}
-.file-name-cell .tooltip.tooltip-down::after {
-  top: -11.5px;
-  border-color: transparent transparent rgba(0, 0, 0, 0.85) ;
-}
-.file-name-cell.is-active .truncated {
-  background: rgba(0,0,0,0.04);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
-  border-radius: 3px;
-}
-</style>

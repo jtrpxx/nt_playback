@@ -149,10 +149,10 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Configuration
-# อนุญาตให้ Frontend (เช่น localhost:5173) ยิง API เข้ามาได้
+# อนุญาตให้ Frontend (เช่น localhost:8001) ยิง API เข้ามาได้
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    "http://localhost:8001",
+    "http://127.0.0.1:8001",
     "http://localhost:3000",
 ]
 

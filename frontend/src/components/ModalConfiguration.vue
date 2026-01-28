@@ -470,30 +470,4 @@ const groupedPermissions = computed(() => {
     overflow: auto
 }
 
-/* checked state (non-disabled only) */
-.permission-item:has(input:checked):not(:has(input:disabled)) {
-    background: rgba(65, 111, 214, 0.1);
-    border-color: #416fd6;
-}
-
-.permission-item:has(input:checked):not(:has(input:disabled)) .perm-checkbox {
-    background: #416fd6 !important;
-    border-color: #416fd6;
-}
-
-.permission-item:has(input:checked):not(:has(input:disabled)) .perm-checkbox::after {
-    content: "\2713";
-    color: #fff;
-}
-
-.permission-item:has(input:checked):not(:has(input:disabled)) .perm-label {
-    color: #777f8c;
-}
-
-.permission-item:has(input:checked):has(input:disabled) .perm-checkbox {
-    background: #c5c5c5 !important;
-    border-color: transparent;
-}
-
-
 </style>

@@ -31,47 +31,52 @@
                             </div>
                             <!-- Content Group here. -->
                             <div class="custom-roles-list" id="customRolesList">
-                                <div v-if="loadingGroups" class="empty-state"
-                                    style="display:flex;align-items:center;justify-content:center;padding:24px;">
-                                    <div>Loading...</div>
-                                </div>
-
+                                <template v-if="loading">
+                                    <div class="container-overlay" style="height: 487px;">
+                                        <div class="overlay-box">Loading...</div>
+                                    </div>
+                                </template>
                                 <template v-else>
-                                    <div v-if="groups.length" class="group-list">
-                                        <div v-for="group in filteredGroups" :key="group.id" :class="['group-card-item', { active: selectedGroupId === group.id }]"
-                                            @click.stop="selectGroup(group)">
-                                            <div class="group-card-main">
-                                                <div class="group-card-header">
-                                                    <span class="group-card-title">{{ group.group_name }}</span>
-                                                    <span class="group-card-group-badge">
-                                                        <template
-                                                            v-if="groupTeamsMap[group.id] && groupTeamsMap[group.id].length">
-                                                            <span v-for="(t, idx) in groupTeamsMap[group.id]"
-                                                                :key="t.id">
-                                                                {{ t.name }}<span
-                                                                    v-if="idx < groupTeamsMap[group.id].length - 1">,
+                                    <div v-if="groups.length">
+                                        <div v-if="filteredGroups.length" class="group-list">
+                                            <div v-for="group in filteredGroups" :key="group.id" :class="['group-card-item', { active: selectedGroupId === group.id }]"
+                                                @click.stop="selectGroup(group)">
+                                                <div class="group-card-main">
+                                                    <div class="group-card-header">
+                                                        <span class="group-card-title">{{ group.group_name }}</span>
+                                                        <span class="group-card-group-badge">
+                                                            <template
+                                                                v-if="groupTeamsMap[group.id] && groupTeamsMap[group.id].length">
+                                                                <span v-for="(t, idx) in groupTeamsMap[group.id]"
+                                                                    :key="t.id">
+                                                                    {{ t.name }}<span
+                                                                        v-if="idx < groupTeamsMap[group.id].length - 1">,
+                                                                    </span>
                                                                 </span>
-                                                            </span>
-                                                        </template>
-                                                        <template v-else>
-                                                            Unassigned
-                                                        </template>
-                                                    </span>
+                                                            </template>
+                                                            <template v-else>
+                                                                Unassigned
+                                                            </template>
+                                                        </span>
+                                                    </div>
+                                                    <div class="group-card-desc">
+                                                        {{ group.description || 'No description provided for this group.' }}
+                                                    </div>
                                                 </div>
-                                                <div class="group-card-desc">
-                                                    {{ group.description || 'No description provided for this group.' }}
-                                                </div>
-                                            </div>
 
-                                            <div class="group-card-actions">
-                                                <button class="group-edit-btn" @click.stop="openEditGroup(group.id)">
-                                                    Click to edit
-                                                </button>
-                                                <button type="button" class="group-delete-btn"
-                                                    @click.stop="deleteGroup(group.id)">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                <div class="group-card-actions">
+                                                    <button class="group-edit-btn" @click.stop="openEditGroup(group.id)">
+                                                        Click to edit
+                                                    </button>
+                                                    <button type="button" class="group-delete-btn" @click.stop="deleteGroup(group.id)">
+                                                        <i class="fas fa-trash" style="font-size: 12px;"></i>
+                                                    </button>
+                                                </div>
                                             </div>
+                                        </div>
+                                        <div v-else class="empty-state">
+                                            <i class="fa-solid fa-dove"></i>
+                                            <p>This group not found.</p>
                                         </div>
                                     </div>
 
@@ -119,10 +124,11 @@
                                 </div>
 
                                 <template v-else>
-                                    <div v-if="loadingGroups" class="empty-state" style="display:flex;align-items:center;justify-content:center;padding:24px;">
-                                        <div>Loading...</div>
-                                    </div>
-
+                                    <template v-if="loading">
+                                        <div class="container-overlay" style="height: 487px;">
+                                            <div class="overlay-box">Loading...</div>
+                                        </div>
+                                    </template>
                                     <template v-else>
                                         <div v-if="filteredTeams.length" class="group-list">
                                             <div v-for="team in filteredTeams" :key="team.id" class="group-card-item">
@@ -138,15 +144,21 @@
                                                         Click to edit
                                                     </button>
                                                     <button type="button" class="group-delete-btn" @click.stop="deleteTeam(team.id)">
-                                                        <i class="fas fa-trash"></i>
+                                                        <i class="fas fa-trash" style="font-size: 12px;"></i>
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div v-else class="empty-state">
-                                            <i class="fas fa-user-plus"></i>
-                                            <p>No teams for this group.</p>
+                                        <div v-else>
+                                            <div v-if="groupTeamsMap[selectedGroupId] && groupTeamsMap[selectedGroupId].length" class="empty-state">
+                                                <i class="fa-solid fa-dove"></i>
+                                                <p>This team not found.</p>
+                                            </div>
+                                            <div v-else class="empty-state">
+                                                <i class="fas fa-user-plus"></i>
+                                                <p>No teams for this group.</p>
+                                            </div>
                                         </div>
                                     </template>
                                 </template>
@@ -160,6 +172,7 @@
     <ModalGroup v-model="showGroupModal" :mode="selectedModalMode" :group="editGroup" :groups="groups" @saved="onGroupSaved" />
 
 </template>
+
 <script setup>
 import MainLayout from '../layouts/MainLayout.vue';
 import Breadcrumbs from '../components/Breadcrumbs.vue'
@@ -175,7 +188,7 @@ const selectedGroupId = ref(null)
 const groups = ref([])
 const teams = ref([])
 const groupTeamsMap = ref({})
-const loadingGroups = ref(true)
+const loading = ref(false)
 
 const showGroupModal = ref(false)
 const selectedModalMode = ref('create')
@@ -199,7 +212,7 @@ const buildGroupTeamsMap = (groupList, teamList) => {
 
 const fetchIndexGroup = async () => {
     const task = (async () => {
-        loadingGroups.value = true
+        loading.value = true
         try {
             const res = await fetch(API_GROUP_INDEX(), { credentials: 'include' })
             if (!res.ok) {
@@ -213,7 +226,7 @@ const fetchIndexGroup = async () => {
         } catch (error) {
             console.error('Error fetching groups:', error)
         } finally {
-            loadingGroups.value = false
+            loading.value = false
         }
     })()
     registerRequest(task)
@@ -262,34 +275,10 @@ function selectGroup(group) {
     selectedGroupId.value = group.id
     teamSearchQuery.value = ''
 
-    // If we already have teams for this group from initial load, use them
     if (Array.isArray(groupTeamsMap.value[group.id]) && groupTeamsMap.value[group.id].length) {
         return
     }
 
-    // Otherwise fetch per-group teams from backend
-    const task = (async () => {
-        loadingTeamsByGroup.value = true
-        try {
-            const res = await fetch(API_GET_TEAM_BY_GROUP(group.id), { credentials: 'include' })
-            if (!res.ok) {
-                console.error('Failed to fetch teams by group', res.status)
-                groupTeamsMap.value[group.id] = []
-                return
-            }
-            const json = await res.json()
-            if (json && json.status === 'success' && Array.isArray(json.teams)) {
-                groupTeamsMap.value = { ...groupTeamsMap.value, [group.id]: json.teams }
-            } else {
-                groupTeamsMap.value = { ...groupTeamsMap.value, [group.id]: [] }
-            }
-        } catch (err) {
-            console.error('Error fetching teams by group', err)
-            groupTeamsMap.value = { ...groupTeamsMap.value, [group.id]: [] }
-        } finally {
-            loadingTeamsByGroup.value = false
-        }
-    })()
     registerRequest(task)
 }
 
@@ -323,6 +312,18 @@ function openCreateTeam() {
 }
 
 function openEditTeam(id) {
+    const t = teams.value.find(x => x.id == id)
+    if (t) {
+        editGroup.value = {
+            id: t.id,
+            name: t.name,
+            maindatabase: t.maindatabase,
+            user_group_id: t.user_group_id || t.user_group || null,
+            group_name: groups.value.find(g => g.id == (t.user_group_id || t.user_group))?.group_name || ''
+        }
+    } else {
+        editGroup.value = { id }
+    }
     selectedModalMode.value = 'editTeam'
     showGroupModal.value = true
 }

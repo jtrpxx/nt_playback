@@ -142,12 +142,12 @@
           </div>
         </li>
 
-        <!-- <li class="menu-item">
-          <router-link to="/set-audio-launcher" class="menu-link">
+        <li class="menu-item">
+          <router-link to="/settings" class="menu-link">
             <i class="fa-solid fa-gear"></i>
-            <span data-translate="audio_launcher">Settings</span>
+            <span>Settings</span>
           </router-link>
-        </li> -->
+        </li>
       </ul>
 
       <div class="menu-divider"></div>

@@ -121,8 +121,6 @@ let searchTimeout = null
 onMounted(() => {
   registerRequest(fetchData())
   document.addEventListener('click', onDocClick)
-  // fetch users for the Name select
-  registerRequest(fetchLogUsers())
 })
 
 const type = computed(() => {
@@ -131,31 +129,6 @@ const type = computed(() => {
   if (p === '/logs/audit') return 'audit'
   return 'user'
 })
-
-async function fetchLogUsers() {
-  try {
-    const params = new URLSearchParams()
-    params.set('draw', 1)
-    params.set('start', 0)
-    params.set('length', 1000)
-    const res = await fetch(`${API_GET_LOG_USER(type.value)}?${params.toString()}`, { credentials: 'include' })
-    if (!res.ok) return
-    const json = await res.json()
-    const data = json.data || []
-    const opts = [{ label: 'All Users', value: '' }]
-    for (const u of data) {
-      const uname = u.username || (u.user && u.user.username) || ''
-      const fname = (u.first_name || u.user?.first_name || '').trim()
-      const lname = (u.last_name || u.user?.last_name || '').trim()
-      const label = uname ? `${uname}${(fname || lname) ? ` - ${fname} ${lname}` : ''}` : (fname || lname || 'Unknown')
-      const value = uname
-      opts.push({ label, value })
-    }
-    userOptions.value = opts
-  } catch (err) {
-    console.error('fetchLogUsers error', err)
-  }
-}
 
 const route = useRoute()
 const cardTitle = computed(() => {
@@ -242,15 +215,15 @@ const onRowDelete = (row) => { console.log('delete row', row) }
 const expanded = ref(new Set())
 
 const columns = [
-  { key: 'index', label: '#', isIndex: true },
-  { key: 'username', label: 'Username' },
-  { key: 'full_name', label: 'Full Name' },
-  { key: 'action', label: 'Action' },
-  { key: 'status', label: 'Status' },
-  { key: 'description', label: 'Description' },
-  { key: 'ip_address', label: 'IP Address' },
-  { key: 'timestamp', label: 'Timestamp' },
-  { key: 'client_type', label: 'Client type' }
+  { key: 'index', label: '#', isIndex: true,width: '5%' },
+  { key: 'username', label: 'Username',width: '15%'  },
+  { key: 'full_name', label: 'Full Name' ,width: '15%' },
+  { key: 'action', label: 'Action',width: '5%'  },
+  { key: 'status', label: 'Status',width: '5%' },
+  { key: 'detail', label: 'Description' , tooltip: true,width: '20%',},
+  { key: 'ip_address', label: 'IP Address',width: '10%'},
+  { key: 'timestamp', label: 'Timestamp',width: '10%', },
+  { key: 'client_type', label: 'Client type',width: '15%' }
 ]
 
 const records = ref([])

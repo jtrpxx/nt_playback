@@ -34,6 +34,11 @@
             </div>
           </template>
         </li>
+        <li v-if="filteredOptions.length === 0" class="option option-empty" role="option">
+          <div class="option-row">
+            <span class="opt-label no-options">No options found</span>
+          </div>
+        </li>
       </div>
 
     </ul>
@@ -45,7 +50,9 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 const props = defineProps({
   modelValue: { type: [String, Number, null], default: '' },
   options: { type: Array, required: true },
-  placeholder: { type: String, default: '' }
+  placeholder: { type: String, default: '' },
+  alwaysHasValue: { type: Boolean, default: false },
+  alwaysUp: { type: Boolean, default: false }
 })
 const emit = defineEmits(['update:modelValue'])
 
@@ -120,9 +127,11 @@ const hasValue = computed(() => {
   return props.modelValue !== '' && props.modelValue !== null && props.modelValue !== undefined
 })
 
+
 function toggle() { open.value = !open.value }
 function openList() { open.value = true }
 function computeUp() {
+  if (props.alwaysUp) { up.value = true; return }
   if (!root.value) return
   const rect = root.value.getBoundingClientRect()
 

@@ -14,7 +14,7 @@
             <div class="modal-body">
                 <div class="form-group-modal">
                     <div class="permissions-section-title">Permissions</div>
-                    <div class="permissions-grid" id="baseRolePermissionsGrid">
+                    <div class="permissions-grid-3" id="baseRolePermissionsGrid">
                         <template v-if="loading">
                             <div class="container-overlay" style="height: 487px;">
                                 <div class="overlay-box">Loading...</div>
@@ -72,7 +72,7 @@
                         placeholder="Enter role name..." maxlength="25">
                 </div>
                 <div class="form-group-modal">                  
-                    <div class="permissions-grid" id="createRolePermissionsGrid">
+                    <div class="permissions-grid-3" id="createRolePermissionsGrid">
                         <template v-if="loading">
                             <div class="container-overlay" style="height: 487px;">
                                 <div class="overlay-box">Loading...</div>
@@ -142,7 +142,7 @@
                 </div>
                 <div class="form-group-modal">
                     <div class="permissions-section-title">Select Permissions</div>
-                    <div class="permissions-grid" id="editRolePermissionsGrid">
+                    <div class="permissions-grid-3" id="editRolePermissionsGrid">
                         <template v-if="loading">
                             <div class="container-overlay" style="height: 487px;">
                                 <div class="overlay-box">Loading...</div>
@@ -402,7 +402,7 @@ const groupedPermissions = computed(() => {
     font-weight: 700
 }
 
-.permissions-grid {
+.permissions-grid-3 {
     display: block;
     position: relative;
     min-height: 140px

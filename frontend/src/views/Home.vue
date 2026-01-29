@@ -1,5 +1,4 @@
 <template>
-
   <MainLayout>
     <div class="main-wrapper container-fluid-home py-3">
       <Breadcrumbs :items="[{ text: 'Home', to: '/' }]" />

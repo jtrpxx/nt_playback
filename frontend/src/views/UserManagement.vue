@@ -57,39 +57,27 @@
                             </template>
 
                             <template #cell-group_team="{ row }">
-                                <div>
-                                    <template v-if="getGroupTeamList(row).length === 0">
-                                        -
-                                    </template>
-                                    <template v-else>
-                                        <button class="collapsible-toggle" @click="toggleExpand(row.id, 'group')">
-                                            <span v-if="!isExpanded(row.id, 'group')"><i class="fa-solid fa-caret-right"></i></span>
-                                            <span v-else><i class="fa-solid fa-caret-down"></i></span>
-                                            {{ getGroupTeamSummary(row) }}
-                                        </button>
-                                        <ul v-if="isExpanded(row.id, 'group')" class="collapsed-list">
-                                            <li v-for="(g, gi) in getGroupTeamList(row)" :key="gi">- {{ g }}</li>
-                                        </ul>
-                                    </template>
-                                </div>
+                                <template v-if="getGroupTeamList(row).length === 0">
+                                    -
+                                </template>
+                                <template v-else>
+                                    <span class="group-summary" @mouseenter="showGroupTooltip($event, row)"
+                                        @mouseleave="hideGroupTooltip">
+                                        {{ getGroupTeamSummary(row) }}
+                                    </span>
+                                </template>
                             </template>
 
                             <template #cell-database_servers="{ row }">
-                                <div>
-                                    <template v-if="getDbList(row).length <= 1">
-                                        {{ getDbList(row)[0] || '-' }}
-                                    </template>
-                                    <template v-else>
-                                        <button class="collapsible-toggle" @click="toggleExpand(row.id, 'db')">
-                                            <span v-if="!isExpanded(row.id, 'db')"><i class="fa-solid fa-caret-right"></i></span>
-                                            <span v-else><i class="fa-solid fa-caret-down"></i></span>
-                                            DB ({{ getDbList(row).length }})
-                                        </button>
-                                        <ul v-if="isExpanded(row.id, 'db')" class="collapsed-list">
-                                            <li v-for="(d, di) in getDbList(row)" :key="di">- {{ d }}</li>
-                                        </ul>
-                                    </template>
-                                </div>
+                                <template v-if="getDbList(row).length <= 1">
+                                    {{ getDbList(row)[0] || '-' }}
+                                </template>
+                                <template v-else>
+                                    <span class="group-summary" @mouseenter="showDbTooltip($event, row)"
+                                        @mouseleave="hideDbTooltip">
+                                        Database Server ({{ getDbList(row).length }})
+                                    </span>
+                                </template>
                             </template>
 
                             <template #cell-phone="{ row }">
@@ -106,6 +94,38 @@
 
                         </TableTemplate>
 
+                        <teleport to="body">
+                            <div v-if="groupTooltip.visible" ref="groupTooltipEl"
+                                class="file-name-tooltip tooltip bs-tooltip-top show"
+                                :class="groupTooltipPlacement === 'top' ? 'tooltip-top' : 'tooltip-bottom'"
+                                :style="groupTooltip.style"
+                                @mouseenter="cancelHideGroup" @mouseleave="hideGroupTooltip">
+                                <div class="tooltip-arrow"></div>
+                                <div class="tooltip-inner d-flex flex-column">
+                                    <div class="tooltip-after">Team</div>
+                                    <ul class="tooltip-after-list">
+                                        <li v-for="(g, gi) in groupTooltip.items" :key="gi" style="margin:2px 0">- {{ g
+                                            }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div v-if="dbTooltip.visible" ref="dbTooltipEl"
+                                class="file-name-tooltip tooltip bs-tooltip-top show"
+                                :class="dbTooltipPlacement === 'top' ? 'tooltip-top' : 'tooltip-bottom'"
+                                :style="dbTooltip.style"
+                                @mouseenter="cancelHideDb" @mouseleave="hideDbTooltip">
+                                <div class="tooltip-arrow"></div>
+                                <div class="tooltip-inner d-flex flex-column">
+                                    <div class="tooltip-after">Database Server</div>
+                                    <ul class="tooltip-after-list">
+                                        <li v-for="(d, di) in dbTooltip.items" :key="di" style="margin:2px 0">- {{ d }}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </teleport>
+
                     </div>
                 </div>
             </div>
@@ -114,7 +134,7 @@
 </template>
 
 <script setup>
-import {  ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 
 import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
@@ -179,6 +199,156 @@ function toggleExpand(rowId, key) {
 function isExpanded(rowId, key) {
     return expanded.value.has(`${rowId}-${key}`)
 }
+
+// tooltip state for group/team
+const groupTooltip = ref({ visible: false, items: [], style: null })
+const groupTooltipEl = ref(null)
+const groupTooltipPlacement = ref('top')
+let groupHideTimer = null
+const groupActiveEl = ref(null)
+
+// tooltip state for database servers
+const dbTooltip = ref({ visible: false, items: [], style: null })
+const dbTooltipEl = ref(null)
+const dbTooltipPlacement = ref('top')
+let dbHideTimer = null
+const dbActiveEl = ref(null)
+
+function showGroupTooltip(e, row) {
+    try {
+        const items = getGroupTeamList(row)
+        if (!items || items.length === 0) return
+        if (groupHideTimer) { clearTimeout(groupHideTimer); groupHideTimer = null }
+        // mark the trigger element so it can be styled while tooltip is visible
+        try {
+            const currentTarget = e.currentTarget
+            if (groupActiveEl.value && groupActiveEl.value !== currentTarget) {
+                groupActiveEl.value.classList.remove('is-active-tooltip')
+            }
+            groupActiveEl.value = currentTarget
+            if (groupActiveEl.value && groupActiveEl.value.classList) groupActiveEl.value.classList.add('is-active-tooltip')
+        } catch (err) { /* ignore if element unavailable */ }
+        groupTooltip.value.items = items
+        groupTooltip.value.visible = true
+        const rect = e.currentTarget.getBoundingClientRect()
+        nextTick(() => {
+            try {
+                const el = groupTooltipEl.value
+                if (!el) return
+                const tRect = el.getBoundingClientRect()
+                const spaceAbove = rect.top
+                const left = rect.left + rect.width / 2
+                let top
+                let transform
+                if (spaceAbove > tRect.height + 8) {
+                    top = rect.top - 8
+                    transform = 'translate(-50%, -100%)'
+                    groupTooltipPlacement.value = 'top'
+                } else {
+                    top = rect.bottom + 8
+                    transform = 'translate(-50%, 0)'
+                    groupTooltipPlacement.value = 'bottom'
+                }
+                groupTooltip.value.style = {
+                    position: 'fixed',
+                    left: `${left}px`,
+                    top: `${top}px`,
+                    transform,
+                    zIndex: 9999,
+                    maxWidth: '420px',
+                    whiteSpace: 'normal'
+                }
+            } catch (err) { console.error('group tooltip pos err', err) }
+        })
+    } catch (e) {
+        console.error('showGroupTooltip error', e)
+    }
+}
+
+function hideGroupTooltip() {
+    if (groupHideTimer) clearTimeout(groupHideTimer)
+    groupHideTimer = setTimeout(() => {
+        groupTooltip.value.visible = false
+        groupTooltip.value.items = []
+        groupTooltip.value.style = null
+        // remove active styling from the trigger element
+        try {
+            if (groupActiveEl.value && groupActiveEl.value.classList) groupActiveEl.value.classList.remove('is-active-tooltip')
+        } catch (err) { }
+        groupActiveEl.value = null
+        groupHideTimer = null
+    }, 120)
+}
+
+function cancelHideGroup() { if (groupHideTimer) { clearTimeout(groupHideTimer); groupHideTimer = null } }
+
+function showDbTooltip(e, row) {
+    try {
+        const items = getDbList(row)
+        if (!items || items.length === 0) return
+        if (dbHideTimer) { clearTimeout(dbHideTimer); dbHideTimer = null }
+        // mark the trigger element so it can be styled while tooltip is visible
+        try {
+            const currentTarget = e.currentTarget
+            if (dbActiveEl.value && dbActiveEl.value !== currentTarget) {
+                dbActiveEl.value.classList.remove('is-active-tooltip')
+            }
+            dbActiveEl.value = currentTarget
+            if (dbActiveEl.value && dbActiveEl.value.classList) dbActiveEl.value.classList.add('is-active-tooltip')
+        } catch (err) { /* ignore if element unavailable */ }
+        dbTooltip.value.items = items
+        dbTooltip.value.visible = true
+        const rect = e.currentTarget.getBoundingClientRect()
+        nextTick(() => {
+            try {
+                const el = dbTooltipEl.value
+                if (!el) return
+                const tRect = el.getBoundingClientRect()
+                const spaceAbove = rect.top
+                const left = rect.left + rect.width / 2
+                let top
+                let transform
+                if (spaceAbove > tRect.height + 8) {
+                    top = rect.top - 8
+                    transform = 'translate(-50%, -100%)'
+                    dbTooltipPlacement.value = 'top'
+                } else {
+                    top = rect.bottom + 8
+                    transform = 'translate(-50%, 0)'
+                    dbTooltipPlacement.value = 'bottom'
+                }
+                dbTooltip.value.style = {
+                    position: 'fixed',
+                    left: `${left}px`,
+                    top: `${top}px`,
+                    transform,
+                    zIndex: 9999,
+                    maxWidth: '420px',
+                    whiteSpace: 'normal'
+                }
+            } catch (err) { console.error('db tooltip pos err', err) }
+        })
+    } catch (e) {
+        console.error('showDbTooltip error', e)
+    }
+}
+
+function hideDbTooltip() {
+    if (dbHideTimer) clearTimeout(dbHideTimer)
+    dbHideTimer = setTimeout(() => {
+        dbTooltip.value.visible = false
+        dbTooltip.value.items = []
+        dbTooltip.value.style = null
+        // remove active styling from the trigger element
+        try {
+            if (dbActiveEl.value && dbActiveEl.value.classList) dbActiveEl.value.classList.remove('is-active-tooltip')
+        } catch (err) { }
+        dbActiveEl.value = null
+        dbHideTimer = null
+    }, 120)
+}
+
+function cancelHideDb() { if (dbHideTimer) { clearTimeout(dbHideTimer); dbHideTimer = null } }
 
 function getGroupTeamPairs(row) {
     // returns array of { group, team }
@@ -451,11 +621,14 @@ div.dataTables_wrapper div.dataTables_paginate ul.pagination {
 .card-body-datatable {
     overflow-x: auto;
 }
+
 .card-body-datatable table {
-    min-width: 800px; /* ensure horizontal scroll when many columns */
+    min-width: 800px;
+    /* ensure horizontal scroll when many columns */
     width: auto;
     border-collapse: separate;
 }
+
 .card-body-datatable table th,
 .card-body-datatable table td {
     white-space: nowrap;
@@ -463,4 +636,77 @@ div.dataTables_wrapper div.dataTables_paginate ul.pagination {
     overflow: hidden;
 }
 
+
+/* Floating tooltip theme (match TableTemplate.vue) */
+.group-summary {
+    cursor: pointer;
+}
+
+.file-name-tooltip {
+    position: fixed;
+    display: inline-block;
+    z-index: 9999;
+    pointer-events: auto;
+}
+
+.file-name-tooltip .tooltip-inner {
+    max-width: 760px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    color: #fff;
+    font-size: 10px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 6px 8px;
+    border-radius: 6px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.file-name-tooltip .tooltip-arrow {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+}
+
+.file-name-tooltip.tooltip-top .tooltip-arrow {
+    bottom: -5px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid rgba(0, 0, 0, 0.85);
+}
+
+.file-name-tooltip.tooltip-bottom .tooltip-arrow {
+    top: -5px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid rgba(0, 0, 0, 0.85);
+}
+
+/* Hide Bootstrap's pseudo-element arrow to avoid a double-arrow effect */
+.file-name-tooltip .tooltip-arrow::before {
+    display: none !important;
+}
+
+.tooltip-after {
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 12px;
+    text-align: left;
+}
+
+.tooltip-after-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: inherit;
+    text-align: left;
+}
+
+.group-summary.is-active-tooltip {
+    background: rgba(0, 0, 0, 0.04);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+    border-radius: 3px;
+}
 </style>

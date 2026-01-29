@@ -5,6 +5,11 @@ from django.db.models import Q
 from apps.core.model.authorize.models import UserLog
 
 def ApiGetUserLogs(request,type):
+    try:
+        type = str(type)
+    except (ValueError, TypeError):
+        return JsonResponse({'status': False, 'message': 'Invalid type'}, status=400)
+    
     draw = int(request.GET.get("draw", 1))
     start = int(request.GET.get("start", 0))
     length = int(request.GET.get("length", 25))
@@ -24,7 +29,8 @@ def ApiGetUserLogs(request,type):
     client_type = request.POST.get("client_type") or request.GET.get("client_type")
     
     # base queryset and type filter
-    log_list = UserLog.objects.all()
+    # avoid N+1 queries on user access by selecting related user
+    log_list = UserLog.objects.select_related('user').all()
 
     if type == 'system':
         log_list = log_list.filter(status='error')
@@ -75,7 +81,7 @@ def ApiGetUserLogs(request,type):
     # records after filtering
     records_filtered = log_list.count()
 
-    # Pagination
+    # Pagination (select_related already applied)
     log_page = log_list[start:start + length]
 
     data = []

@@ -10,7 +10,7 @@ const routes = [
 	{ path: '/configuration/role', name: 'role', component: Role },
 	{ path: '/configuration/group', name: 'Group', component: () => import('../views/GroupAndTeam.vue') },
 	{ path: '/configuration/users', name: 'Users', component: () => import('../views/Users.vue') },
-	{ path: '/dashboard', name: 'Dashboard', component: () => import('../views/Dashboard.vue') },
+	{ path: '//user-management/add', name: 'AddUser', component: () => import('../views/AddUser.vue') },
 	{ path: '/profile', name: 'Profile', component: () => import('../views/Profile.vue') },
 	{ path: '/logs/system', name: 'SystemLogs', component: () => import('../views/UserLog.vue') },
 	{ path: '/logs/audit', name: 'AuditLogs', component: () => import('../views/UserLog.vue') },

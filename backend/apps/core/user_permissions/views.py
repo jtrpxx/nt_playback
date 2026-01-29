@@ -81,7 +81,9 @@ def index(request):
         allowed_db_ids = {auth.maindatabase_id for auth in auths}
 
         if allowed_db_ids == main_db_ids and allowed_db_ids:
-            profile.database_servers = "ALL"
+            profile.database_servers = [
+                auth.maindatabase.database_name for auth in auths
+            ]
         elif allowed_db_ids:
             profile.database_servers = [
                 auth.maindatabase.database_name for auth in auths

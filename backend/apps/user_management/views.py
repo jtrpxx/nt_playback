@@ -40,9 +40,7 @@ def ApiGetUser(request):
         auths = auth_map.get(profile.user_id, [])
         profile.permission = auths[0].user_permission.name if auths else None
         allowed_db_ids = {auth.maindatabase_id for auth in auths}
-        if allowed_db_ids == main_db_ids and allowed_db_ids:
-            profile.database_servers = "ALL"
-        elif allowed_db_ids:
+        if allowed_db_ids:
             profile.database_servers = [auth.maindatabase.database_name for auth in auths]
         else:
             profile.database_servers = None

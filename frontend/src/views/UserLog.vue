@@ -4,7 +4,7 @@
       <Breadcrumbs :items="[{ text: 'Home', to: '/' }, { text: 'User Logs' }]" />
       <div class="col-lg-12">
         <div class="card">
-          <div class="card-body card-body-datatable">
+          <div class="card-body card-body-datatable" style="position: relative;">
             <div class="d-flex align-items-start justify-content-between" style="margin-bottom: 6px;">
               <div class="d-flex align-items-center">
                 <div class="d-flex align-items-center justify-content-center me-1"
@@ -36,60 +36,42 @@
 
             <div>
               <form id="filterForm" class="filter-row">
-                <div class="filter-group">
-                  <label for="name">Name: </label>
-                  <select class="form-input-modal custom-select-modal" id="name" name="name" placeholder="Select User">
-                    <option value>All Users</option>
-                    <!-- {% for u in users %} -->
-                    <option value="">sdsd</option>
-                    <!-- {% endfor %} -->
-                  </select>
+
+                <div class="input-group" >
+                  <CustomSelect class="select-search select-checkbox" v-model="filters.name"
+                    :options="userOptions"
+                    placeholder="Select User" name="name" />
                 </div>
 
-                <div class="filter-group">
-                  <label for="action">Action: </label>
-                  <select class="form-input-modal custom-select-modal" id="action" name="action"
-                    placeholder="Select Action" data-searchable="true">
-                    <option value>All Actions</option>
-                    <option value="Change User Status">Change User Status</option>
-                    <option value="Create Columns">Create Columns</option>
-                    <option value="Create Config Group">Create Config Group</option>
-                    <option value="Create Config Team">Create Config Team</option>
-                    <option value="Create Custom Role">Create Custom Role</option>
-                    <option value="Create Favorite">Create Favorite</option>
-                    <option value="Create Favorite Search">Create Favorite Search</option>
-                    <option value="Created User">Created User</option>
-                    <option value="Delete Config Group">Delete Config Group</option>
-                    <option value="Delete Config Team">Delete Config Team</option>
-                    <option value="Delete Custom Role">Delete Custom Role</option>
-                    <option value="Delete Favorite">Delete Favorite</option>
-                    <option value="Delete User">Delete User</option>
-                    <option value="Edit Favorite">Edit Favorite</option>
-                    <option value="Login">Login</option>
-                    <option value="Play audio">Play audio</option>
-                    <option value="Save file">Save file</option>
-                    <option value="Update Config Group">Update Config Group</option>
-                    <option value="Update Config Team">Update Config Team</option>
-                    <option value="Update Custom Role">Update Custom Role</option>
-                    <option value="Update Favorite Search">Update Favorite Search</option>
-                    <option value="Update User">Update User</option>
-                  </select>
+
+                <div class="input-group" >
+                  <CustomSelect class="select-search select-checkbox" v-model="filters.action"
+                    :options="actionOptions"
+                    placeholder="Select Action" name="action" />
                 </div>
 
-                <div class="filter-group">
-                  <label for="start_date">Start Date: </label>
-                  <input type="text" class="form-input-modal datetimepicker" id="start_date" name="start_date"
-                    autocomplete="off" placeholder="Start Date" />
+
+                <div :class="['input-group', { 'has-value': !!filters.start_date }]">
+                  <input ref="startInput" v-flatpickr="{ target: filters, key: 'start_date' }" required type="text"
+                    name="start_date"
+                    autocomplete="off" class="input">
+                  <label class="floating-label">Start Date</label>
+                  <span class="calendar-icon" @click="startInput && startInput.focus()"><i
+                      class="fa-regular fa-calendar"></i></span>
                 </div>
-                <div class="filter-group">
-                  <label for="end_date">End Date: </label>
-                  <input type="text" class="form-input-modal datetimepicker" id="end_date" name="end_date"
-                    autocomplete="off" placeholder="End Date" />
+                <div :class="['input-group', { 'has-value': !!filters.end_date }]">
+                  <input ref="endInput" v-flatpickr="{ target: filters, key: 'end_date' }" required type="text"
+                    name="end_date"
+                    autocomplete="off" class="input">
+                  <label class="floating-label">End Date</label>
+                  <span class="calendar-icon" @click="endInput && endInput.focus()"><i
+                      class="fa-regular fa-calendar"></i></span>
                 </div>
 
-                <div class="filter-group" style="flex: 0 0 auto;">
+
+                <div class="input-group" style="flex: 0 0 auto;">
                   <button type="button" class="btn btn-light" id="resetFilterBtn"
-                    style="height: 35px; border: 1px solid #e2e8f0;border-radius: 10px; ">
+                    style="height: 31px; border: 1px solid #e2e8f0;border-radius: 10px;font-size: 12px;margin-top: -7px;">
                     <i class="fas fa-undo"></i> Reset
                   </button>
                 </div>
@@ -97,6 +79,7 @@
               </form>
             </div>
 
+            <div class="table-area">
             <TableTemplate
               :columns="columns"
               :rows="paginatedRecords"
@@ -111,6 +94,7 @@
               @delete="onRowDelete"
               @page-change="changePage"
               @per-change="setPerPage" />
+            </div>
 
             <!-- Content Audio Records-->
           </div>
@@ -129,7 +113,7 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import CustomSelect from '../components/CustomSelect.vue'
 import { registerRequest } from '../utils/pageLoad'
-import { API_AUDIO_LIST } from '../api/paths'
+import {  API_GET_LOG_USER } from '../api/paths'
 
 const searchQuery = ref('')
 let searchTimeout = null
@@ -137,7 +121,41 @@ let searchTimeout = null
 onMounted(() => {
   registerRequest(fetchData())
   document.addEventListener('click', onDocClick)
+  // fetch users for the Name select
+  registerRequest(fetchLogUsers())
 })
+
+const type = computed(() => {
+  const p = route.path || ''
+  if (p === '/logs/system') return 'system'
+  if (p === '/logs/audit') return 'audit'
+  return 'user'
+})
+
+async function fetchLogUsers() {
+  try {
+    const params = new URLSearchParams()
+    params.set('draw', 1)
+    params.set('start', 0)
+    params.set('length', 1000)
+    const res = await fetch(`${API_GET_LOG_USER(type.value)}?${params.toString()}`, { credentials: 'include' })
+    if (!res.ok) return
+    const json = await res.json()
+    const data = json.data || []
+    const opts = [{ label: 'All Users', value: '' }]
+    for (const u of data) {
+      const uname = u.username || (u.user && u.user.username) || ''
+      const fname = (u.first_name || u.user?.first_name || '').trim()
+      const lname = (u.last_name || u.user?.last_name || '').trim()
+      const label = uname ? `${uname}${(fname || lname) ? ` - ${fname} ${lname}` : ''}` : (fname || lname || 'Unknown')
+      const value = uname
+      opts.push({ label, value })
+    }
+    userOptions.value = opts
+  } catch (err) {
+    console.error('fetchLogUsers error', err)
+  }
+}
 
 const route = useRoute()
 const cardTitle = computed(() => {
@@ -162,6 +180,44 @@ const currentPage = ref(1)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / perPage.value)))
 const startIndex = computed(() => (currentPage.value - 1) * perPage.value)
 const paginatedRecords = computed(() => records.value)
+
+// filter state
+import { reactive } from 'vue'
+const filters = reactive({ name: '', action: '', start_date: '', end_date: '' })
+const userOptions = ref([])
+const actionOptions = ref([
+  { label: 'All Actions', value: '' },
+  { label: 'Change User Status', value: 'Change User Status' },
+  { label: 'Create Columns', value: 'Create Columns' },
+  { label: 'Create Config Group', value: 'Create Config Group' },
+  { label: 'Create Config Team', value: 'Create Config Team' },
+  { label: 'Create Custom Role', value: 'Create Custom Role' },
+  { label: 'Create Favorite', value: 'Create Favorite' },
+  { label: 'Create Favorite Search', value: 'Create Favorite Search' },
+  { label: 'Created User', value: 'Created User' },
+  { label: 'Delete Config Group', value: 'Delete Config Group' },
+  { label: 'Delete Config Team', value: 'Delete Config Team' },
+  { label: 'Delete Custom Role', value: 'Delete Custom Role' },
+  { label: 'Delete Favorite', value: 'Delete Favorite' },
+  { label: 'Delete User', value: 'Delete User' },
+  { label: 'Edit Favorite', value: 'Edit Favorite' },
+  { label: 'Login', value: 'Login' },
+  { label: 'Play audio', value: 'Play audio' },
+  { label: 'Save file', value: 'Save file' },
+  { label: 'Update Config Group', value: 'Update Config Group' },
+  { label: 'Update Config Team', value: 'Update Config Team' },
+  { label: 'Update Custom Role', value: 'Update Custom Role' },
+  { label: 'Update Favorite Search', value: 'Update Favorite Search' },
+  { label: 'Update User', value: 'Update User' }
+])
+
+// flatpickr refs
+const startInput = ref(null)
+const endInput = ref(null)
+
+// small helpers for dropdown handling (prevent undefined errors)
+const perWrap = ref(null)
+const perDropdownOpen = ref(false)
 
 const setPerPage = (opt) => {
   perPage.value = opt
@@ -189,12 +245,12 @@ const columns = [
   { key: 'index', label: '#', isIndex: true },
   { key: 'username', label: 'Username' },
   { key: 'full_name', label: 'Full Name' },
-  { key: 'role', label: 'Role' },
-  { key: 'group_team', label: 'Group/Team' },
-  { key: 'database_servers', label: 'Database Server' },
-  { key: 'phone', label: 'Phone' },
+  { key: 'action', label: 'Action' },
   { key: 'status', label: 'Status' },
-  { key: 'actions', label: 'Actions', isAction: true }
+  { key: 'description', label: 'Description' },
+  { key: 'ip_address', label: 'IP Address' },
+  { key: 'timestamp', label: 'Timestamp' },
+  { key: 'client_type', label: 'Client type' }
 ]
 
 const records = ref([])
@@ -210,8 +266,12 @@ const fetchData = async () => {
     params.set('start', start)
     params.set('length', perPage.value)
     params.set('search[value]', searchQuery.value || '')
+    if (filters.name) params.set('name', filters.name)
+    if (filters.action) params.set('action', filters.action)
+    if (filters.start_date) params.set('start_date', filters.start_date)
+    if (filters.end_date) params.set('end_date', filters.end_date)
 
-    const res = await fetch(`${API_AUDIO_LIST()}?${params.toString()}`, { credentials: 'include' })
+    const res = await fetch(`${API_GET_LOG_USER(type.value)}?${params.toString()}`, { credentials: 'include' })
     if (!res.ok) throw new Error('Failed to fetch')
     const json = await res.json()
     records.value = json.data || json.user_management || []
@@ -226,9 +286,59 @@ const fetchData = async () => {
 </script>
 
 <style scoped>
-  .filter-row { display: flex; gap: 15px; margin-bottom: 6px; align-items: center; flex-wrap: nowrap; width: 100%; }
-  .filter-group { display: flex; flex-direction: row; gap: 10px; align-items: center; flex: 1; }
-  .filter-group label { font-weight: 600; font-size: 14px; color: #64748b; margin-bottom: 0; white-space: nowrap; }
-  .form-input-modal { height: 38px; border-radius: 8px; border: 1px solid #e2e8f0; padding: 0 12px; width: 100%; }
-  .filter-group .custom-select-container { width: 100%; }
+
+.filter-row {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  flex: 1 1;
+}
+
+
+.form-input-modal {
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.input-group .custom-select-container {
+  width: 100%;
+}
+
+/* make floating-label behave like CustomSelect for inputs */
+.input-group .floating-label {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  transform: translateY(-50%);
+  font-size: clamp(12px, 1.2vw, 13px);
+  color: #6c757d;
+  pointer-events: none;
+  transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  padding: 0 0.2em;
+  transform-origin: left center;
+}
+.input:focus ~ .floating-label,
+.input-group.has-value .floating-label {
+  transform: translateY(-125%) scale(0.8);
+  color: #416fd6;
+}
+
+@media (min-width: 1200px) {
+    :deep(.card-body-datatable .table-container .table-scroll) {
+        max-height: calc(100vh - 316px) !important;
+    }
+}
 </style>

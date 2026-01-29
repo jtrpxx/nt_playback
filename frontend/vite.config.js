@@ -14,7 +14,32 @@ export default defineConfig({
     watch: {
       usePolling: true,
     },
-    host: true,
-    port: 8001
+    // listen on all interfaces inside the container
+    host: '0.0.0.0',
+    port: 8001,
+    // HMR: tell the client to connect to your LAN host on port 80 via ws
+    // but don't make Vite bind to that host: use clientPort instead of port
+    hmr: {
+      protocol: 'ws',
+      host: '192.168.1.229',
+      clientPort: 80,
+    },
+    // allow Host headers coming from the proxy container and LAN
+    allowedHosts: ['frontend', 'localhost', '127.0.0.1', '192.168.1.229']
+    ,
+    // Proxy API and auth requests from the dev server to the backend container
+    proxy: {
+      '/api': {
+        target: 'http://backend:8000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path,
+      },
+      '/login': {
+        target: 'http://backend:8000',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   }
 })

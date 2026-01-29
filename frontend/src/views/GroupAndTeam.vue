@@ -360,7 +360,7 @@ function onGroupSaved(payload) {
     box-sizing: border-box;
 }
 .group-list {
-    max-height: calc(100vh - 254px);
+    max-height: calc(100vh - 260px);
     margin-top: 3px;
     padding-right: 4px;
 }

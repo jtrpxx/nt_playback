@@ -28,7 +28,7 @@
                 <div class="input-group" v-has-value>
                   <input ref="fromInput" v-flatpickr="{ target: filters, key: 'from' }" required type="text" name="from"
                     autocomplete="off" class="input">
-                  <label class="title-label">From</label>
+                  <label class="floating-label">From</label>
                   <span class="calendar-icon" @click="fromInput && fromInput.focus()"><i
                       class="fa-regular fa-calendar"></i></span>
                 </div>
@@ -36,19 +36,19 @@
                 <div class="input-group" v-has-value>
                   <input ref="toInput" v-flatpickr="{ target: filters, key: 'to' }" required type="text" name="to"
                     autocomplete="off" class="input">
-                  <label class="title-label">To</label>
+                  <label class="floating-label">To</label>
                   <span class="calendar-icon" @click="toInput && toInput.focus()"><i
                       class="fa-regular fa-calendar"></i></span>
                 </div>
 
                 <div class="input-group" v-has-value>
                   <input v-model="filters.duration" required="" type="text" name="duration" autocomplete="off" class="input">
-                  <label class="title-label">Duration</label>
+                  <label class="floating-label">Duration</label>
                 </div>
 
                 <div class="input-group" v-has-value>
                   <input v-model="filters.fileName" required="" type="text" name="fileName" autocomplete="off" class="input">
-                  <label class="title-label">File Name</label>
+                  <label class="floating-label">File Name</label>
                 </div>
 
                 <div class="input-group">
@@ -59,12 +59,12 @@
 
                 <div class="input-group" v-has-value>
                   <input v-model="filters.customerNumber" required="" type="text" name="customerNumber" autocomplete="off" class="input">
-                  <label class="title-label">Customer Number</label>
+                  <label class="floating-label">Customer Number</label>
                 </div>
 
                 <div class="input-group" v-has-value>
                   <input v-model="filters.extension" required="" type="text" name="extension" autocomplete="off" class="input">
-                  <label class="title-label">Extension</label>
+                  <label class="floating-label">Extension</label>
                 </div>
 
                 <div class="input-group" >
@@ -75,12 +75,12 @@
 
                 <div class="input-group" v-has-value>
                   <input v-model="filters.fullName" required="" type="text" name="fullName" autocomplete="off" class="input">
-                  <label class="title-label">Full Name</label>
+                  <label class="floating-label">Full Name</label>
                 </div>
 
                 <div class="input-group" v-has-value>
                   <input v-model="filters.customField" required="" type="text" name="customField" autocomplete="off" class="input">
-                  <label class="title-label">Custom Field</label>
+                  <label class="floating-label">Custom Field</label>
                 </div>
 
               </div>
@@ -484,3 +484,25 @@ const onRowEdit = (row) => { console.log('edit row', row) }
 const onRowDelete = (row) => { console.log('delete row', row) }
 
 </script>
+
+<style scoped>
+/* make floating-label behave for inputs in Home like CustomSelect */
+.input-group .floating-label {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  transform: translateY(-50%);
+  font-size: clamp(12px, 1.2vw, 13px);
+  color: #6c757d;
+  pointer-events: none;
+  transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  padding: 0 0.2em;
+  transform-origin: left center;
+}
+.input:focus ~ .floating-label,
+.input-group.has-value .floating-label {
+  transform: translateY(-125%) scale(0.8);
+  color: #416fd6;
+}
+</style>

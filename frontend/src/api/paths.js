@@ -24,5 +24,8 @@ export const API_GET_TEAM_BY_GROUP = (groupId) => `${getApiBase()}/api/group/get
 export const API_GET_DATABASE = () => `${getApiBase()}/api/get/database/`
 
 // หน้า  User Management
-export const API_USER_MANAGEMENT_INDEX = () => `${getApiBase()}/api/user-management/index/`
+export const API_GET_USER = () => `${getApiBase()}/api/get/user/`
 export const API_USER_MANAGEMENT_CHANGE_STATUS = (id) => `${getApiBase()}/api/user-management/change-status/${id}/`
+
+// หน้า log user
+export const API_GET_LOG_USER = (type) => `${getApiBase()}/api/log-user/get-log/${type}/`

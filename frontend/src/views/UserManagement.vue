@@ -120,7 +120,7 @@ import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import { registerRequest } from '../utils/pageLoad'
-import { API_USER_MANAGEMENT_INDEX, API_USER_MANAGEMENT_CHANGE_STATUS } from '../api/paths'
+import { API_GET_USER, API_USER_MANAGEMENT_CHANGE_STATUS } from '../api/paths'
 
 const searchQuery = ref('')
 let searchTimeout = null
@@ -287,7 +287,7 @@ const fetchData = async () => {
         params.set('length', perPage.value)
         params.set('search[value]', searchQuery.value || '')
 
-        const res = await fetch(`${API_USER_MANAGEMENT_INDEX()}?${params.toString()}`, { credentials: 'include' })
+        const res = await fetch(`${API_GET_USER()}?${params.toString()}`, { credentials: 'include' })
         if (!res.ok) throw new Error('Failed to fetch')
         const json = await res.json()
         records.value = json.data || json.user_management || []

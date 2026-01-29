@@ -77,7 +77,7 @@
               <div>Loading...</div>
             </div>
             <template v-else>
-              <div v-if="filteredRoles.length">
+              <div v-if="filteredRoles.length" class="custom-roles-container">
                   <div v-for="role in filteredRoles" :key="role.id" class="custom-role-item"
                     @click.stop="openEditRole(role.id, 'edit')">
                   <div class="custom-role-info">

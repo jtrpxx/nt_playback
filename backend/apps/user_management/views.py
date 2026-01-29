@@ -20,7 +20,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 @login_required(login_url='/login')
-def ApiIndexUserManagement(request):
+def ApiGetUser(request):
     # prepare base query
     qs = UserProfile.objects.exclude(user=request.user).select_related('user', 'team')
 

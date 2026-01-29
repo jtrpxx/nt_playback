@@ -657,6 +657,11 @@
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
+  /* max-height: calc(100vh - 480px); */
+}
+
+.custom-roles-container {
+  max-height: calc(100vh - 480px);
 }
 
 .custom-roles-list::-webkit-scrollbar {

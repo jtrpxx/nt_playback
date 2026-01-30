@@ -147,6 +147,9 @@ import { API_GET_USER, API_USER_MANAGEMENT_CHANGE_STATUS } from '../api/paths'
 const searchQuery = ref('')
 let searchTimeout = null
 
+// dropdown state used by the table per-page control
+
+
 onMounted(() => {
     registerRequest(fetchData())
     document.addEventListener('click', onDocClick)

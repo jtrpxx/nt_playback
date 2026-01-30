@@ -77,7 +77,7 @@
                     </div>
                   </div>
 
-                  <div class="permissions-grid">
+                  <div class="permissions-grid-3">
                     <div class="input-group">
                       <CustomSelect class="select-search select-checkbox" v-model="filters.databaseServer"
                         :options="mainDbOptions" placeholder="Database Server" name="databaseServerModal" />
@@ -162,7 +162,7 @@
                     </div>
                   </div>
 
-                  <div class="permissions-grid">
+                  <div class="permissions-grid-3">
                     <div class="input-group">
                       <CustomSelect class="select-search select-checkbox" v-model="editForm.databaseServer"
                         :options="mainDbOptions" placeholder="Database Server" name="databaseServerEdit" />

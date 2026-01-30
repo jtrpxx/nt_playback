@@ -48,7 +48,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 const props = defineProps({
-  modelValue: { type: [String, Number, null], default: '' },
+  modelValue: { type: [String, Number, Array], default: '' },
   options: { type: Array, required: true },
   placeholder: { type: String, default: '' },
   alwaysHasValue: { type: Boolean, default: false },

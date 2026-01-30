@@ -5,7 +5,6 @@ import { API_LOGIN } from '../api/paths'
 export const useAuthStore = defineStore('auth', () => {
 	// Initialize state from localStorage to enable persistence
 	const user = ref(JSON.parse(localStorage.getItem('user')))
-	console.log('Initial user from localStorage:', user.value)
 	const token = ref(localStorage.getItem('token'))
 
 	function setUser(payload) {

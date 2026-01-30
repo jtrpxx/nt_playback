@@ -32,6 +32,7 @@
                             :rows="paginatedRecords"
                             :start-index="startIndex"
                             :loading="loading"
+                            action-id-key="user.id"
                             :per-page="perPage"
                             :per-page-options="perPageOptions"
                             :current-page="currentPage"
@@ -135,6 +136,7 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 
 import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
@@ -183,8 +185,18 @@ const onDocClick = (e) => {
     if (!perWrap.value.contains(e.target)) perDropdownOpen.value = false
 }
 
-const onRowEdit = (row) => { console.log('edit row', row) }
-const onRowDelete = (row) => { console.log('delete row', row) }
+const router = useRouter()
+
+const onRowEdit = (row, actionId) => {
+    const id = actionId ?? (row && row.user && row.user.id) 
+    if (!id) {
+        console.warn('onRowEdit: no id available for row', row)
+        return
+    }
+    router.push(`/user-management/edit/${id}`)
+}
+
+const onRowDelete = (row, actionId) => { console.log('delete row', row, actionId) }
 
 const expanded = ref(new Set())
 
@@ -416,7 +428,16 @@ async function toggleUserStatus(userId, row) {
         // optimistic
         rec.user.is_active = !current
         try {
-            const res = await fetch(API_USER_MANAGEMENT_CHANGE_STATUS(userId), { method: 'POST', credentials: 'include' })
+            // include CSRF token for Django POST
+            const csrfToken = getCookie('csrftoken')
+            const res = await fetch(API_USER_MANAGEMENT_CHANGE_STATUS(userId), {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'X-CSRFToken': csrfToken || '',
+                    'Accept': 'application/json'
+                }
+            })
             const json = await res.json()
             if (!res.ok || json.status === 'error') {
                 rec.user.is_active = current
@@ -429,6 +450,13 @@ async function toggleUserStatus(userId, row) {
     } catch (e) {
         console.error('toggleUserStatus error', e)
     }
+}
+
+// helper to read cookie by name (used for CSRF)
+function getCookie(name) {
+    if (!name || typeof document === 'undefined') return null
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)')
+    return v ? v.pop() : null
 }
 
 const columns = [
@@ -589,32 +617,6 @@ div.dataTables_wrapper div.dataTables_paginate ul.pagination {
 
 .collapsed-list li {
     margin: 4px 0
-}
-
-.role-badge {
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 12px
-}
-
-.role-badge.administrator {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626
-}
-
-.role-badge.auditor {
-    background: rgba(16, 185, 129, 0.1);
-    color: #059669;
-}
-
-.role-badge.operator {
-    background: rgba(65, 111, 214, 0.1);
-    color: #416fd6;
-}
-
-.role-badge.other {
-    background: #e5e7eb;
-    color: #374151
 }
 
 /* Table sizing + horizontal scroll */

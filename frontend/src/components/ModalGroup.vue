@@ -122,7 +122,7 @@
                             <div class="form-group-modal">
                                 <div class="input-group">
                                     <CustomSelect class="select-search select-checkbox" v-model="selectedGroupId"
-                                        :options="groupOptions" placeholder="Select Group..." name="groupModal" />
+                                        :options="groupOptions" placeholder="Select Group" name="groupModal" />
                                 </div>
                             </div>
                         </div>
@@ -205,7 +205,7 @@
                             <div class="form-group-modal">
                                 <div class="input-group">
                                     <CustomSelect class="select-search select-checkbox" v-model="selectedGroupId"
-                                        :options="groupOptions" placeholder="Select Group..." name="groupModal" />
+                                        :options="groupOptions" placeholder="Select Group" name="groupModal" />
                                 </div>
                             </div>
                         </div>

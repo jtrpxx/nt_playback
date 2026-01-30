@@ -23,8 +23,17 @@
                 </template>
                 <template v-else-if="col.isAction">
                   <div class="group-card-actions">
-                    <button class="group-edit-btn" @click.stop="$emit('edit', r)">Click to edit</button>
-                    <button type="button" class="group-delete-btn" @click.stop="$emit('delete', r)">
+                    <button
+                      :id="`click-to-edit-${getActionId(r) ?? r.id ?? idx}`"
+                      class="group-edit-btn"
+                      @click.stop="$emit('edit', r, getActionId(r))">
+                      Click to edit
+                    </button>
+                    <button
+                      :id="`group-delete-btn-${getActionId(r) ?? r.id ?? idx}`"
+                      type="button"
+                      class="group-delete-btn"
+                      @click.stop="$emit('delete', r, getActionId(r))">
                       <i class="fas fa-trash" style="font-size: 12px;"></i>
                     </button>
                   </div>
@@ -98,6 +107,8 @@ const props = defineProps({
   startIndex: { type: Number, default: 0 },
   loading: { type: Boolean, default: false },
   callDirectionKey: { type: String, default: '' },
+  // optional key (supports dot-path) to derive an action id from a row
+  actionIdKey: { type: String, default: '' },
   // pagination-related props (UI-only)
   perPage: { type: Number, default: 50 },
   perPageOptions: { type: Array, default: () => [50, 100, 500, 1000] },
@@ -255,6 +266,26 @@ function colWidthStyle(col) {
   if (!col || col.width === undefined || col.width === null) return null
   const w = col.width
   return { width: typeof w === 'number' ? `${w}px` : String(w) }
+}
+
+function getByPath(obj, path) {
+  if (!path) return undefined
+  const parts = String(path).split('.')
+  let cur = obj
+  for (const p of parts) {
+    if (cur == null) return undefined
+    cur = cur[p]
+  }
+  return cur
+}
+
+function getActionId(row) {
+  if (!props.actionIdKey) return undefined
+  try {
+    return getByPath(row, props.actionIdKey)
+  } catch (e) {
+    return undefined
+  }
 }
 </script>
 

@@ -32,3 +32,5 @@ export const API_GET_LOG_USER = (type) => `${getApiBase()}/api/log-user/get-log/
 
 // หน้า Add User
 export const API_GET_ALL_ROLES_PERMISSIONS = () => `${getApiBase()}/api/add-user/get-all-roles-permissions/`
+// Get user profile for edit (expects user_id)
+export const API_GET_USER_PROFILE = (id) => `${getApiBase()}/api/user-management/get-profile/${id}/`

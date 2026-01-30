@@ -106,10 +106,13 @@ const filteredOptions = computed(() => {
 
 const selectedLabel = computed(() => {
   if (checkboxable.value && Array.isArray(props.modelValue)) {
-    const labels = normalizedOptions.value.filter(o => props.modelValue.includes(o.value)).map(o => o.label)
-    if (labels.length === 0) return ''
-    if (labels.length <= 3) return labels.join(', ')
-    return `${labels.length} selected`
+    const labels = normalizedOptions.value
+      .filter(o => !o.isGroup && props.modelValue.includes(o.value))
+      .map(o => o.label)
+    const count = labels.length
+    if (count === 0) return ''
+    if (count === 1) return labels[0]
+    return `${count} Selected`
   }
   const sel = normalizedOptions.value.find(o => o.value === props.modelValue)
   return sel ? sel.label : props.placeholder
@@ -131,7 +134,7 @@ const hasValue = computed(() => {
 function toggle() { open.value = !open.value }
 function openList() { open.value = true }
 function computeUp() {
-  if (props.alwaysUp) { up.value = true; return }
+  if (props.alwaysUp) { up.value = true; return } else if (props.alwaysUp === false) { up.value = false; return }
   if (!root.value) return
   const rect = root.value.getBoundingClientRect()
 
@@ -270,4 +273,7 @@ onBeforeUnmount(() => {
 }
 .option .option-row { display: flex; align-items: center; gap: 8px; padding: 6px 2px; cursor: pointer }
 .option .opt-label { flex: 1 }
+.no-options {
+  text-align: center;
+}
 </style>

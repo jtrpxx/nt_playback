@@ -4,7 +4,8 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.db import transaction, DatabaseError,IntegrityError
 from django.contrib import messages
-# from apps.core.utils.function import create_user_log
+from apps.core.utils.function import create_user_log
+import json
 
 # models
 from apps.core.model.authorize.models import MainDatabase,UserAuth,UserProfile,Department,MainDatabase,UserGroup,UserTeam,UserLog
@@ -96,5 +97,177 @@ def ApiChangeUserStatus(request, user_id):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
 
+@login_required(login_url='/login')
+def ApiGetAllRolesPermissions(request):
+    try:
+        admin_role = UserPermission.objects.filter(type='administrator').first()
+        all_perms_data = []
+        
+        if admin_role:
+            details = UserPermissionDetail.objects.filter(user_permission=admin_role).order_by('type', 'action')
+            for d in details:
+                all_perms_data.append({
+                    'action': d.action,
+                    'name': d.action.replace('-', ' ').title(), 
+                    'type': d.type
+                })
+
+        roles = UserPermission.objects.all()
+        roles_permissions = {}
+        custom_roles = []
+
+        for role in roles:
+            active_actions = list(UserPermissionDetail.objects.filter(
+                user_permission=role, 
+                status=True
+            ).values_list('action'))
+            
+            if role.type in ['administrator', 'auditor', 'operator']:
+                roles_permissions[role.type] = {
+                    'id': role.id,
+                    'permissions': active_actions
+                }
+            else:
+                custom_roles.append({
+                    'id': role.id,
+                    'name': role.name,
+                    'permissions': active_actions
+                })
+
+        return JsonResponse({
+            'status': 'success',
+            'all_permissions': all_perms_data,
+            'base_roles': roles_permissions,
+            'custom_roles': custom_roles
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+def ApiGetUSerProfile(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+        if user == request.user:
+            return JsonResponse({'status': 'error', 'message': 'Cannot change your own status.'})
+
+        user_to_edit = user
+        user_profile = UserProfile.objects.filter(user=user_to_edit).first()
+
+        user_auths = UserAuth.objects.filter(user=user_to_edit)
+        selected_db_ids = [str(auth.maindatabase.id) for auth in user_auths if getattr(auth, 'allow', False)]
+        
+        main_db_qs = MainDatabase.objects.all()
+        main_db = [
+            {
+                'id': d.id,
+                'database_name': getattr(d, 'database_name', None),
+                'status': getattr(d, 'status', None)
+            }
+            for d in main_db_qs
+        ]
+
+        all_db_selected = len(selected_db_ids) == len(main_db) and len(main_db) > 0
+
+        user_permission = None
+        if user_auths.exists() and user_auths.first().user_permission:
+            user_permission = user_auths.first().user_permission
+
+        selected_role_id = None
+        selected_role_type = None
+        if user_permission:
+            if user_permission.type in ['administrator', 'auditor', 'operator']:
+                selected_role_type = user_permission.type
+            else:
+                selected_role_id = str(user_permission.id)
+
+        profile_data = UserProfileSerializer(user_profile).data if user_profile else None
+
+        return JsonResponse({
+            'status': 'success',
+            'user_profile': profile_data,
+            'selected_db_id': selected_db_ids,
+            'all_db_selected': all_db_selected,
+            'selected_role_id': selected_role_id,
+            'selected_role_type': selected_role_type,
+        })
+    except User.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'User not found.'})
+        
+
+@login_required
+@require_POST
+def ChangeUserStatus(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+        
+        if user == request.user:
+            return JsonResponse({'status': 'error', 'message': 'Cannot change your own status.'})
+            
+        user.is_active = not user.is_active
+        user.save()
+        
+        status_msg = "Active" if user.is_active else "Inactive"
+        create_user_log(user=request.user, action="Change User Status", detail=f"Changed status of {user.username} to {status_msg}", status="success", request=request)
+        
+        return JsonResponse({'status': 'success', 'message': f'User is now {status_msg}.'})
+    except User.DoesNotExist:
+        create_user_log(user=request.user, action="Change User Status", detail=f"message : User not found", status="error", request=request)
+        return JsonResponse({'status': 'error', 'message': 'User not found.'})
+    except Exception as e:
+        create_user_log(user=request.user, action="Change User Status", detail=f"message : {str(e)}", status="error", request=request)
+        return JsonResponse({'status': 'error', 'message': str(e)})
     
+@login_required
+@require_POST
+def DeleteUserPermission(request, user_id):
+    """
+    Hard deletes a user and cleans up related data to avoid foreign key constraints.
+    """
+    print('user_id',user_id)
+    try:
+        user_to_delete = User.objects.get(id=user_id)
+
+        if user_to_delete.is_superuser:
+            create_user_log(user=request.user, action="Delete User", detail=f"Attempted to delete superuser: {user_to_delete.username}", status="error", request=request)
+            return JsonResponse({'status': 'error', 'message': 'Cannot delete a superuser.'})
+        if user_to_delete == request.user:
+            create_user_log(user=request.user, action="Delete User", detail=f"Attempted to delete self: {user_to_delete.username}", status="error", request=request)
+            return JsonResponse({'status': 'error', 'message': 'Cannot delete your own account.'})
+
+        username = user_to_delete.username 
+        
+        with transaction.atomic():
+            # 1. ลบ Logs ของ User นี้ก่อน (มักเป็นสาเหตุหลักของ FK Constraint แบบ PROTECT)
+            UserLog.objects.filter(user=user_to_delete).delete()
+            
+            # 2. ลบข้อมูล Auth และ Profile (ปกติจะเป็น CASCADE แต่ลบเพื่อความชัวร์)
+            UserAuth.objects.filter(user=user_to_delete).delete()
+            UserProfile.objects.filter(user=user_to_delete).delete()
+            
+            # 3. ลบ User ออกจากระบบ
+            user_to_delete.delete()
+
+        create_user_log(user=request.user, action="Delete User", detail=f"Successfully deleted user: {username} (ID: {user_id})", status="success", request=request)
+        return JsonResponse({'status': 'success', 'message': 'User deleted successfully.', 'username': username})
+    except User.DoesNotExist:
+        create_user_log(user=request.user, action="Delete User", detail=f"Attempted to delete non-existent user with ID: {user_id}", status="error", request=request)
+        return JsonResponse({'status': 'error', 'message': 'User not found.'})
+    except Exception as e:
+        create_user_log(user=request.user, action="Delete User", detail=f"Failed to delete user with ID: {user_id}", status="error", request=request, exception=e)
+        return JsonResponse({'status': 'error', 'message': f'An error occurred: {str(e)}'})
+
+
+@login_required(login_url='/login')
+def CheckUsername(request):
+    username = request.GET.get('username', None)
+    user_id = request.GET.get('user_id', None)
+    if not username:
+        return JsonResponse({'status': 'error', 'message': 'Username is required'})
     
+    query = User.objects.filter(username=username)
+    if user_id:
+        query = query.exclude(id=user_id)
+
+    if query.exists():
+        return JsonResponse({'status': 'success', 'is_taken': True, 'message': 'This name is already in the system.'})
+    else:
+        return JsonResponse({'status': 'success', 'is_taken': False})

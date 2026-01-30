@@ -1,0 +1,883 @@
+<template>
+    <MainLayout>
+        <div class="main-wrapper container-fluid-home py-3">
+            <Breadcrumbs :items="[{ text: 'Home', to: '/' }, { text: 'User Management', to: '/user-management' }, { text: mode === 'edit' ? 'Edit User' : 'Add User' }]" />
+
+            <div class="row col-lg-12">
+                <div class="col-lg-6" style="margin-bottom: 14px;">
+                    <div class="card card-left">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start justify-content-between"
+                                    style="margin-bottom: 18px;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center justify-content-center me-1"
+                                            style="width:35px;height:35px;background-color: #D9E2F6;border-radius: 10px !important;">
+                                            <i class="fas fa-user-plus" style="color:#2b6cb0;font-size:18px"></i>
+                                        </div>
+                                        <h5 class="card-title mb-2 mt-1">User Information</h5>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div>
+                                            <button class="customize-btn" type="button" id="clearUserInfoBtn"
+                                                @click="clearUserInfo" style=" position:relative;">
+                                                <i class="fas fa-eraser" style="margin-right: 6px;"></i> Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="permissions-grid-1">
+                                    <div class="input-group" v-has-value>
+                                        <input v-model="form.username" required type="text" name="username" autocomplete="off" class="input" maxlength="50" style="margin-bottom: 20px;">
+                                        <label class="title-label">Username</label>
+                                    </div>
+                                </div>
+
+                                <div class="permissions-grid-2">
+                                    <div class="input-group" v-has-value v-if="mode !== 'edit'">
+                                        <input required="" :type="passwordVisible ? 'text' : 'password'" name="password" autocomplete="off" class="input" maxlength="50">
+                                        <button type="button" class="toggle-visibility" @click="passwordVisible = !passwordVisible" aria-label="Toggle password visibility">
+                                            <i :class="passwordVisible ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+                                        </button>
+                                        <label class="title-label">Password</label>
+                                    </div>
+                                    <div class="input-group" v-has-value v-if="mode !== 'edit'">
+                                        <input required="" :type="confirmPasswordVisible ? 'text' : 'password'" name="confirmPassword" autocomplete="off" class="input" maxlength="50">
+                                        <button type="button" class="toggle-visibility" @click="confirmPasswordVisible = !confirmPasswordVisible" aria-label="Toggle confirm password visibility">
+                                            <i :class="confirmPasswordVisible ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+                                        </button>
+                                        <label class="title-label">Confirm Password</label>
+                                    </div>
+                                    <div class="input-group" v-has-value>
+                                        <input v-model="form.firstName" required type="text" name="firstName" autocomplete="off" class="input" maxlength="50">
+                                        <label class="title-label">First Name</label>
+                                    </div>
+                                    <div class="input-group" v-has-value>
+                                        <input v-model="form.lastName" required type="text" name="lastName" autocomplete="off" class="input" maxlength="50">
+                                        <label class="title-label">Last Name</label>
+                                    </div>
+                                    <div class="input-group" v-has-value>
+                                        <input v-model="form.email" required type="text" name="email" autocomplete="off" class="input" maxlength="50">
+                                        <label class="title-label">Email</label>
+                                    </div>
+                                    <div class="input-group" v-has-value>
+                                        <input v-model="form.phone" required type="text" name="phone" autocomplete="off" class="input" maxlength="50">
+                                        <label class="title-label">Phone</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <CustomSelect class="select-search " v-model="selectedGroupId" :options="groupOptions" :always-up="false" placeholder="Select Group" name="groupModal" />
+                                    </div>
+                                    <div class="input-group" :class="{ 'select-disabled': !selectedGroupId }">
+                                        <CustomSelect class="select-search" v-model="selectedTeamId" :always-up="false" :options="teamOptions" placeholder="Select Team" name="teamModal" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-lg-6" style="margin-bottom: 14px;">
+                    <!-- Select Role Card -->
+                    <div class="card card-right">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start justify-content-between"
+                                    style="margin-bottom: 18px;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center justify-content-center me-1"
+                                            style="width:35px;height:35px;background-color: #D9E2F6;border-radius: 10px !important;">
+                                            <i class="fas fa-shield-alt" style="color:#2b6cb0;font-size:18px"></i>
+                                        </div>
+                                        <h5 class="card-title mb-2 mt-1">Select Role</h5>
+                                    </div>
+                                </div>
+
+                                <div class="role-cards" id="roleCards" :class="{ disabled: roleCardsDisabled }">
+                                    <label class="role-card" :class="{ selected: selectedBaseRoleKey==='administrator' }" @click.prevent="selectBaseRole('administrator')">
+                                        <input type="checkbox" name="role" value="administrator" :checked="selectedBaseRoleKey==='administrator'">
+                                        <div class="role-icon"><i class="fas fa-crown"></i></div>
+                                        <div class="role-name">Administrator</div>
+                                        <div class="role-desc">Full system access</div>
+                                    </label>
+                                    <label class="role-card" :class="{ selected: selectedBaseRoleKey==='auditor' }" @click.prevent="selectBaseRole('auditor')">
+                                        <input type="checkbox" name="role" value="auditor" :checked="selectedBaseRoleKey==='auditor'">
+                                        <div class="role-icon"><i class="fas fa-clipboard-check"></i></div>
+                                        <div class="role-name">Auditor</div>
+                                        <div class="role-desc">Read & audit access</div>
+                                    </label>
+                                    <label class="role-card" :class="{ selected: selectedBaseRoleKey==='operator' }" @click.prevent="selectBaseRole('operator')">
+                                        <input type="checkbox" name="role" value="operator" :checked="selectedBaseRoleKey==='operator'">
+                                        <div class="role-icon"><i class="fas fa-headset"></i></div>
+                                        <div class="role-name">Operator</div>
+                                        <div class="role-desc">Standard operations</div>
+                                    </label>
+                                </div>
+
+                                <div class="custom-role-row" style="display: flex; gap: 12px; align-items: stretch;">
+                                    <div class="custom-dropdown" id="otherRoleDropdown" :class="{ open: otherRoleOpen, selected: selectedCustomRoleId }" style="flex: 1;">
+                                        <div class="dropdown-selected" @click="toggleOtherRoleDropdown">
+                                            <span class="dropdown-text">
+                                                <i v-if="selectedCustomRoleId" class="fas fa-user" style="margin-right: 8px;"></i>
+                                                {{ selectedCustomRoleName || 'Select Custom Role' }}
+                                            </span>
+                                            <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                        </div>
+                                        <div class="dropdown-options">
+                                            <div v-if="customRoles.length === 0" class="dropdown-option disabled" style="color: #94a3b8; cursor: default; pointer-events: none;">
+                                                <i class="fas fa-info-circle"></i>
+                                                <span>No custom roles available</span>
+                                            </div>
+                                            <div v-else>
+                                                <div v-for="role in customRoles" :key="role.id" class="dropdown-option" :class="{ selected: selectedCustomRoleId === role.id }" @click="selectCustomRole(role)">
+                                                    <i class="fas fa-user"></i>
+                                                    <span>{{ role.name }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="otherRole" id="otherRoleInput" :value="selectedCustomRoleId || ''">
+                                    </div>
+                                    <button class="customize-btn" type="button" @click="clearCustomRole"
+                                        style="display: flex; align-items: center; justify-content: center; margin: 0;">
+                                        <i class="fas fa-eraser" style="margin-right: 6px;"></i> Clear
+                                    </button>
+                                </div>
+
+
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start justify-content-between"
+                                    style="margin-bottom: 18px;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center justify-content-center me-1"
+                                            style="width:35px;height:35px;background-color: #D9E2F6;border-radius: 10px !important;">
+                                            <i class="fas fa-database" style="color:#2b6cb0;font-size:18px"></i>
+                                        </div>
+                                        <h5 class="card-title mb-2 mt-1">Select Database Server</h5>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <button type="button" class="btn-role btn-secondary" @click="resetDatabase"
+                                            style="margin-right: 6px">
+                                            <i class="fas fa-undo"></i>
+                                            Reset to Default
+                                        </button>
+                                        <button class="customize-btn" type="button" @click="clearDatabaseScope">
+                                            <i class="fas fa-eraser" style="margin-right: 6px;"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="database-grid">
+                                    <label class="db-card">
+                                        <input type="checkbox" value="all" :checked="selectedAllDatabases" @change="toggleAllDatabases">
+                                        <span class="db-checkbox"></span>
+                                        <span class="db-name">All Databases</span>
+                                    </label>
+                                    <label class="db-card" v-for="db in databases" :key="db.id">
+                                        <input type="checkbox" :value="db.id" :checked="selectedDatabaseIds.includes(String(db.id))" @change="() => toggleDatabase(db)">
+                                        <span class="db-checkbox"></span>
+                                        <span class="db-name">{{ db.database_name }}</span>
+                                    </label>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between" style="margin-bottom: 6px;">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center me-1"
+                                        style="width:35px;height:35px;background-color: #D9E2F6;border-radius: 10px !important;">
+                                        <i class="fas fa-key" style="color:#2b6cb0;font-size:18px"></i>
+                                    </div>
+                                    <h5 class="card-title mb-2 mt-1">Permissions</h5>
+                                </div>
+                            </div>
+
+                            <div class="permissions-grid" id="permissionsGrid">
+                                <template v-for="type in orderedTypes" :key="type">
+                                    <div v-if="groupedPermissions[type] && groupedPermissions[type].length"
+                                        class="permission-group-header">{{ typeLabels[type] }}</div>
+
+                                    <label v-for="perm in groupedPermissions[type]" :key="perm.action"
+                                        :class="['permission-item', { disabled: !permissionInputsEnabled }]">
+                                        <input type="checkbox" :data-permission="perm.action" :disabled="!permissionInputsEnabled" :checked="!!selectedPermissions[perm.action]" @change="() => togglePermission(perm)">
+                                        <span class="perm-checkbox"></span>
+                                        <span class="perm-label">{{ perm.name }}</span>
+                                    </label>
+                                </template>
+                            </div>
+
+                            <div class="button-group">
+                                <button class="btn btn-primary" type="button" @click="submit">
+                                    <i class="fas fa-check"></i>
+                                    {{ mode === 'edit' ? 'Update User' : 'Create User' }}
+                                </button>
+                                <button class="btn btn-secondary" @click="cancel">
+                                    <i class="fas fa-times"></i>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </MainLayout>
+</template>
+
+<script setup>
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import MainLayout from '../layouts/MainLayout.vue'
+import Breadcrumbs from '../components/Breadcrumbs.vue'
+import CustomSelect from '../components/CustomSelect.vue'
+import { registerRequest } from '../utils/pageLoad'
+import { API_GROUP_INDEX, API_GET_DATABASE, API_GET_ALL_ROLES_PERMISSIONS } from '../api/paths'
+
+const loading = ref(false)
+const selectedGroupId = ref(null)
+
+const route = useRoute()
+const router = useRouter()
+
+const props = defineProps({
+    mode: { type: String, default: null },
+    initialData: { type: Object, default: null }
+})
+
+const mode = computed(() => {
+    if (props.mode) return props.mode
+    try {
+        if (!route) return 'add'
+        const q = route.query && route.query.mode
+        if (q === 'edit') return 'edit'
+        const p = (route.path || route.fullPath || '').toString().toLowerCase()
+        if (p.includes('/edit')) return 'edit'
+        const paramMode = route.params && route.params.mode
+        if (paramMode === 'edit') return 'edit'
+        return 'add'
+    } catch (e) {
+        return 'add'
+    }
+})
+
+// form reactive state used by v-model bindings
+const form = ref({
+    username: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: ''
+})
+
+const groups = ref([])
+const teams = ref([])
+const groupTeamsMap = ref({})
+const databases = ref([])
+
+// password visibility
+const passwordVisible = ref(false)
+const confirmPasswordVisible = ref(false)
+
+// permissions state
+const allPermissions = ref([])
+const groupedPermissions = ref({})
+const orderedTypes = [
+    'access',
+    'audio recordings',
+    'user management',
+    'logs'
+]
+const typeLabels = {
+    'access': 'ACCESS',
+    'audio recordings': 'AUDIO RECORDINGS',
+    'user management': 'USER MANAGEMENT',
+    'logs': 'LOGS'
+}
+
+for (const t of orderedTypes) groupedPermissions.value[t] = []
+
+const customRoles = ref([])
+const selectedCustomRoleId = ref(null)
+const otherRoleOpen = ref(false)
+const selectedCustomRoleName = computed(() => {
+    const r = customRoles.value.find(x => String(x.id) === String(selectedCustomRoleId.value))
+    return r ? r.name : null
+})
+
+function toggleOtherRoleDropdown() {
+    otherRoleOpen.value = !otherRoleOpen.value
+}
+
+function selectCustomRole(role) {
+    if (!role) return
+    selectedCustomRoleId.value = role.id
+    otherRoleOpen.value = false
+
+    // clear any selected base role
+    selectedBaseRoleKey.value = null
+
+    setSelectedPermissionsFromCustomRole(role.id)
+}
+
+function clearCustomRole() {
+    selectedCustomRoleId.value = null
+    otherRoleOpen.value = false
+    clearSelectedPermissions()
+}
+
+// populate form when `initialData` prop is provided (Edit mode)
+function populateFromInitial(data) {
+    if (!data) return
+    const up = data.user_profile || data.userProfile || null
+    // user fields
+    const u = up && (up.user || up.user_to_edit || up.user) || (data.user_to_edit && data.user_to_edit) || null
+    if (u) {
+        if (form && form.value) {
+            form.value.username = u.username || u.user_name || ''
+            form.value.firstName = u.first_name || u.firstName || ''
+            form.value.lastName = u.last_name || u.lastName || ''
+            form.value.email = u.email || ''
+        }
+    }
+
+    // profile-level phone
+    if (up && up.phone) {
+        if (form && form.value) form.value.phone = up.phone
+    } else if (data.phone) {
+        if (form && form.value) form.value.phone = data.phone
+    }
+
+    // team/group
+    const team = up && up.team ? up.team : (data.team || null)
+    if (team) {
+        // group id may be nested under user_group
+        const gid = (team.user_group && team.user_group.id) || team.user_group_id || (team.user_group && team.user_group.user_group_id) || null
+        if (gid) selectedGroupId.value = String(gid)
+        if (team.id) selectedTeamId.value = String(team.id)
+    }
+
+    // selected databases - accept several field name variants
+    let selD = data.selected_db_id || data.selected_db_ids || data.selected_db_ids_json || data.selected_db_ids_json || data.selected_db_ids || data.selected_db_id
+    if (!selD && data.selected_db_id === undefined && data.selected_db_ids === undefined) {
+        // also check older keys
+        selD = data.selectedDatabaseIds || data.selected_database_ids
+    }
+    if (typeof selD === 'string') {
+        try { selD = JSON.parse(selD) } catch (e) { selD = selD.replace(/[[\]"]+/g, '').split(',').map(s=>s.trim()).filter(Boolean) }
+    }
+    if (Array.isArray(selD)) {
+        selectedDatabaseIds.value = selD.map(x => String(x))
+        defaultDatabaseIds.value = [...selectedDatabaseIds.value]
+        selectedAllDatabases.value = databases.value.length > 0 && selectedDatabaseIds.value.length === databases.value.length
+    }
+
+    // honor explicit all_db_selected flag from API
+    const allSelectedFlag = data.all_db_selected || data.all_db_selected === true || data.all_db_selected === 'true'
+    if (allSelectedFlag) {
+        selectedAllDatabases.value = true
+        // if databases already loaded, set selectedDatabaseIds now
+        if (databases.value && databases.value.length > 0) {
+            selectedDatabaseIds.value = databases.value.map(d => String(d.id))
+            defaultDatabaseIds.value = [...selectedDatabaseIds.value]
+            selectedAllDatabases.value = databases.value.length > 0 && selectedDatabaseIds.value.length === databases.value.length
+        }
+    }
+
+    // role
+    const selRoleType = data.selected_role_type || data.selected_role_type_json || data.selectedRoleType || null
+    const selRoleId = data.selected_role_id || data.selected_role_id_json || data.selectedRoleId || null
+    if (selRoleType && ['administrator','auditor','operator'].includes(selRoleType)) {
+        selectedBaseRoleKey.value = selRoleType
+        selectedCustomRoleId.value = null
+    } else if (selRoleId) {
+        selectedCustomRoleId.value = String(selRoleId)
+        selectedBaseRoleKey.value = null
+    }
+
+}
+
+
+// (watch moved below declarations that populateFromInitial depends on)
+function clearUserInfo() {
+    clearSelectedPermissions()
+    selectedBaseRoleKey.value = null
+    selectedCustomRoleId.value = null
+    otherRoleOpen.value = false
+
+    // reset visibility toggles
+    passwordVisible.value = false
+    confirmPasswordVisible.value = false
+
+    try {
+        const userCard = document.querySelector('.card-left')
+        if (userCard) {
+            userCard.querySelectorAll('input').forEach(inp => {
+                if (inp.type === 'checkbox' || inp.type === 'radio') inp.checked = false
+                else inp.value = ''
+            })
+            userCard.querySelectorAll('.input-group.has-value').forEach(el => el.classList.remove('has-value'))
+        }
+    } catch (e) {
+        console.warn('clearUserInfo: failed to clear inputs', e)
+    }
+
+    // clear the reactive form values so v-model bindings are reset
+    if (form && form.value) {
+        form.value.username = ''
+        form.value.password = ''
+        form.value.confirmPassword = ''
+        form.value.firstName = ''
+        form.value.lastName = ''
+        form.value.email = ''
+        form.value.phone = ''
+    }
+
+    selectedGroupId.value = null
+    selectedTeamId.value = null
+}
+
+function clearDatabaseScope() {
+    selectedDatabaseIds.value = []
+    defaultDatabaseIds.value = []
+    selectedAllDatabases.value = false
+}
+
+function submit() {
+    // minimal client-side submission handler to avoid runtime errors
+    // Real implementation should call backend API
+    const payload = {
+        ...form.value,
+        group_id: selectedGroupId.value,
+        team_id: selectedTeamId.value,
+        base_role: selectedBaseRoleKey.value,
+        custom_role: selectedCustomRoleId.value,
+        databases: selectedDatabaseIds.value,
+        permissions: Object.keys(selectedPermissions.value).filter(k => selectedPermissions.value[k])
+    }
+    console.log('Submit payload:', payload)
+    // navigate back to user list (or go back)
+    try { router.push('/user-management') } catch (e) { router.back() }
+}
+
+function cancel() {
+    try { router.back() } catch (e) { router.push('/user-management') }
+}
+
+function setSelectedPermissionsFromCustomRole(roleId) {
+    const role = customRoles.value.find(r => String(r.id) === String(roleId))
+    clearSelectedPermissions()
+    if (!role) return
+    // Normalize role permission names: flatten nested arrays, trim and lowercase
+    let permNames = []
+    if (Array.isArray(role.permissions)) {
+        permNames = role.permissions.flat(Infinity).map(x => String(x || '').trim().toLowerCase()).filter(Boolean)
+    }
+
+    for (const p of allPermissions.value) {
+        const pname = String(p.name || p.action || '').trim().toLowerCase()
+        // exact match or fuzzy contains (to handle 'PlayBack' vs 'Playback')
+        const matched = permNames.some(rn => rn === pname || rn.includes(pname) || pname.includes(rn))
+        if (matched) selectedPermissions.value[p.action] = true
+    }
+}
+
+const buildGroupTeamsMap = (groupList, teamList) => {
+    const map = {}
+    for (const g of groupList) map[g.id] = []
+    for (const t of teamList) {
+        const gid = t.user_group_id || t.user_group || t.user_group_id_id || t.user_group_id
+        if (gid != null && map[gid]) map[gid].push(t)
+    }
+    return map
+}
+
+const groupOptions = computed(() => {
+    return groups.value.map(g => ({
+        value: String(g.id || g.user_group_id || g.user_group || ''),
+        label: g.group_name || g.group || g.name || (g.user_group && g.user_group.group_name) || g.user_group || ''
+    }))
+})
+
+
+const selectedTeamId = ref(null)
+
+
+const selectedDatabaseIds = ref([])
+const selectedAllDatabases = ref(false)
+const defaultDatabaseIds = ref([])
+
+function toggleDatabase(db) {
+    const idStr = String(db.id)
+    const idx = selectedDatabaseIds.value.indexOf(idStr)
+    if (idx === -1) selectedDatabaseIds.value.push(idStr)
+    else selectedDatabaseIds.value.splice(idx, 1)
+    selectedAllDatabases.value = databases.value.length > 0 && selectedDatabaseIds.value.length === databases.value.length
+}
+
+watch(selectedTeamId, (teamId) => {
+    // If selectedDatabaseIds already set (e.g., from initialData), don't overwrite it.
+    if (selectedDatabaseIds.value && selectedDatabaseIds.value.length > 0) {
+        // Still clear when team is unset
+        if (!teamId) selectedDatabaseIds.value = []
+        return
+    }
+
+    if (!teamId) {
+        selectedDatabaseIds.value = []
+        return
+    }
+    const team = teams.value.find(t => String(t.id) === String(teamId))
+    if (!team) return
+    let mains = []
+    try {
+        if (typeof team.maindatabase === 'string') mains = JSON.parse(team.maindatabase)
+        else if (Array.isArray(team.maindatabase)) mains = team.maindatabase
+    } catch (e) {
+        if (typeof team.maindatabase === 'string') {
+            mains = team.maindatabase.replace(/[[\]\"]+/g, '').split(',').map(s => s.trim()).filter(Boolean)
+        }
+    }
+    selectedDatabaseIds.value = mains.map(x => String(x))
+    defaultDatabaseIds.value = [...selectedDatabaseIds.value]
+    selectedAllDatabases.value = databases.value.length > 0 && selectedDatabaseIds.value.length === databases.value.length
+})
+
+function resetDatabase() {
+    selectedDatabaseIds.value = [...defaultDatabaseIds.value]
+    selectedAllDatabases.value = false
+}
+
+function toggleAllDatabases() {
+    selectedAllDatabases.value = !selectedAllDatabases.value
+    if (selectedAllDatabases.value) {
+        selectedDatabaseIds.value = databases.value.map(d => String(d.id))
+    } else {
+        selectedDatabaseIds.value = []
+    }
+}
+
+const baseRoles = ref({})
+const selectedBaseRoleKey = ref(null)
+const selectedPermissions = ref({})
+
+const permissionInputsEnabled = computed(() => {
+    // Always enable editing of permissions in edit mode
+    if (mode && mode.value === 'edit') return true
+    return !!selectedBaseRoleKey.value || !!selectedCustomRoleId.value
+})
+
+const roleCardsDisabled = computed(() => false)
+
+function clearSelectedPermissions() {
+    selectedPermissions.value = {}
+}
+
+function selectBaseRole(roleKey) {
+    if (!roleKey) return
+    if (selectedBaseRoleKey.value === roleKey) {
+        selectedBaseRoleKey.value = null
+        clearSelectedPermissions()
+        return
+    }
+
+    selectedBaseRoleKey.value = roleKey
+    selectedCustomRoleId.value = null
+
+    clearSelectedPermissions()
+    const br = baseRoles.value && baseRoles.value[roleKey]
+    if (br && Array.isArray(br.permissions)) {
+        const perms = br.permissions.flat().map(p => p.toString().trim())
+        for (const p of perms) selectedPermissions.value[p] = true
+    }
+}
+
+// Apply base role permissions without toggling selection (used when initializing from API)
+function applyBaseRolePermissions(roleKey) {
+    if (!roleKey) return
+    selectedBaseRoleKey.value = roleKey
+    selectedCustomRoleId.value = null
+    clearSelectedPermissions()
+    const br = baseRoles.value && baseRoles.value[roleKey]
+    if (br && Array.isArray(br.permissions)) {
+        const perms = br.permissions.flat().map(p => p.toString().trim())
+        for (const p of perms) selectedPermissions.value[p] = true
+    }
+}
+
+function togglePermission(perm) {
+    if (!permissionInputsEnabled.value) return
+    const k = perm.action
+    selectedPermissions.value[k] = !selectedPermissions.value[k]
+}
+
+const teamOptions = computed(() => {
+    const gid = selectedGroupId.value
+    if (!gid) return []
+    return teams.value
+        .filter(t => {
+            const tgid = (t.user_group && (t.user_group.id || t.user_group.user_group_id)) || t.user_group_id || t.user_group_id_id || t.user_group
+            return String(tgid) === String(gid)
+        })
+        .map(t => ({ value: String(t.id || t.user_team_id || t.id || ''), label: t.name || t.team_name || t.name }))
+})
+
+watch(selectedGroupId, (val, old) => {
+    // Only clear selected team when the group changes after an existing selection.
+    // This prevents populateFromInitial (which sets group then team) from being cleared.
+    if (old !== null && old !== undefined && String(old) !== String(val)) {
+        selectedTeamId.value = null
+    }
+})
+
+const fetchData = async () => {
+    const task = (async () => {
+        loading.value = true
+        try {
+            const res = await fetch(API_GROUP_INDEX(), { credentials: 'include' })
+            if (!res.ok) {
+                console.error('Failed to fetch groups', res.status)
+                return
+            }
+            const json = await res.json()
+            groups.value = Array.isArray(json.user_group) ? json.user_group : []
+            teams.value = Array.isArray(json.user_team) ? json.user_team : []
+            groupTeamsMap.value = buildGroupTeamsMap(groups.value, teams.value)
+            try {
+                const dbRes = await fetch(API_GET_DATABASE(), { credentials: 'include' })
+                if (dbRes.ok) {
+                    const dbJson = await dbRes.json()
+                    if (Array.isArray(dbJson.results)) {
+                        databases.value = dbJson.results
+                    } else if (Array.isArray(dbJson)) {
+                        databases.value = dbJson
+                    } else if (Array.isArray(dbJson.main_db)) {
+                        databases.value = dbJson.main_db
+                    } else if (Array.isArray(dbJson.databases)) {
+                        databases.value = dbJson.databases
+                    } else {
+                        databases.value = []
+                    }
+                    // If initial data requested all DBs selected, apply selection now that DB list is available
+                    if (selectedAllDatabases.value) {
+                        selectedDatabaseIds.value = databases.value.map(d => String(d.id))
+                        defaultDatabaseIds.value = [...selectedDatabaseIds.value]
+                        selectedAllDatabases.value = databases.value.length > 0 && selectedDatabaseIds.value.length === databases.value.length
+                    }
+                } else {
+                    console.error('Failed to fetch databases', dbRes.status)
+                }
+            } catch (dbError) {
+                console.error('Error fetching databases:', dbError)
+            }
+        } catch (error) {
+            console.error('Error fetching groups:', error)
+        } finally {
+            loading.value = false
+        }
+    })()
+    registerRequest(task)
+    await task
+}
+
+const fetchGetAllRolesPermissions = async () => {
+    const task = (async () => {
+        loading.value = true
+        try {
+            const res = await fetch(API_GET_ALL_ROLES_PERMISSIONS(), { credentials: 'include' })
+            if (!res.ok) {
+                console.error('Failed to fetch get all roles permissions', res.status)
+                return
+            }
+            const json = await res.json()
+            const perms = Array.isArray(json.all_permissions) ? json.all_permissions : []
+            allPermissions.value = perms
+            customRoles.value = Array.isArray(json.custom_roles) ? json.custom_roles : []
+            baseRoles.value = json.base_roles || {}
+
+            const map = {}
+            for (const t of orderedTypes) map[t] = []
+            for (const p of perms) {
+                const t = (p.type || '').toString().trim().toLowerCase()
+                if (!map[t]) map[t] = []
+                map[t].push(p)
+            }
+            for (const t of orderedTypes) {
+                groupedPermissions.value[t] = map[t] || []
+            }
+
+            // If the component already has an initial selected role (from props.initialData),
+            // apply the corresponding permissions now that baseRoles/customRoles are loaded.
+            if (selectedBaseRoleKey.value) {
+                applyBaseRolePermissions(selectedBaseRoleKey.value)
+            } else if (selectedCustomRoleId.value) {
+                setSelectedPermissionsFromCustomRole(selectedCustomRoleId.value)
+            }
+
+        } catch (error) {
+            console.error('Error fetching permissions:', error)
+        } finally {
+            loading.value = false
+        }
+    })()
+    registerRequest(task)
+    await task
+}
+onMounted(() => {
+    fetchData()
+    fetchGetAllRolesPermissions()
+})
+
+// react to initial data (populate when parent passes data or it arrives async)
+onMounted(() => {
+    if (props.initialData) populateFromInitial(props.initialData)
+})
+
+watch(() => props.initialData, (val) => {
+    if (val) populateFromInitial(val)
+})
+</script>
+
+<style scoped>
+/* (retain styles from AddUser.vue) */
+.customize-btn {
+    margin-left: auto;
+    padding: 6px 16px;
+    background: transparent;
+    border: 1px solid #416fd6;
+    border-radius: 20px;
+    color: #416fd6;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.customize-btn:hover {
+    background: #416fd6;
+    color: #fff;
+}
+
+.select-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.card-left,
+.card-right {
+    background-color: rgba(0, 0, 0, 0);
+    border: rgba(0, 0, 0, 0);
+    gap: 14px;
+
+}
+
+.main-content {
+    flex: 1 1 auto;
+    padding: 83.5px 0px 16px 0px;
+}
+
+.main-wrapper {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100vh - 140px);
+}
+
+.main-wrapper::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.main-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.main-wrapper::-webkit-scrollbar-thumb {
+    background-color: #416fd6;
+    border-radius: 4px;
+}
+
+.database-grid,
+.permissions-grid-3 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.permissions-grid-3 {
+    max-height: none;
+}
+
+.db-card,
+.permission-item {
+    box-sizing: border-box;
+    flex: 0 1 220px;
+    min-width: 180px;
+}
+
+.card {
+    overflow: visible;
+}
+
+.permission-group-header {
+    grid-column: 1 / -1;
+    font-weight: 600;
+    color: rgb(108, 117, 125);
+    margin: 16px 0px 8px;
+    text-transform: uppercase;
+    font-size: 13px;
+}
+
+.main-wrapper .card-body {
+    overflow: visible ;
+}
+
+.dropdown-options::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.dropdown-options::-webkit-scrollbar-track {
+  background: transparent;
+  margin-top: 6px;
+  margin-bottom: 12px;
+}
+
+.dropdown-options::-webkit-scrollbar-thumb {
+  background-color: #416fd6;
+  border-radius: 4px;
+}
+
+/* Password visibility toggle styles */
+.input-group { position: relative; }
+.input-group .input { padding-right: 40px; }
+.input-group .toggle-visibility {
+    position: absolute;
+    right: 8px;
+    top: 16.5px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    font-size: 14px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.input-group .toggle-visibility:focus { outline: none; }
+
+</style>

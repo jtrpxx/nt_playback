@@ -5,5 +5,5 @@ urlpatterns = [
     path('api/get/user/', views.ApiGetUser, name='ApiGetUser'),
     path('api/user-management/change-status/<int:user_id>/', views.ApiChangeUserStatus, name='ApiChangeUserStatus'),
     path('api/add-user/get-all-roles-permissions/', views.ApiGetAllRolesPermissions, name='ApiGetAllRolesPermissions'),
-    
+    path('api/user-management/get-profile/<int:user_id>/', views.ApiGetUSerProfile, name='ApiGetUSerProfile'),
 ]

@@ -298,7 +298,7 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import CustomSelect from '../components/CustomSelect.vue'
 import { registerRequest } from '../utils/pageLoad'
-import { API_GROUP_INDEX, API_GET_DATABASE } from '../api/paths'
+import { API_GROUP_INDEX, API_GET_DATABASE,API_GET_ALL_ROLES_PERMISSIONS } from '../api/paths'
 
 import '../assets/css/add-user.css'
 
@@ -387,8 +387,41 @@ const fetchData = async () => {
     registerRequest(task)
     await task
 }
+
+const fetchGetAllRolesPermissions = async () => {
+    const task = (async () => {
+        loading.value = true
+        try {
+            const res = await fetch(API_GET_ALL_ROLES_PERMISSIONS(), { credentials: 'include' })
+            if (!res.ok) {
+                console.error('Failed to fetch get all roles permissions', res.status)
+                return
+            }
+            const json = await res.json()
+         
+            // fetch database list
+            try {
+                const results = await fetch(API_GET_DATABASE(), { credentials: 'include' })
+                if (results.ok) {
+                 
+                } else {
+                    console.error('Failed to fetch databases', results.status)
+                }
+            } catch (resultsError) {
+                console.error('Error fetching databases:', resultsError)
+            }
+        } catch (error) {
+            console.error('Error fetching groups:', error)
+        } finally {
+            loading.value = false
+        }
+    })()
+    registerRequest(task)
+    await task
+}
 onMounted(() => {
     fetchData()
+    fetchGetAllRolesPermissions()
 })
 </script>
 

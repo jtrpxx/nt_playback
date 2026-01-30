@@ -29,3 +29,6 @@ export const API_USER_MANAGEMENT_CHANGE_STATUS = (id) => `${getApiBase()}/api/us
 
 // หน้า log user
 export const API_GET_LOG_USER = (type) => `${getApiBase()}/api/log-user/get-log/${type}/`
+
+// หน้า Add User
+export const API_GET_ALL_ROLES_PERMISSIONS = () => `${getApiBase()}/api/add-user/get-all-roles-permissions/`

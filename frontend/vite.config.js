@@ -17,12 +17,11 @@ export default defineConfig({
     // listen on all interfaces inside the container
     host: '0.0.0.0',
     port: 8001,
-    // HMR: tell the client to connect to your LAN host on port 80 via ws
-    // but don't make Vite bind to that host: use clientPort instead of port
+    // HMR: let client connect to the page origin (works for localhost and LAN)
+    // remove explicit `host` so client uses the current origin automatically
     hmr: {
       protocol: 'ws',
-      host: '192.168.1.229',
-      clientPort: 80,
+      clientPort: 8001,
     },
     // allow Host headers coming from the proxy container and LAN
     allowedHosts: ['frontend', 'localhost', '127.0.0.1', '192.168.1.229']

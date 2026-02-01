@@ -95,13 +95,16 @@
                       </button>
                     </div>
 
-                    <div class="dropup d-flex justify-content-center">
-                      <button class="btn btn-light" type="button" id="recentDropdown" data-bs-toggle="dropdown"
-                        aria-expanded="false" style="width: 100%;font-size: 12px;margin-bottom: 4px;">
+                    <div class="dropup d-flex justify-content-center" ref="recentWrap">
+                      <button class="btn btn-light" type="button" @click.stop="toggleRecent" :aria-expanded="recentOpen" style="width: 100%;font-size: 12px;margin-bottom: 4px;">
                         <div style="text-align: left;"><i class="fa-regular fa-clock"></i> <span>Recent</span></div>
                       </button>
-                      <ul class="dropdown-menu" id="recentMenu" style="width: 241px;">
-                        <li class="dropdown-item disabled">No recent searches<span>No recent searches</span></li>
+                      <ul v-show="recentOpen" class="recent-dropdown">
+                        <li><button class="dropdown-item" type="button" @click="applyLatestRecent">Latest</button></li>
+                        <li><button class="dropdown-item" type="button" @click="applyRecentRange('1w')">1 week</button></li>
+                        <li><button class="dropdown-item" type="button" @click="applyRecentRange('1m')">1 month</button></li>
+                        <li><button class="dropdown-item" type="button" @click="applyRecentRange('1y')">1 year</button></li>
+                        <!-- dynamic recent entries hidden (only static range menu shown) -->
                       </ul>
                       <label for="recentDropdown"></label>
                     </div>
@@ -114,7 +117,7 @@
                         </div>
                         <div class="col-lg-6">
                           <button class="btn btn-light w-97" type="button" id="reset_audio"
-                            style="border-color: #f2e1e1;font-size: 12px;"><span>Reset</span></button>
+                            style="border-color: #f2e1e1;font-size: 12px;" @click="onReset"><span>Reset</span></button>
                         </div>
                       </div>
                     </div>
@@ -143,15 +146,13 @@
                     <input v-model="searchQuery" type="text" class="form-control form-control-sm search-input"
                       placeholder="Search..." @input="onTyping" @keyup.enter="onSearch" />
                   </div>
-                  <div class="ms-2 export-group">
-                    <button type="button" class="btn btn-primary btn-sm export-icon" data-bs-toggle="dropdown"
-                      aria-expanded="false">
+                  <div class="ms-2 export-group" ref="exportWrap">
+                    <button type="button" class="btn btn-primary btn-sm export-icon" @click.stop="toggleExport" :aria-expanded="exportOpen">
                       <i class="fa-solid fa-download" style="color: #fff;"></i>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul v-show="exportOpen" class="export-dropdown">
                       <li><button class="dropdown-item" type="button" @click="onExportFormat('pdf')">PDF</button></li>
-                      <li><button class="dropdown-item" type="button" @click="onExportFormat('excel')">Excel</button>
-                      </li>
+                      <li><button class="dropdown-item" type="button" @click="onExportFormat('excel')">Excel</button></li>
                       <li><button class="dropdown-item" type="button" @click="onExportFormat('csv')">CSV</button></li>
                     </ul>
                   </div>
@@ -272,17 +273,109 @@ const setPerPage = (opt) => {
 }
 
 const perWrap = ref(null)
+const fromInput = ref(null)
+const toInput = ref(null)
+const exportWrap = ref(null)
+const exportOpen = ref(false)
+const recentWrap = ref(null)
+const recentOpen = ref(false)
+const recentList = ref([])
 const showFavoriteModal = ref(false)
 
 const onDocClick = (e) => {
-  if (!perWrap.value) return
-  if (!perWrap.value.contains(e.target)) perDropdownOpen.value = false
+  if (perWrap.value && !perWrap.value.contains(e.target)) perDropdownOpen.value = false
+  if (exportWrap.value && !exportWrap.value.contains(e.target)) exportOpen.value = false
+  if (recentWrap.value && !recentWrap.value.contains(e.target)) recentOpen.value = false
+}
+
+const toggleRecent = () => {
+  recentOpen.value = !recentOpen.value
+}
+
+const applyRecent = (r) => {
+  try {
+    console.log('apply recent', r)
+    // If recent item contains raw_data similar to favorites, apply filters
+    const raw = typeof r.raw_data === 'string' ? JSON.parse(r.raw_data || '{}') : (r.raw_data || null)
+    if (raw) {
+      const keyMap = {
+        database_name: 'databaseServer',
+        start_date: 'from',
+        end_date: 'to',
+        file_name: 'fileName',
+        duration: 'duration',
+        customer: 'customerNumber',
+        agent: 'agent',
+        call_direction: 'callDirection',
+        extension: 'extension',
+        full_name: 'fullName',
+        custom_field: 'customField'
+      }
+      for (const [rawKey, val] of Object.entries(raw)){
+        const target = keyMap[rawKey]
+        if (target && Object.prototype.hasOwnProperty.call(filters, target)){
+          filters[target] = val
+        }
+      }
+      fetchData()
+    }
+  } catch (err) {
+    console.error('applyRecent error', err)
+  } finally {
+    recentOpen.value = false
+  }
+}
+
+const applyRecentRange = (rangeKey) => {
+  try {
+    const today = new Date()
+    const to = today.toISOString().slice(0,10)
+    let from = ''
+    if (rangeKey === 'latest') {
+      from = ''
+    } else if (rangeKey === '1w') {
+      const d = new Date(today)
+      d.setDate(d.getDate() - 7)
+      from = d.toISOString().slice(0,10)
+    } else if (rangeKey === '1m') {
+      const d = new Date(today)
+      d.setMonth(d.getMonth() - 1)
+      from = d.toISOString().slice(0,10)
+    } else if (rangeKey === '1y') {
+      const d = new Date(today)
+      d.setFullYear(d.getFullYear() - 1)
+      from = d.toISOString().slice(0,10)
+    }
+
+    filters.from = from
+    filters.to = from ? to : ''
+    recentOpen.value = false
+    fetchData()
+  } catch (err) {
+    console.error('applyRecentRange error', err)
+    recentOpen.value = false
+  }
+}
+
+const applyLatestRecent = () => {
+  try {
+    if (!recentList.value || recentList.value.length === 0) return
+    const latest = recentList.value[0]
+    applyRecent(latest)
+  } catch (err) {
+    console.error('applyLatestRecent error', err)
+  }
+}
+
+const toggleExport = () => {
+  exportOpen.value = !exportOpen.value
 }
 
 onMounted(() => {
   // fetchIndexHome registers itself with pageLoad; ensure the initial data fetch is registered too
   fetchIndexHome()
   registerRequest(fetchData())
+  loadRecentFromStorage()
   document.addEventListener('click', onDocClick)
 })
 
@@ -394,10 +487,111 @@ watch(perPage, () => {
   fetchData()
 })
 
-const onSearch = () => {
+const RECENT_KEY = 'home_recent_searches'
+
+const loadRecentFromStorage = () => {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY)
+    if (!raw) return
+    const arr = JSON.parse(raw)
+    if (Array.isArray(arr)) recentList.value = arr
+  } catch (e) {
+    console.error('loadRecentFromStorage error', e)
+  }
+}
+
+const saveRecentToStorage = () => {
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(recentList.value.slice(0, 10)))
+  } catch (e) {
+    console.error('saveRecentToStorage error', e)
+  }
+}
+
+const pushRecent = (item) => {
+  try {
+    // dedupe by raw_data JSON
+    const key = JSON.stringify(item.raw_data || {})
+    recentList.value = recentList.value.filter(r => JSON.stringify(r.raw_data || {}) !== key)
+    recentList.value.unshift(item)
+    // keep max 10
+    if (recentList.value.length > 10) recentList.value.pop()
+    saveRecentToStorage()
+  } catch (e) {
+    console.error('pushRecent error', e)
+  }
+}
+
+const onSearch = async () => {
   currentPage.value = 1
   if (searchTimeout) { clearTimeout(searchTimeout); searchTimeout = null }
-  fetchData()
+  await fetchData()
+  try {
+    // save current filters + searchQuery as a recent item using backend-style keys
+    const raw = {
+      database_name: filters.databaseServer,
+      start_date: filters.from,
+      end_date: filters.to,
+      file_name: filters.fileName,
+      duration: filters.duration,
+      customer: filters.customerNumber,
+      agent_id: filters.agent,
+      agent: filters.agent,
+      call_direction: filters.callDirection,
+      extension: filters.extension,
+      full_name: filters.fullName,
+      custom_field: filters.customField,
+      search: searchQuery.value
+    }
+    const item = { raw_data: raw, created_at: new Date().toISOString() }
+    pushRecent(item)
+  } catch (e) {
+    console.error('onSearch save recent error', e)
+  }
+}
+
+const onReset = async () => {
+  try {
+    // clear all filter fields
+    filters.databaseServer = ''
+    filters.from = ''
+    filters.to = ''
+    filters.duration = ''
+    filters.fileName = ''
+    filters.callDirection = ''
+    filters.customerNumber = ''
+    filters.agent = ''
+    filters.fullName = ''
+    filters.customField = ''
+    // clear search and pagination
+    searchQuery.value = ''
+    currentPage.value = 1
+    // ensure flatpickr inputs are cleared in the DOM too
+    await nextTick()
+    try {
+      if (fromInput.value) {
+        if (fromInput.value._flatpickr && typeof fromInput.value._flatpickr.clear === 'function') {
+          fromInput.value._flatpickr.clear()
+        } else {
+          fromInput.value.value = ''
+        }
+      }
+    } catch (e) { console.warn('clear fromInput failed', e) }
+    try {
+      if (toInput.value) {
+        if (toInput.value._flatpickr && typeof toInput.value._flatpickr.clear === 'function') {
+          toInput.value._flatpickr.clear()
+        } else {
+          toInput.value.value = ''
+        }
+      }
+    } catch (e) { console.warn('clear toInput failed', e) }
+
+    // fetch default data
+    await fetchData()
+  } catch (e) {
+    console.error('onReset error', e)
+  }
 }
 
 function applyFavorite(fav){
@@ -504,4 +698,19 @@ const onRowDelete = (row) => { console.log('delete row', row) }
   transform: translateY(-125%) scale(0.8);
   color: #416fd6;
 }
+
+/* Export button and dropdown */
+.export-group { position: relative; }
+.export-dropdown { position: absolute; right: 0; margin-top: 34px; min-width: 150px; z-index: 1050; background: #fff; border: 1px solid rgba(0,0,0,.15); border-radius: 6px; box-shadow: 0 .5rem 1rem rgba(0,0,0,.175); list-style: none; padding: 6px 0; }
+.export-dropdown .dropdown-item { width:100%; text-align:left; padding:8px 16px; background:transparent; border:none;font-size: 10px; }
+
+/* Recent dropdown */
+.dropup { position: relative; display: block; }
+.recent-dropdown { position: absolute; left: 0; right: 0; bottom: calc(100% + -12px); min-width: 0; width: auto; max-width: 100%; box-sizing: border-box; z-index: 2060; background: #fff; border: 1px solid rgba(0,0,0,.15); border-radius: 25px;  list-style: none; padding: 6px 0; transform-origin: bottom right; }
+.recent-dropdown .dropdown-item { width:100%; text-align:left; padding:8px 12px; background:transparent; border:none; font-size:12px }
+
+/* Prevent my-favorite-search card from clipping the dropup */
+.my-favorite-search .card,
+.my-favorite-search .card-body { overflow: visible; }
+
 </style>

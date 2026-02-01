@@ -38,6 +38,10 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8001",
     "http://localhost:3000",
     "http://172.27.96.1:8001",
+    "http://192.168.1.229:8001",
+    # support access via nginx on default HTTP port (no :8001)
+    "http://localhost",
+    "http://192.168.1.229",
 ]
 SESSION_COOKIE_DOMAIN = None  # ให้ Django ใช้ host จาก request
 
@@ -107,8 +111,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('POSTGRES_DB', 'app_playback'),
         'USER': os.environ.get('POSTGRES_USER', 'postgres'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', '123456'),
-        'HOST': os.environ.get('POSTGRES_HOST', '192.168.1.90'),
+        # Support dev-specific env vars: POSTGRES_PASSWORD_DEV / POSTGRES_HOST_DEV
+        # Priority: if DEBUG and *_DEV set -> use *_DEV, else use normal vars or defaults
+        'PASSWORD': (os.environ.get('POSTGRES_PASSWORD_DEV') if (DEBUG and os.environ.get('POSTGRES_PASSWORD_DEV'))
+                     else os.environ.get('POSTGRES_PASSWORD', '123456')),
+        'HOST': (os.environ.get('POSTGRES_HOST_DEV') if (DEBUG and os.environ.get('POSTGRES_HOST_DEV'))
+                 else os.environ.get('POSTGRES_HOST', 'host.docker.internal')),
         'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
 }
@@ -161,3 +169,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ถ้าต้องการส่ง Cookie/Token ข้าม Domain
 CORS_ALLOW_CREDENTIALS = True
+
+# เพิ่ม CSRF trusted origins เพื่อให้การส่ง cookie/csrf ทำงานจากทั้ง localhost และ LAN
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8001",
+    "http://127.0.0.1:8001",
+    "http://192.168.1.229:8001",
+    # support nginx default port (no :8001)
+    "http://localhost",
+    "http://192.168.1.229",
+]

@@ -141,3 +141,207 @@ export function showToast(titleOrMessage, maybeTypeOrMessage = '', maybeType) {
 export function notification (title, text, icon, showCancelButton){
 
 }
+
+export async function exportTableToFormat(format, type = 'audio', opts = {}) {
+  try {
+    const rows = Array.isArray(opts.rows) ? opts.rows : []
+    const columns = Array.isArray(opts.columns) ? opts.columns : []
+    const startIndex = typeof opts.startIndex === 'number' ? opts.startIndex : 0
+    const rangeStart = (startIndex || 0) + 1
+    const rangeEnd = (startIndex || 0) + (rows.length || 0)
+
+    const hdrs = columns.map(c => c.label || c.key)
+
+    const exportData = rows.map((row, rIdx) => {
+      return columns.map((col) => {
+        if (col.isIndex) return (startIndex || 0) + rIdx + 1
+        const key = col.key
+        let val = row && (row[key] !== undefined ? row[key] : '')
+        if (val === null || val === undefined) return ''
+        return String(val)
+      })
+    })
+
+    // Allow caller to override the filename prefix via opts.fileNamePrefix
+    let fileTypeName = ''
+    if (opts && opts.fileNamePrefix) {
+      fileTypeName = String(opts.fileNamePrefix)
+      if (!fileTypeName.endsWith('_')) fileTypeName += '_'
+    } else {
+      if (type === 'audit') fileTypeName = 'audit-records_'
+      else if (type === 'audio') fileTypeName = 'audio-records_'
+      else fileTypeName = (type ? String(type) + '_' : '')
+    }
+
+    // Excel (HTML-based .xls)
+    if (format === 'excel') {
+      const headerBg = '#2980b9'
+      const callDirColorMap = {
+        'Incoming': '#baf3c7', 'Inbound': '#baf3c7', 'Outgoing': '#add8e6', 'Outbound': '#add8e6', 'Internal': '#fdedbe', 'Block': '#ff7878', 'Tandem': '#add8e6', 'External': '#f0f0f0'
+      }
+      const statusColorMap = { 'success': '#baf3c7', 'error': '#ff7878' }
+
+      let html = '<html><head><meta charset="UTF-8"></head><body>'
+      html += '<table border="1" cellspacing="0" cellpadding="0">'
+      html += '<tr>'
+      html += '<td colspan="' + hdrs.length + '" style="text-align:left;font-size:28px;color:#2980b9;padding:8px;font-weight:bold;">' + (type === 'audio' ? 'Audio Records' : 'Audit Log') + '</td>'
+      html += '</tr>'
+      html += '<tr>'
+      html += '<td colspan="' + hdrs.length + '" style="border-bottom:2px solid #2980b9;padding:0;margin:0;">&nbsp;</td>'
+      html += '</tr>'
+      html += '<thead><tr>'
+      hdrs.forEach(h => { html += '<th style="background-color:' + headerBg + ';color:#ffffff;padding:8px;">' + (h || '') + '</th>' })
+      html += '</tr></thead><tbody>'
+
+      const custNumIndex = hdrs.findIndex(h => String(h).toLowerCase().includes('customer') || String(h).toLowerCase().includes('number'))
+      const extIndex = hdrs.findIndex(h => String(h).toLowerCase().includes('extension') || String(h).toLowerCase().includes('ext'))
+      const callDirIndex = hdrs.findIndex(h => String(h).toLowerCase().includes('call direction'))
+      const statusIndex = hdrs.findIndex(h => String(h).toLowerCase().includes('status'))
+
+      exportData.forEach(row => {
+        html += '<tr>'
+        row.forEach((cell, cellIndex) => {
+          const text = (cell === null || cell === undefined) ? '' : String(cell).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          let cellStyle = ''
+          if (callDirIndex >= 0 && cellIndex === callDirIndex) {
+            const bg = callDirColorMap[text] || '#ffffff'
+            cellStyle += 'background-color:' + bg + ';'
+          } else if (statusIndex >= 0 && cellIndex === statusIndex) {
+            const bg = statusColorMap[text] || '#ffffff'
+            cellStyle += 'background-color:' + bg + ';'
+          }
+          if ((custNumIndex >= 0 && cellIndex === custNumIndex) || (extIndex >= 0 && cellIndex === extIndex)) {
+            cellStyle += 'text-align:right;mso-number-format:\\@;'
+          }
+          html += '<td style="' + cellStyle + '">' + text + '</td>'
+        })
+        html += '</tr>'
+      })
+
+      html += '</tbody></table></body></html>'
+
+      const blob = new Blob([html], { type: 'application/vnd.ms-excel' })
+      const dateStr = new Date().toISOString().slice(0, 10)
+      const fileName = fileTypeName + dateStr + '_' + rangeStart + '-' + rangeEnd + '.xls'
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) window.navigator.msSaveOrOpenBlob(blob, fileName)
+      else {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = fileName
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        setTimeout(() => URL.revokeObjectURL(url), 3000)
+      }
+      return
+    }
+
+    // CSV
+    if (format === 'csv') {
+      const BOM = '\uFEFF'
+      const escapeCsv = (v) => {
+        if (v === null || v === undefined) return ''
+        const s = String(v)
+        return '"' + s.replace(/"/g, '""') + '"'
+      }
+      const csvLines = []
+      csvLines.push(hdrs.map(h => escapeCsv(h)).join(','))
+      exportData.forEach(r => {
+        csvLines.push(r.map(cell => escapeCsv(cell)).join(','))
+      })
+      const csvContent = BOM + csvLines.join('\r\n')
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const dateStr = new Date().toISOString().slice(0, 10)
+      const fileName = fileTypeName + dateStr + '_' + rangeStart + '-' + rangeEnd + '.csv'
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) window.navigator.msSaveOrOpenBlob(blob, fileName)
+      else {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = fileName
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        setTimeout(() => URL.revokeObjectURL(url), 3000)
+      }
+      return
+    }
+
+    // PDF using jsPDF + autoTable (expects window.jspdf and autoTable plugin available)
+    if (format === 'pdf') {
+      const { jsPDF } = window.jspdf || {}
+      if (!jsPDF) {
+        console.error('jsPDF not available')
+        return
+      }
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      const titleText = (type === 'audio') ? 'Audio Records' : 'Audit Log'
+
+      const descIndex = hdrs.findIndex(h => String(h).toLowerCase().includes('description'))
+      const fileNameIndex = hdrs.findIndex(h => String(h).toLowerCase().includes('file name'))
+      const callDirIndex = hdrs.findIndex(h => String(h).toLowerCase().includes('call direction'))
+      const statusIndex = hdrs.findIndex(h => String(h).toLowerCase().includes('status'))
+
+      const columnStyles = {}
+      if (descIndex >= 0) columnStyles[descIndex] = { cellWidth: 70 }
+      if (fileNameIndex >= 0) columnStyles[fileNameIndex] = { cellWidth: 60 }
+
+      const callDirColorMap = {
+        'Incoming': { bg: [186,243,199], text: [23,21,21] }, 'Inbound': { bg: [186,243,199], text: [23,21,21] }, 'Outgoing': { bg: [173,216,230], text: [23,21,21] }, 'Outbound': { bg: [173,216,230], text: [23,21,21] }, 'Internal': { bg: [253,237,190], text: [23,21,21] }, 'Block': { bg: [255,120,120], text: [255,255,255] }, 'Tandem': { bg: [173,216,230], text: [255,255,255] }, 'External': { bg: [240,240,240], text: [23,21,21] }
+      }
+      const statusColorMap = { 'success': { bg: [186,243,199], text: [23,21,21] }, 'error': { bg: [255,120,120], text: [255,255,255] } }
+
+      doc.autoTable({
+        head: [hdrs],
+        body: exportData,
+        startY: 22,
+        margin: { top: 22, left: 14, right: 14 },
+        theme: 'grid',
+        styles: { font: 'helvetica', fontSize: 7.5, cellPadding: 2, overflow: 'linebreak' },
+        headStyles: { fillColor: [41,128,185], textColor: [255,255,255], fontSize: 8.5, fontStyle: 'bold' },
+        columnStyles: columnStyles,
+        tableWidth: 'auto',
+        didDrawPage: function (data) {
+          const pageWidth = doc.internal.pageSize.getWidth ? doc.internal.pageSize.getWidth() : doc.internal.pageSize.width
+          const left = data.settings && data.settings.margin && data.settings.margin.left !== undefined ? data.settings.margin.left : 14
+          const right = data.settings && data.settings.margin && data.settings.margin.right !== undefined ? data.settings.margin.right : 14
+          const lineStartX = left
+          const lineEndX = pageWidth - right
+          doc.setFontSize(16)
+          doc.setTextColor(41,128,185)
+          doc.text(String(titleText), left, 12)
+          const pageNum = (typeof data.pageNumber !== 'undefined') ? data.pageNumber : doc.internal.getNumberOfPages()
+          doc.setFontSize(10)
+          doc.setTextColor(41,128,185)
+          if (doc.textAlign) doc.text('Page ' + pageNum, lineEndX, 12, { align: 'right' })
+          else doc.text('Page ' + pageNum, lineEndX, 12, null, null, 'right')
+          doc.setDrawColor(41,128,185)
+          doc.line(lineStartX, 16, lineEndX, 16)
+        },
+        didParseCell: function (data) {
+          const custNumIndex = hdrs.findIndex(h => String(h).toLowerCase().includes('customer') || String(h).toLowerCase().includes('number'))
+          const extIndex = hdrs.findIndex(h => String(h).toLowerCase().includes('extension') || String(h).toLowerCase().includes('ext'))
+          if ((custNumIndex >= 0 && data.column.index === custNumIndex) || (extIndex >= 0 && data.column.index === extIndex)) data.cell.styles.halign = 'right'
+          if (callDirIndex >= 0 && data.column.index === callDirIndex && data.section === 'body') {
+            const cellValue = data.cell.text[0]
+            const colorInfo = callDirColorMap[cellValue]
+            if (colorInfo) { data.cell.styles.fillColor = colorInfo.bg; data.cell.styles.textColor = colorInfo.text }
+          }
+          if (statusIndex >= 0 && data.column.index === statusIndex && data.section === 'body') {
+            const cellValue = data.cell.text[0]
+            const colorInfo = statusColorMap[cellValue]
+            if (colorInfo) { data.cell.styles.fillColor = colorInfo.bg; data.cell.styles.textColor = colorInfo.text }
+          }
+        }
+      })
+
+      const dateStr = new Date().toISOString().slice(0, 10)
+      const fileName = fileTypeName + dateStr + '_' + rangeStart + '-' + rangeEnd + '.pdf'
+      doc.save(fileName)
+      return
+    }
+  } catch (err) {
+    console.error('exportTableToFormat error', err)
+  }
+}

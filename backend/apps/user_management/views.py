@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.db import transaction, DatabaseError,IntegrityError
+from django.db.models import Q
+import re
 from django.contrib import messages
 from apps.core.utils.function import create_user_log
 import json
@@ -35,6 +37,80 @@ def ApiGetUser(request):
         auth_map.setdefault(auth.user_id, []).append(auth)
 
     main_db_ids = set(MainDatabase.objects.filter(status=True).values_list('id', flat=True))
+
+    # apply search filter if provided (DataTables style: search[value])
+    search_term = (request.GET.get('search[value]') or request.GET.get('search') or '').strip()
+    if search_term:
+        # split on whitespace and common separators (hyphen, slash, underscore)
+        tokens = [t for t in re.split(r'[\s\-_/]+', search_term) if t]
+        base_q = (
+            Q(user__username__icontains=search_term)
+            | Q(user__first_name__icontains=search_term)
+            | Q(user__last_name__icontains=search_term)
+            | Q(phone__icontains=search_term)
+            | Q(team__name__icontains=search_term)
+            | Q(user_code__icontains=search_term)
+            | Q(user__userauth__maindatabase__database_name__icontains=search_term)
+            | Q(user__userauth__user_permission__name__icontains=search_term)
+        )
+
+        # detect explicit or partial status tokens (allow partial like 'inac' or 'act')
+        status_value = None
+        exact_status = {t.lower() for t in tokens if t.lower() in ('active', 'inactive')}
+        if 'active' in exact_status and 'inactive' not in exact_status:
+            status_value = True
+        elif 'inactive' in exact_status and 'active' not in exact_status:
+            status_value = False
+        else:
+            # allow partial matches for tokens of length >= 3
+            partial_hits = set()
+            for t in tokens:
+                lt = t.lower()
+                if len(lt) >= 3:
+                    hit = []
+                    if 'active'.find(lt) != -1:
+                        hit.append('active')
+                    if 'inactive'.find(lt) != -1:
+                        hit.append('inactive')
+                    if len(hit) == 1:
+                        partial_hits.add(hit[0])
+            if 'active' in partial_hits and 'inactive' not in partial_hits:
+                status_value = True
+            elif 'inactive' in partial_hits and 'active' not in partial_hits:
+                status_value = False
+
+        applied_status_only = False
+
+        # build tokenized name/group queries for multi-token searches
+        if len(tokens) > 1:
+            q_tokens = Q()
+            for t in tokens:
+                q_tokens &= (
+                    Q(user__first_name__icontains=t) | Q(user__last_name__icontains=t)
+                )
+            # also try matching all tokens across group/team fields (e.g. "Group - Team")
+            q_tokens_group = Q()
+            for t in tokens:
+                q_tokens_group &= (
+                    Q(team__name__icontains=t) | Q(team__user_group__group_name__icontains=t)
+                )
+
+            # if a status token exists alongside other tokens, require status AND the other tokens
+            if status_value is not None:
+                q = (base_q | q_tokens | q_tokens_group) & Q(user__is_active=status_value)
+            else:
+                q = base_q | q_tokens | q_tokens_group
+        else:
+            # single-token search
+            if status_value is not None:
+                # if the search is just 'active' or 'inactive', filter by status only
+                qs = qs.filter(user__is_active=status_value)
+                applied_status_only = True
+            else:
+                q = base_q
+
+        if not applied_status_only:
+            qs = qs.filter(q).distinct()
 
     # annotate profile instances with permission and database_servers for use in serialization
     for profile in qs:

@@ -1424,6 +1424,13 @@ hr {
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    cursor: pointer;
+}
+
+.group-delete-btn:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
+    transform: scale(1.1);
 }
 
 .group-delete-btn:hover {
@@ -1435,15 +1442,34 @@ hr {
 .swal2-container {
   font-family: "THSarabun";
 }
-.group-delete-btn:hover {
-    background: #fef2f2;
-    border-color: #ef4444;
-    transform: scale(1.1);
+
+.swal2-confirm {
+  background: linear-gradient(135deg, #416fd6, #3b5fc0);
+  border: none;
+  color: #fff;
+  border-radius: 25px;
+  cursor: pointer;
 }
 
-.swal2-container {
-  font-family: "THSarabun";
+.swal2-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(65, 111, 214, 0.4);
 }
+
+.swal2-cancel {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  border-radius: 25px;
+  cursor: pointer;
+}
+
+.swal2-cancel:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+
 
 /* checked state (non-disabled only) */
 .permission-item:has(input:checked):not(:has(input:disabled)) {

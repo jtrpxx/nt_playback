@@ -202,6 +202,12 @@ import { onBeforeUnmount } from 'vue'
 import { nextTick } from 'vue'
 import { API_AUDIO_LIST, API_HOME_INDEX } from '../api/paths'
 
+import '../assets/js/jspdf.umd.min.js'
+import '../assets/js/jspdf.plugin.autotable.min.js'
+
+import { exportTableToFormat } from '../assets/js/function-all'
+
+
 const filters = reactive({
   databaseServer: '',
   from: '',
@@ -835,7 +841,15 @@ onMounted(() => {
 })
 
 const onExport = () => console.log('Export triggered')
-const onExportFormat = (format) => console.log('Export format:', format)
+
+const onExportFormat = (format) => {
+  exportTableToFormat(format, 'audio', {
+    rows: paginatedRecords.value || [],
+    columns: columns || [],
+    startIndex: startIndex.value || 0,
+    fileNamePrefix: 'audio-records'
+  })
+}
 
 const callDirectionClass = (dir) => {
   if (!dir) return 'bg-secondary'

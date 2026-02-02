@@ -164,6 +164,12 @@ const onTyping = () => {
     }, 450)
 }
 
+function onSearch() {
+    currentPage.value = 1
+    if (searchTimeout) { clearTimeout(searchTimeout); searchTimeout = null }
+    fetchData()
+}
+
 const perPageOptions = [50, 100, 500, 1000]
 const perPage = ref(50)
 const currentPage = ref(1)

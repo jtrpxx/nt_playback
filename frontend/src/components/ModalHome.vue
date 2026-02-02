@@ -28,7 +28,7 @@
             </div>
 
             <div class="card card-custom-role" style="border: 2px dashed #e2e8f0;">
-              <div class="custom-roles-list" style="padding: 10px;max-height: 396px !important; overflow:auto !important;">
+              <div id="customRolesList" class="custom-roles-list" style="padding: 10px;max-height: 396px !important; overflow:auto !important;">
                 <template v-if="favorites && favorites.length">
                   <div v-for="favorite in filteredFavorites" :key="favorite.id" class="custom-role-item"
                     @click="applyFavorite(favorite)" style="cursor: pointer;" :data-id="favorite.id">
@@ -407,10 +407,49 @@ function editFavorite(f) {
 async function deleteFavorite(id) {
   try {
     if (!id) return
+    // Prefer Swal if available, otherwise try global Sweetalert2 name, else fallback to native confirm
+    const swalLib = (typeof Swal !== 'undefined' && Swal) || (typeof window !== 'undefined' && (window.Swal || window.Sweetalert2 || window.SweetAlert || window.sweetAlert))
+    let result
+    if (swalLib && typeof swalLib.fire === 'function') {
+      result = await swalLib.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      })
+      if (!result || !result.isConfirmed) return
+    } else {
+      const ok = window.confirm("Are you sure? This action cannot be undone.")
+      if (!ok) return
+    }
+
     const payload = { action: 'delete', favorite_id: id }
     const json = await postFavoriteAction(payload)
     if (json && json.status === 'success') {
       showToast(json.message || 'Deleted successfully', 'success')
+
+      // Remove item from DOM immediately as a visual fallback
+      try {
+        const itemToRemove = document.querySelector(`#myFavoriteSearchModal .custom-role-item[data-id="${id}"]`)
+        if (itemToRemove) itemToRemove.remove()
+
+        const listContainer = document.getElementById('customRolesList')
+        if (listContainer && !listContainer.querySelector('.custom-role-item')) {
+          listContainer.insertAdjacentHTML('afterbegin', `
+              <div class="empty-state" onclick="document.getElementById('tab-btn-add') && document.getElementById('tab-btn-add').click()" style="cursor: pointer; padding: 40px 0; text-align: center; color: #94a3b8;">
+                  <i class="fa-solid fa-plus-circle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                  <p>No favorites yet. Click to create.</p>
+              </div>
+              `)
+        }
+      } catch (e) {
+        console.warn('DOM remove fallback failed', e)
+      }
+
+      // notify parent to update reactive list
       emit('delete', id)
     } else {
       showToast(json.message || 'Failed to delete favorite', 'error')

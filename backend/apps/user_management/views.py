@@ -62,18 +62,29 @@ def ApiGetUser(request):
         elif 'inactive' in exact_status and 'active' not in exact_status:
             status_value = False
         else:
-            # allow partial matches for tokens of length >= 3
+            # allow partial/ prefix matches for status tokens (accept shorter prefixes)
             partial_hits = set()
             for t in tokens:
                 lt = t.lower()
-                if len(lt) >= 3:
-                    hit = []
-                    if 'active'.find(lt) != -1:
-                        hit.append('active')
-                    if 'inactive'.find(lt) != -1:
-                        hit.append('inactive')
-                    if len(hit) == 1:
-                        partial_hits.add(hit[0])
+                # consider prefixes of length >= 2 to be helpful for users (e.g., 'ac' or 'inc')
+                if len(lt) >= 2:
+                    added = False
+                    # prefer prefix matches to avoid accidental substring collisions
+                    if 'active'.startswith(lt) and not 'inactive'.startswith(lt):
+                        partial_hits.add('active')
+                        added = True
+                    if 'inactive'.startswith(lt) and not 'active'.startswith(lt):
+                        partial_hits.add('inactive')
+                        added = True
+                    if not added:
+                        # fallback to substring matching when prefix rules are ambiguous
+                        hit = []
+                        if 'active'.find(lt) != -1:
+                            hit.append('active')
+                        if 'inactive'.find(lt) != -1:
+                            hit.append('inactive')
+                        if len(hit) == 1:
+                            partial_hits.add(hit[0])
             if 'active' in partial_hits and 'inactive' not in partial_hits:
                 status_value = True
             elif 'inactive' in partial_hits and 'active' not in partial_hits:

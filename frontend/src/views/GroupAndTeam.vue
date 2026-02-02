@@ -32,7 +32,7 @@
                             <!-- Content Group here. -->
                             <div class="custom-roles-list" id="customRolesList">
                                 <template v-if="loading">
-                                    <div class="container-overlay" style="height: 487px;">
+                                    <div class="table-overlay" style="height: 487px;">
                                         <div class="overlay-box">Loading...</div>
                                     </div>
                                 </template>

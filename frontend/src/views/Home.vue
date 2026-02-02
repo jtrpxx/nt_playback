@@ -2,6 +2,7 @@
   <MainLayout>
     <div class="main-wrapper container-fluid-home py-3">
       <Breadcrumbs :items="[{ text: 'Home', to: '/' }]" />
+      
       <div class="row col-lg-12">
         <div class="col-lg-2">
           <div class="card">
@@ -52,7 +53,7 @@
 
                 <div class="input-group">
                   <CustomSelect class="select-checkbox" v-model="filters.callDirection"
-                    :options="[{ label: 'All', value: 'All' }, { label: 'Internal', value: 'Internal' }, { label: 'Inbound', value: 'Inbound' }, { label: 'Outbound', value: 'Outbound' }]"
+                    :options="callDirectionOptions"
                     placeholder="Call Direction" name="callDirection" />
                 </div>
 
@@ -101,6 +102,8 @@
                       </button>
                       <ul v-show="recentOpen" class="recent-dropdown">
                         <li><button class="dropdown-item" type="button" @click="applyLatestRecent">Latest</button></li>
+                        <li><button class="dropdown-item" type="button" @click="applyRecentRange('1h')">1 hour</button></li>
+                        <li><button class="dropdown-item" type="button" @click="applyRecentRange('1d')">1 day</button></li>
                         <li><button class="dropdown-item" type="button" @click="applyRecentRange('1w')">1 week</button></li>
                         <li><button class="dropdown-item" type="button" @click="applyRecentRange('1m')">1 month</button></li>
                         <li><button class="dropdown-item" type="button" @click="applyRecentRange('1y')">1 year</button></li>
@@ -230,6 +233,12 @@ const perDropdownUp = ref(false)
 const mainDbOptions = ref([])
 const favoriteSearchAll = ref([])
 const agentOptions = ref([{ label: 'All', value: 'all' }])
+const callDirectionOptions = [
+  { label: 'All', value: 'All' },
+  { label: 'Internal', value: 'Internal' },
+  { label: 'Inbound', value: 'Inbound' },
+  { label: 'Outbound', value: 'Outbound' }
+]
 
 
 const fetchIndexHome = async () => {
@@ -292,7 +301,7 @@ const toggleRecent = () => {
   recentOpen.value = !recentOpen.value
 }
 
-const applyRecent = (r) => {
+const applyRecent = async (r) => {
   try {
     console.log('apply recent', r)
     // If recent item contains raw_data similar to favorites, apply filters
@@ -317,7 +326,49 @@ const applyRecent = (r) => {
           filters[target] = val
         }
       }
-      fetchData()
+
+      // normalize call direction to match option values (case-insensitive)
+      try {
+        if (filters.callDirection) {
+          const v = String(filters.callDirection)
+          const found = callDirectionOptions.find(o => String(o.value).toLowerCase() === v.toLowerCase() || String(o.label).toLowerCase() === v.toLowerCase())
+          if (found) filters.callDirection = found.value
+        }
+      } catch (e) {}
+
+      // ensure flatpickr inputs reflect the loaded from/to
+      try {
+        const parseDate = (s) => {
+          if (!s) return null
+          // convert 'YYYY-MM-DD HH:mm' to 'YYYY-MM-DDTHH:mm' for reliable Date parsing
+          const t = String(s).replace(' ', 'T')
+          const d = new Date(t)
+          return isNaN(d.getTime()) ? null : d
+        }
+        const fromDate = parseDate(filters.from)
+        const toDate = parseDate(filters.to)
+
+        if (fromInput.value) {
+          const inst = fromInput.value._flatpickrInstance
+          if (inst && typeof inst.setDate === 'function') {
+            if (fromDate) inst.setDate(fromDate, true)
+            else inst.clear()
+          } else {
+            fromInput.value.value = filters.from || ''
+          }
+        }
+        if (toInput.value) {
+          const inst2 = toInput.value._flatpickrInstance
+          if (inst2 && typeof inst2.setDate === 'function') {
+            if (toDate) inst2.setDate(toDate, true)
+            else inst2.clear()
+          } else {
+            toInput.value.value = filters.to || ''
+          }
+        }
+      } catch (e) { console.warn('applyRecent update inputs failed', e) }
+
+      await fetchData()
     }
   } catch (err) {
     console.error('applyRecent error', err)
@@ -326,42 +377,101 @@ const applyRecent = (r) => {
   }
 }
 
-const applyRecentRange = (rangeKey) => {
+const applyRecentRange = async (rangeKey) => {
   try {
-    const today = new Date()
-    const to = today.toISOString().slice(0,10)
-    let from = ''
+    const now = new Date()
+    let fromDate = null
+    let toDate = null
     if (rangeKey === 'latest') {
-      from = ''
+      fromDate = null
+      toDate = null
+    } else if (rangeKey === '1h') {
+      fromDate = new Date(now.getTime() - 1 * 60 * 60 * 1000)
+      toDate = now
+    } else if (rangeKey === '1d') {
+      fromDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)
+      toDate = now
     } else if (rangeKey === '1w') {
-      const d = new Date(today)
-      d.setDate(d.getDate() - 7)
-      from = d.toISOString().slice(0,10)
+      fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      toDate = now
     } else if (rangeKey === '1m') {
-      const d = new Date(today)
-      d.setMonth(d.getMonth() - 1)
-      from = d.toISOString().slice(0,10)
+      fromDate = new Date(now)
+      fromDate.setMonth(fromDate.getMonth() - 1)
+      toDate = now
     } else if (rangeKey === '1y') {
-      const d = new Date(today)
-      d.setFullYear(d.getFullYear() - 1)
-      from = d.toISOString().slice(0,10)
+      fromDate = new Date(now)
+      fromDate.setFullYear(fromDate.getFullYear() - 1)
+      toDate = now
     }
 
-    filters.from = from
-    filters.to = from ? to : ''
+    const pad = (n) => String(n).padStart(2, '0')
+    const fmt = (d) => {
+      if (!d) return ''
+      // format as 'YYYY-MM-DD HH:mm' (flatpickr default in directive)
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+    }
+
+    filters.from = fromDate ? fmt(fromDate) : ''
+    filters.to = toDate ? fmt(toDate) : ''
+
+    // update flatpickr inputs/instances so UI reflects the change
+    try {
+      if (fromInput.value) {
+        const inst = fromInput.value._flatpickrInstance
+        if (inst && typeof inst.setDate === 'function') {
+          if (fromDate) inst.setDate(fromDate, true)
+          else inst.clear()
+        } else {
+          fromInput.value.value = filters.from
+        }
+      }
+    } catch (e) { console.warn('update fromInput failed', e) }
+    try {
+      if (toInput.value) {
+        const inst = toInput.value._flatpickrInstance
+        if (inst && typeof inst.setDate === 'function') {
+          if (toDate) inst.setDate(toDate, true)
+          else inst.clear()
+        } else {
+          toInput.value.value = filters.to
+        }
+      }
+    } catch (e) { console.warn('update toInput failed', e) }
     recentOpen.value = false
-    fetchData()
+    await fetchData()
+
+    // save this range as the latest recent selection so 'Latest' will apply it
+    try {
+      const raw = {
+        database_name: filters.databaseServer,
+        start_date: filters.from,
+        end_date: filters.to,
+        file_name: filters.fileName,
+        duration: filters.duration,
+        customer: filters.customerNumber,
+        agent_id: filters.agent,
+        agent: filters.agent,
+        call_direction: filters.callDirection,
+        extension: filters.extension,
+        full_name: filters.fullName,
+        custom_field: filters.customField,
+        search: searchQuery.value
+      }
+      pushRecent({ raw_data: raw, created_at: new Date().toISOString() })
+    } catch (e) {
+      console.warn('save recent range failed', e)
+    }
   } catch (err) {
     console.error('applyRecentRange error', err)
     recentOpen.value = false
   }
 }
 
-const applyLatestRecent = () => {
+const applyLatestRecent = async () => {
   try {
     if (!recentList.value || recentList.value.length === 0) return
     const latest = recentList.value[0]
-    applyRecent(latest)
+    await applyRecent(latest)
   } catch (err) {
     console.error('applyLatestRecent error', err)
   }
@@ -594,7 +704,7 @@ const onReset = async () => {
   }
 }
 
-function applyFavorite(fav){
+async function applyFavorite(fav){
   try{
     const raw = typeof fav.raw_data === 'string' ? JSON.parse(fav.raw_data || '{}') : (fav.raw_data || {})
     // map raw_data keys to local `filters` keys
@@ -617,8 +727,69 @@ function applyFavorite(fav){
         filters[target] = val
       }
     }
-    // close modal and refresh
+
+    // normalize call direction to match option values (case-insensitive)
+    try {
+      if (filters.callDirection) {
+        const v = String(filters.callDirection)
+        const found = callDirectionOptions.find(o => String(o.value).toLowerCase() === v.toLowerCase() || String(o.label).toLowerCase() === v.toLowerCase())
+        if (found) filters.callDirection = found.value
+      }
+    } catch (e) {}
+
+    // ensure DOM inputs and flatpickr reflect the loaded values so labels float correctly
     showFavoriteModal.value = false
+    await nextTick()
+
+    const parseDate = (s) => {
+      if (!s) return null
+      const t = String(s).replace(' ', 'T')
+      const d = new Date(t)
+      return isNaN(d.getTime()) ? null : d
+    }
+
+    try {
+      if (fromInput.value) {
+        const inst = fromInput.value._flatpickrInstance || fromInput.value._flatpickr
+        const d = parseDate(filters.from)
+        if (inst && typeof inst.setDate === 'function') {
+          if (d) inst.setDate(d, true)
+          else inst.clear()
+        } else {
+          fromInput.value.value = filters.from || ''
+        }
+      }
+    } catch (e) { console.warn('applyFavorite update fromInput failed', e) }
+    try {
+      if (toInput.value) {
+        const inst2 = toInput.value._flatpickrInstance || toInput.value._flatpickr
+        const d2 = parseDate(filters.to)
+        if (inst2 && typeof inst2.setDate === 'function') {
+          if (d2) inst2.setDate(d2, true)
+          else inst2.clear()
+        } else {
+          toInput.value.value = filters.to || ''
+        }
+      }
+    } catch (e) { console.warn('applyFavorite update toInput failed', e) }
+
+    // sync has-value classes for inputs inside the filter-card
+    try {
+      const wrap = document.querySelector('.filter-card')
+      if (wrap) {
+        const groups = wrap.querySelectorAll('.input-group')
+        groups.forEach(g => {
+          try {
+            const input = g.querySelector('input, textarea, select')
+            if (!input) return
+            const val = input.value
+            const has = val !== null && String(val).trim() !== ''
+            g.classList.toggle('has-value', has)
+          } catch (ign) {}
+        })
+      }
+    } catch (e) { console.warn('applyFavorite sync has-value failed', e) }
+
     fetchData()
   }catch(e){
     console.error('applyFavorite parse error', e)
@@ -626,11 +797,28 @@ function applyFavorite(fav){
 }
 
 function editFavorite(fav){
-  console.log('edit favorite', fav)
+  try {
+    if (!fav || !fav.id) return
+    const idx = favoriteSearchAll.value.findIndex(x => String(x.id) === String(fav.id))
+    if (idx === -1) {
+      // new favorite created -> add to front
+      favoriteSearchAll.value.unshift(fav)
+    } else {
+      // update existing in-place
+      favoriteSearchAll.value[idx] = fav
+    }
+  } catch (e) {
+    console.error('editFavorite update error', e)
+  }
 }
 
 function deleteFavorite(id){
-  console.log('delete favorite', id)
+  try {
+    if (!id) return
+    favoriteSearchAll.value = favoriteSearchAll.value.filter(x => String(x.id) !== String(id))
+  } catch (e) {
+    console.error('deleteFavorite update error', e)
+  }
 }
 
 function truncate(s, max) {

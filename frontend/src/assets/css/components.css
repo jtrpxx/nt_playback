@@ -958,37 +958,121 @@
   }
 } */
 
-/* Toast Notification */
+/* Toast Notification - modern style (updated to match mockup) */
 .toast {
   position: fixed;
-  bottom: 24px;
   right: 24px;
-  background: #1e293b;
-  color: #fff;
-  padding: 16px 24px;
-  border-radius: 12px;
+  left: auto;
+  bottom: 24px;
+  transform: translateY(12px) scale(.995);
+  opacity: 0;
+  transition: transform 280ms cubic-bezier(.2,.9,.2,1), opacity 280ms ease;
+  z-index: 1200;
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  transform: translateY(100px);
-  opacity: 0;
-  transition: all 0.3s ease;
-  z-index: 1000;
+  gap: 16px;
+  width: auto;
+  max-width: 420px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(2,6,23,0.08);
+  border: 1px solid rgba(2,6,23,0.06);
+  overflow: hidden;
 }
 
 .toast.show {
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
   opacity: 1;
 }
 
-.toast.success {
-  background: #10b981;
+.toast .icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex: 0 0 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 4px 10px rgba(2,6,23,0.08);
 }
 
-.toast.error {
-  background: #ef4444;
+.toast .content { display: flex; flex-direction: column; gap: 4px }
+.toast .content .title { font-weight: 800; color: #ffffff; font-size: 15px }
+.toast .content .message { color: #475569; font-size: 13px }
+
+/* Variant styles: colored left accent and matching icon background */
+.toast.success {
+  background: #f0fdf4;
+  border-color: rgba(16,185,129,0.18);
+  box-shadow: 0 10px 30px rgba(16,185,129,0.03);
+  border-left: 6px solid #10b981;
 }
+.toast.success .icon { background: #10b981; }
+
+.toast.info {
+  background: #eff6ff;
+  border-color: rgba(59,130,246,0.18);
+  box-shadow: 0 10px 30px rgba(59,130,246,0.03);
+  border-left: 6px solid #3b82f6;
+}
+.toast.info .icon { background: #3b82f6; }
+
+.toast.warning {
+  background: #fffbeb;
+  border-color: rgba(245,158,11,0.18);
+  box-shadow: 0 10px 30px rgba(245,158,11,0.03);
+  border-left: 6px solid #f59e0b;
+}
+.toast.warning .icon { background: #f59e0b; }
+
+.toast.error {
+  background: #fef2f2;
+  color: #fff;
+  border-color: rgba(239,68,68,0.18);
+  box-shadow: 0 10px 30px rgba(239,68,68,0.03);
+  border-left: 6px solid #ef4444;
+}
+.toast.error .icon { background: #ef4444; color: #fff !important}
+
+.toast + .toast { margin-top: 10px }
+
+/* Toast progress bar (bottom) */
+.toast {
+  position: fixed;
+}
+.toast .toast-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: rgba(2,6,23,0.03);
+}
+.toast .toast-progress-bar {
+  height: 100%;
+  width: 100%;
+  background: rgba(2,6,23,0.08);
+  transition: width 120ms linear;
+}
+
+/* progress color per variant (muted/transparent) */
+.toast.success .toast-progress-bar { background: rgba(16,185,129,0.22) }
+.toast.info .toast-progress-bar { background: rgba(59,130,246,0.22) }
+.toast.warning .toast-progress-bar { background: rgba(245,158,11,0.22) }
+.toast.error .toast-progress-bar { background: rgba(239,68,68,0.22) }
+
+/* subtle hover tint per variant */
+/* .toast.success:hover { background: rgba(174, 197, 189, 0.22) }
+.toast.info:hover { background: rgba(59,130,246,0.22) }
+.toast.warning:hover { background: rgba(245,158,11,0.22) }
+.toast.error:hover { background: rgba(255, 255, 255, 0.22) } */
+
+/* keep toast visible while hovered (JS also pauses timers) */
+.toast:hover { cursor: default }
 
 /* Modal */
 .modal-overlay {
@@ -1213,8 +1297,8 @@ hr {
 
 .validate {
   color: #dc3545;
-  font-size: 13px;
-  margin-top: 0.25rem;
+  font-size: 10px;
+  margin-top: -6px;
 }
 
 .group-card-item {

@@ -325,3 +325,115 @@ def ApiGetAudioList(request):
         "data": data
     })
 
+def ApiCreateMyFavoriteSearch(request):
+    if request.method == "POST":
+        action = request.POST.get("action")
+        user = request.user
+        
+        # Handle Delete
+        if action == "delete":
+            favorite_id = request.POST.get("favorite_id")
+            try:
+                fav = FavoriteSearch.objects.get(id=favorite_id, user=user)
+                fav_name = fav.favorite_name
+                fav.delete()
+                create_user_log(user=request.user, action="Delete Favorite", detail=f"Deleted favorite: {fav_name}", status="success", request=request)
+                return JsonResponse({"status": "success", "message": "Deleted successfully", "id": favorite_id})
+            except Exception as e:
+                create_user_log(user=request.user, action="Delete Favorite", detail=f"Error deleting favorite: {str(e)}", status="error", request=request)
+                return JsonResponse({"status": "error", "message": str(e)})
+
+        # Handle Create and Edit
+        favorite_name = request.POST.get("favorite_name", "").strip()
+        description = request.POST.get("favorite_description") or request.POST.get("create_favorite_description", "")
+        full_name = request.POST.get("full_name") or request.POST.get("fav_fullname", "")
+
+        
+        # Collect raw data from form fields
+        raw_data = {
+            "database_name": request.POST.get("database_name", ""),
+            "call_direction": request.POST.get("call_direction", ""),
+            "start_date": request.POST.get("start_date", ""),
+            "end_date": request.POST.get("end_date", ""),
+            "file_name": request.POST.get("file_name", ""),
+            "customer": request.POST.get("customer", ""),
+            "extension": request.POST.get("extension", ""),
+            "agent": request.POST.get("agent", ""),
+            "full_name": full_name,
+        }
+
+        if action == "create":
+            if FavoriteSearch.objects.filter(user=user, favorite_name__iexact=favorite_name).exists():
+                create_user_log(user=request.user, action="Create Favorite", detail=f"Duplicate name: {favorite_name}", status="error", request=request)
+                return JsonResponse({"status": "error", "message": "This name is already in the system."})
+
+            try:
+                fav = FavoriteSearch.objects.create(
+                    user=user,
+                    favorite_name=favorite_name,
+                    raw_data=raw_data,
+                    description=description
+                )
+                create_user_log(user=request.user, action="Create Favorite", detail=f"Created favorite: {favorite_name}", status="success", request=request)
+                return JsonResponse({
+                    "status": "success", 
+                    "message": "Created successfully",
+                    "favorite": {
+                        "id": fav.id,
+                        "favorite_name": fav.favorite_name,
+                        "raw_data": fav.raw_data,
+                        "description": fav.description
+                    }
+                })
+            except Exception as e:
+                create_user_log(user=request.user, action="Create Favorite", detail=f"Error creating favorite: {str(e)}", status="error", request=request)
+                return JsonResponse({"status": "error", "message": str(e)})
+
+        elif action == "edit":
+            favorite_id = request.POST.get("favorite_id")
+            
+            if FavoriteSearch.objects.filter(user=user, favorite_name__iexact=favorite_name).exclude(id=favorite_id).exists():
+                create_user_log(user=request.user, action="Edit Favorite", detail=f"Duplicate name: {favorite_name}", status="error", request=request)
+                return JsonResponse({"status": "error", "message": "This name is already in the system."})
+
+            try:
+                fav = FavoriteSearch.objects.get(id=favorite_id, user=user)
+                fav.favorite_name = favorite_name
+                fav.raw_data = raw_data
+                fav.description = description
+                fav.save()
+                create_user_log(user=request.user, action="Edit Favorite", detail=f"Updated favorite: {favorite_name}", status="success", request=request)
+                return JsonResponse({
+                    "status": "success", 
+                    "message": "Updated successfully",
+                    "favorite": {
+                        "id": fav.id,
+                        "favorite_name": fav.favorite_name,
+                        "raw_data": fav.raw_data,
+                        "description": fav.description
+                    }
+                })
+            except FavoriteSearch.DoesNotExist:
+                return JsonResponse({"status": "error", "message": "Favorite not found"})
+            except Exception as e:
+                create_user_log(user=request.user, action="Edit Favorite", detail=f"Error updating favorite: {str(e)}", status="error", request=request)
+                return JsonResponse({"status": "error", "message": str(e)})
+
+    return JsonResponse({"status": "error", "message": "Invalid request"})
+
+
+def ApiCheckMyFavoriteName(request):
+    favorite_name = request.GET.get('favoriteName', '').strip()
+    favorite_id = request.GET.get('favoriteId', None)
+    
+    if not favorite_name:
+        return JsonResponse({'status': 'success', 'is_taken': False})
+
+    query = FavoriteSearch.objects.filter(user=request.user, favorite_name__iexact=favorite_name)
+    if favorite_id:
+        query = query.exclude(id=favorite_id)
+
+    if query.exists():
+        return JsonResponse({'status': 'success', 'is_taken': True, 'message': 'This name is already in the system.'})
+    else:
+        return JsonResponse({'status': 'success', 'is_taken': False})

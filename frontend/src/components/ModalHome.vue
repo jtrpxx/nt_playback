@@ -63,78 +63,80 @@
 
           <!-- Add Tab (simplified, kept structure) -->
           <div :class="['tab-pane', { active: activeTab === 'add' }]">
-            <div class="tab-placeholder">
+              <div class="tab-placeholder">
               <div class="favorite-card">
                 <form id="addFavoriteForm" @submit.prevent>
                   <div class="permissions-grid-1">
+                      <div class="input-group" v-has-value>
+                        <input v-model="addForm.firstName" required="" type="text" name="favoriteName" autocomplete="off"
+                          :class="['input', { 'form-input-modal': addNameTaken }]">
+                        <label class="title-label">Favorite name</label>
+                        <div v-show="addNameTaken" class="validate" id="validateAddMyfavoriteName"><i class="fa-solid fa-circle-exclamation"></i> This name is already in the system.</div>
+                      </div>
                     <div class="input-group" v-has-value>
-                      <input required="" type="text" name="firstNameModal" autocomplete="off" class="input">
-                      <label class="title-label">First Name</label>
-                    </div>
-                    <div class="input-group" v-has-value>
-                      <input required="" type="text" name="descriptionModal" autocomplete="off" class="input">
+                      <input v-model="addForm.description" required="" type="text" name="descriptionModal" autocomplete="off" class="input">
                       <label class="title-label">Description</label>
                     </div>
                   </div>
 
                   <div class="permissions-grid-3">
                     <div class="input-group">
-                      <CustomSelect class="select-search select-checkbox" v-model="filters.databaseServer"
+                      <CustomSelect class="select-search select-checkbox" v-model="addForm.databaseServer"
                         :options="mainDbOptions" placeholder="Database Server" name="databaseServerModal" />
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input ref="fromInput" required type="text" name="fromModal" autocomplete="off" class="input">
+                      <input v-model="addForm.from" ref="fromInputAdd" required type="text" name="fromModal" autocomplete="off" class="input">
                       <label class="title-label">From</label>
-                      <span class="calendar-icon" @click="fromInput && fromInput.focus()"><i
+                      <span class="calendar-icon" @click="fromInputAdd && fromInputAdd.focus()"><i
                           class="fa-regular fa-calendar"></i></span>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input ref="toInput" required type="text" name="toModal" autocomplete="off" class="input">
+                      <input v-model="addForm.to" ref="toInputAdd" required type="text" name="toModal" autocomplete="off" class="input">
                       <label class="title-label">To</label>
-                      <span class="calendar-icon" @click="toInput && toInput.focus()"><i
+                      <span class="calendar-icon" @click="toInputAdd && toInputAdd.focus()"><i
                           class="fa-regular fa-calendar"></i></span>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input required="" type="text" name="durationModal" autocomplete="off" class="input">
+                      <input v-model="addForm.duration" required="" type="text" name="durationModal" autocomplete="off" class="input">
                       <label class="title-label">Duration</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input required="" type="text" name="fileNameModal" autocomplete="off" class="input">
+                      <input v-model="addForm.fileName" required="" type="text" name="fileNameModal" autocomplete="off" class="input">
                       <label class="title-label">File Name</label>
                     </div>
 
                     <div class="input-group">
-                      <CustomSelect class="select-checkbox"
+                      <CustomSelect class="select-checkbox" v-model="addForm.callDirection"
                         :options="[{ label: 'All', value: 'All' }, { label: 'Internal', value: 'Internal' }, { label: 'Inbound', value: 'Inbound' }, { label: 'Outbound', value: 'Outbound' }]"
                         placeholder="Call Direction" name="callDirectionModal" />
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input required="" type="text" name="customerNumberModal" autocomplete="off" class="input">
+                      <input v-model="addForm.customerNumber" required="" type="text" name="customerNumberModal" autocomplete="off" class="input">
                       <label class="title-label">Customer Number</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input required="" type="text" name="extensionModal" autocomplete="off" class="input">
+                      <input v-model="addForm.extension" required="" type="text" name="extensionModal" autocomplete="off" class="input">
                       <label class="title-label">Extension</label>
                     </div>
 
                     <div class="input-group">
-                      <CustomSelect class="select-search select-checkbox" v-model="filters.agent"
+                      <CustomSelect class="select-search select-checkbox" v-model="addForm.agent"
                         :options="agentOptions" placeholder="Agent" name="agentModal" />
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input required="" type="text" name="fullNameModal" autocomplete="off" class="input">
+                      <input v-model="addForm.fullName" required="" type="text" name="fullNameModal" autocomplete="off" class="input">
                       <label class="title-label">Full Name</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input required="" type="text" name="customFieldModal" autocomplete="off" class="input">
+                      <input v-model="addForm.customField" required="" type="text" name="customFieldModal" autocomplete="off" class="input">
                       <label class="title-label">Custom Field</label>
                     </div>
                   </div>
@@ -153,8 +155,11 @@
                 <form id="addFavoriteForm" @submit.prevent>
                   <div class="permissions-grid-1">
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.firstName" required="" type="text" name="firstNameModal" autocomplete="off" class="input">
-                      <label class="title-label">First Name</label>
+                      <input v-model="editForm.firstName" required="" type="text" name="favoriteName" autocomplete="off"
+                        :class="['input', { 'form-input-modal': editNameTaken }]">
+                      <input v-model="editForm.id" required="" type="text" name="favoriteId" autocomplete="off" class="input d-none"></input>
+                      <label class="title-label">Favorite name</label>
+                      <div v-show="editNameTaken" class="validate" id="validateEditMyfavoriteName"><i class="fa-solid fa-circle-exclamation"></i> This name is already in the system.</div>
                     </div>
                     <div class="input-group" v-has-value>
                       <input v-model="editForm.description" required="" type="text" name="descriptionModal" autocomplete="off" class="input">
@@ -231,7 +236,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button v-if="activeTab === 'add'" id="btn-reset-fav" class="btn-role btn-secondary" onclick="resetMyFavoriteSearch()"
+        <button v-if="activeTab === 'add'" id="btn-reset-fav" class="btn-role btn-secondary" @click.prevent="resetAddForm()"
           style="margin-right: auto;">
           <i class="fas fa-undo"></i>
           Reset
@@ -242,7 +247,9 @@
           Cancel
         </button>
 
-        <button v-if="activeTab === 'add' || activeTab === 'edit'" id="btn-save-fav" class="btn-role btn-primary">
+        <button v-if="activeTab === 'add' || activeTab === 'edit'" id="btn-save-fav" class="btn-role btn-primary"
+          :disabled="(activeTab === 'add' && addNameTaken) || (activeTab === 'edit' && editNameTaken)"
+          @click.prevent="saveFavorite()">
           <i class="fas fa-save"></i>
           Save Changes
         </button>
@@ -253,7 +260,11 @@
 
 <script setup>
 import { defineProps, defineEmits, ref, computed, reactive, onMounted, watch } from 'vue'
+import { API_ADD_MY_FAVORITE_SEARCH, API_CHECK_MY_FAVORITE_NAME } from '../api/paths'
+import { getCookie, showToast } from '../assets/js/function-all'
 import CustomSelect from './CustomSelect.vue'
+
+import '../assets/js/sweetalert2@11.min.js'
 import '../assets/css/modal-favorite.css'
 
 const props = defineProps({ modelValue: { type: Boolean, default: false }, favorites: { type: Array, default: () => [] }, mainDbOptions: { type: Array, default: () => [] }, agentOptions: { type: Array, default: () => [] } })
@@ -272,6 +283,26 @@ const filteredFavorites = computed(() => {
   const q = String(searchTerm.value || '').trim().toLowerCase()
   if (!q) return props.favorites
   return props.favorites.filter(f => (String(f.favorite_name || '') + ' ' + String(f.description || '')).toLowerCase().includes(q))
+})
+
+const fromInputAdd = ref(null)
+const toInputAdd = ref(null)
+
+// add form state
+const addForm = reactive({
+  firstName: '',
+  description: '',
+  databaseServer: '',
+  from: '',
+  to: '',
+  duration: '',
+  fileName: '',
+  callDirection: [],
+  customerNumber: '',
+  extension: '',
+  agent: '',
+  fullName: '',
+  customField: ''
 })
 
 // edit form state
@@ -373,7 +404,204 @@ function editFavorite(f) {
     console.error('editFavorite parse error', e)
   }
 }
-function deleteFavorite(id) { emit('delete', id) }
+async function deleteFavorite(id) {
+  try {
+    if (!id) return
+    const payload = { action: 'delete', favorite_id: id }
+    const json = await postFavoriteAction(payload)
+    if (json && json.status === 'success') {
+      showToast(json.message || 'Deleted successfully', 'success')
+      emit('delete', id)
+    } else {
+      showToast(json.message || 'Failed to delete favorite', 'error')
+    }
+  } catch (e) {
+    console.error('deleteFavorite error', e)
+    showToast('Failed to delete favorite', 'error')
+  }
+}
+
+// reset add form
+function resetAddForm() {
+  addForm.firstName = ''
+  addForm.description = ''
+  addForm.databaseServer = ''
+  addForm.from = ''
+  addForm.to = ''
+  addForm.duration = ''
+  addForm.fileName = ''
+  addForm.callDirection = []
+  addForm.customerNumber = ''
+  addForm.extension = ''
+  addForm.agent = ''
+  addForm.fullName = ''
+  addForm.customField = ''
+  // sync has-value classes if needed
+  try {
+    const wrap = document.querySelector('#myFavoriteSearchModal .tab-placeholder')
+    if (wrap) {
+      const groups = wrap.querySelectorAll('.input-group')
+      groups.forEach(g => {
+        const input = g.querySelector('input, textarea, select')
+        if (!input) return
+        const val = input.value
+        g.classList.toggle('has-value', val !== null && String(val).trim() !== '')
+      })
+    }
+  } catch (e) {}
+}
+
+// reset edit form values
+function resetEditForm() {
+  editForm.id = null
+  editForm.firstName = ''
+  editForm.description = ''
+  editForm.databaseServer = ''
+  editForm.from = ''
+  editForm.to = ''
+  editForm.duration = ''
+  editForm.fileName = ''
+  editForm.callDirection = []
+  editForm.customerNumber = ''
+  editForm.extension = ''
+  editForm.agent = ''
+  editForm.fullName = ''
+  editForm.customField = ''
+  editNameTaken.value = false
+  // sync has-value classes inside edit form container if visible
+  try {
+    const wrap = document.querySelector('#edit-form-container')
+    if (wrap) {
+      const groups = wrap.querySelectorAll('.input-group')
+      groups.forEach(g => {
+        const input = g.querySelector('input, textarea, select')
+        if (!input) return
+        const val = input.value
+        g.classList.toggle('has-value', val !== null && String(val).trim() !== '')
+      })
+    }
+  } catch (e) {}
+}
+
+// duplicate name check state & debounce timers
+const addNameTaken = ref(false)
+const editNameTaken = ref(false)
+let _addNameTimer = null
+let _editNameTimer = null
+
+async function checkFavoriteNameAPI(name, favoriteId = null) {
+  if (!name || String(name).trim() === '') return false
+  try {
+    const url = API_CHECK_MY_FAVORITE_NAME() + `?favoriteName=${encodeURIComponent(name)}${favoriteId ? `&favoriteId=${encodeURIComponent(favoriteId)}` : ''}`
+    const res = await fetch(url, { method: 'GET', credentials: 'include' })
+    if (!res.ok) return false
+    const j = await res.json()
+    return j && j.is_taken === true
+  } catch (e) {
+    console.error('checkFavoriteNameAPI error', e)
+    return false
+  }
+}
+
+// debounce watches
+watch(() => addForm.firstName, (val) => {
+  addNameTaken.value = false
+  if (_addNameTimer) clearTimeout(_addNameTimer)
+  _addNameTimer = setTimeout(async () => {
+    if (!val || String(val).trim() === '') { addNameTaken.value = false; return }
+    addNameTaken.value = await checkFavoriteNameAPI(val)
+  }, 400)
+})
+
+watch(() => editForm.firstName, (val) => {
+  editNameTaken.value = false
+  if (_editNameTimer) clearTimeout(_editNameTimer)
+  _editNameTimer = setTimeout(async () => {
+    if (!val || String(val).trim() === '') { editNameTaken.value = false; return }
+    editNameTaken.value = await checkFavoriteNameAPI(val, editForm.id)
+  }, 400)
+})
+
+// helper to POST form data to backend endpoint used by create/edit
+async function postFavoriteAction(formObj) {
+  try {
+    const fd = new FormData()
+    for (const k of Object.keys(formObj)) {
+      const v = formObj[k]
+      if (Array.isArray(v)) fd.append(k, v.join(','))
+      else if (v === null || v === undefined) fd.append(k, '')
+      else fd.append(k, String(v))
+    }
+    const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+    // const csrfToken = ''
+
+    const res = await fetch(API_ADD_MY_FAVORITE_SEARCH(), { method: 'POST', body: fd, credentials: 'include', headers: { 'X-CSRFToken': csrfToken || '' } })
+    if (!res.ok) throw new Error('Network response not ok')
+    return await res.json()
+  } catch (e) {
+    console.error('postFavoriteAction error', e)
+    return { status: 'error', message: e.message }
+  }
+}
+
+// using shared showToast from assets/js/toast.js
+
+// Save handler for add/edit
+async function saveFavorite() {
+  if (activeTab.value === 'add') {
+    const payload = {
+      action: 'create',
+      favorite_name: addForm.firstName || '(no name)',
+      favorite_description: addForm.description || '',
+      database_name: Array.isArray(addForm.databaseServer) ? addForm.databaseServer.join(',') : (addForm.databaseServer || ''),
+      call_direction: Array.isArray(addForm.callDirection) ? addForm.callDirection.join(',') : (addForm.callDirection || ''),
+      start_date: addForm.from || '',
+      end_date: addForm.to || '',
+      file_name: addForm.fileName || '',
+      customer: addForm.customerNumber || '',
+      extension: addForm.extension || '',
+      agent: Array.isArray(addForm.agent) ? addForm.agent.join(',') : (addForm.agent || ''),
+      full_name: addForm.fullName || ''
+    }
+    const json = await postFavoriteAction(payload)
+    if (json && json.status === 'success') {
+      // notify parent to refresh list
+      showToast(`Create ${json.favorite.favorite_name} successfully`, 'success')
+      emit('edit', json.favorite)
+      // clear add form so values are not left behind
+      try { resetAddForm() } catch (e) {}
+      emit('update:modelValue', false)
+    } else {
+      showToast(json.message || 'Failed to create favorite', 'error')
+    }
+  } else if (activeTab.value === 'edit') {
+    const payload = {
+      action: 'edit',
+      favorite_id: editForm.id,
+      favorite_name: editForm.firstName || '(no name)',
+      favorite_description: editForm.description || '',
+      database_name: Array.isArray(editForm.databaseServer) ? editForm.databaseServer.join(',') : (editForm.databaseServer || ''),
+      call_direction: Array.isArray(editForm.callDirection) ? editForm.callDirection.join(',') : (editForm.callDirection || ''),
+      start_date: editForm.from || '',
+      end_date: editForm.to || '',
+      file_name: editForm.fileName || '',
+      customer: editForm.customerNumber || '',
+      extension: editForm.extension || '',
+      agent: Array.isArray(editForm.agent) ? editForm.agent.join(',') : (editForm.agent || ''),
+      full_name: editForm.fullName || ''
+    }
+    const json = await postFavoriteAction(payload)
+    if (json && json.status === 'success') {
+      showToast(`Edit ${json.favorite.favorite_name} successfully`, 'success')
+      emit('edit', json.favorite)
+      // clear edit form after successful save
+      try { resetEditForm() } catch (e) {}
+      emit('update:modelValue', false)
+    } else {
+      showToast(json.message || 'Failed to update favorite', 'error')
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -744,5 +972,10 @@ function deleteFavorite(id) { emit('delete', id) }
 
 .form-label-modal {
   font-size: 12px !important;
+}
+/* Validation styles for modal inputs */
+.form-input-modal {
+  border: 1px solid rgb(245, 163, 163) !important;
+  box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
 }
 </style>

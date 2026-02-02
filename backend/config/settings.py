@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,6 +31,20 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-h6k8sm!93!(=$fmii-x3j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# --- postgres env resolution (use env only; no hardcoded default password) ---
+# NOTE: Use POSTGRES_PASSWORD_DEV when DEBUG and set; otherwise use POSTGRES_PASSWORD.
+# This computes variables used by DATABASES below and fails fast if password is missing.
+POSTGRES_DB = os.environ.get('POSTGRES_DB', 'app_playback')
+POSTGRES_USER = os.environ.get('POSTGRES_USER', 'postgres')
+POSTGRES_PASSWORD = (os.environ.get('POSTGRES_PASSWORD_DEV') if (DEBUG and os.environ.get('POSTGRES_PASSWORD_DEV'))
+                     else os.environ.get('POSTGRES_PASSWORD'))
+POSTGRES_HOST = (os.environ.get('POSTGRES_HOST_DEV') if (DEBUG and os.environ.get('POSTGRES_HOST_DEV'))
+                 else os.environ.get('POSTGRES_HOST', 'host.docker.internal'))
+POSTGRES_PORT = os.environ.get('POSTGRES_PORT', '5432')
+
+if not POSTGRES_PASSWORD:
+    raise ImproperlyConfigured('POSTGRES_PASSWORD (or POSTGRES_PASSWORD_DEV when DEBUG) is not set in the environment')
+
 ALLOWED_HOSTS = ['*', '127.0.0.1', '172.27.96.1']
 # CORS Configuration
 # อนุญาตให้ Frontend (เช่น localhost:8001) ยิง API เข้ามาได้
@@ -39,7 +54,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://172.27.96.1:8001",
     "http://192.168.1.229:8001",
-    # support access via nginx on default HTTP port (no :8001)
     "http://localhost",
     "http://192.168.1.229",
 ]
@@ -73,6 +87,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'apps.core.utils.middleware.DynamicDBHostMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -109,15 +124,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'app_playback'),
-        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
-        # Support dev-specific env vars: POSTGRES_PASSWORD_DEV / POSTGRES_HOST_DEV
-        # Priority: if DEBUG and *_DEV set -> use *_DEV, else use normal vars or defaults
-        'PASSWORD': (os.environ.get('POSTGRES_PASSWORD_DEV') if (DEBUG and os.environ.get('POSTGRES_PASSWORD_DEV'))
-                     else os.environ.get('POSTGRES_PASSWORD', '123456')),
-        'HOST': (os.environ.get('POSTGRES_HOST_DEV') if (DEBUG and os.environ.get('POSTGRES_HOST_DEV'))
-                 else os.environ.get('POSTGRES_HOST', 'host.docker.internal')),
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        'NAME': POSTGRES_DB,
+        'USER': POSTGRES_USER,
+        'PASSWORD': POSTGRES_PASSWORD,
+        'HOST': POSTGRES_HOST,
+        'PORT': POSTGRES_PORT,
     }
 }
 

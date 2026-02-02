@@ -6,15 +6,16 @@ export const getApiBase = () => getRuntime('VITE_API_BASE', ENV_API_BASE)
 
 // หน้า Home
 export const API_HOME_INDEX = () => `${getApiBase()}/api/home/index/`
-
 export const API_AUDIO_LIST = () => `${getApiBase()}/api/audio/list/`
+export const API_CHECK_MY_FAVORITE_NAME = () => `${getApiBase()}/api/home/check/my-favorite-search/`
+export const API_ADD_MY_FAVORITE_SEARCH = () => `${getApiBase()}/api/home/add/my-favorite-search/`
+export const API_EDIT_MY_FAVORITE_SEARCH = (myfavoriteId) => `${getApiBase()}/api/home/edit/my-favorite-search/${myfavoriteId}/`
 
 // หน้า Login
 export const API_LOGIN = () => `${getApiBase()}/login/`
 
 // หน้า Role
 export const API_INDEX_ROLE = () => `${getApiBase()}/api/role/index/`
-
 export const API_GET_DETAILS_ROLE = () => `${getApiBase()}/api/role/get-details/`
 
 // หน้า  Group

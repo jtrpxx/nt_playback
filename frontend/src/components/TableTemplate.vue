@@ -8,7 +8,15 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(r, idx) in rows" :key="r.id ?? idx">
+          <tr v-if="((!rows || rows.length === 0) && !loading)">
+            <td :colspan="columns.length" style="--bs-table-bg-type: #fff;border-bottom-width: 0px;">
+              <div class="empty-state">
+                <i class="fa-solid fa-dove"></i>
+                <p>No matching records found.</p>
+              </div>
+            </td>
+          </tr>
+          <tr v-else v-for="(r, idx) in rows" :key="r.id ?? idx">
             <td v-for="col in columns" :key="col.key" :style="colWidthStyle(col)">
               <slot :name="`cell-${col.key}`" :row="r" :index="idx">
                 <template v-if="col.isIndex">{{ startIndex + idx + 1 }}</template>

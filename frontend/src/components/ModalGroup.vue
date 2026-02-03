@@ -17,7 +17,7 @@
                         <div class="col-lg-12">
                             <div class="form-group-modal">
                                 <div class="input-group" v-has-value>
-                                    <input required="" v-model="name" type="text" name="groupNameModal"
+                                    <input required v-model="name" type="text" name="groupNameModal"
                                         autocomplete="off" class="input" maxlength="30">
                                     <label class="title-label">Group name</label>
                                 </div>
@@ -28,7 +28,7 @@
                             <div class="form-group-modal">
                                 <div class="form-group-modal">
                                     <div class="input-group" v-has-value>
-                                        <input required="" v-model="description" type="text" name="descriptionModal"
+                                        <input required v-model="description" type="text" name="descriptionModal"
                                             autocomplete="off" class="input" maxlength="50">
                                         <label class="title-label">Description</label>
                                     </div>
@@ -69,7 +69,7 @@
                         <div class="col-lg-12">
                             <div class="form-group-modal">
                                 <div class="input-group" v-has-value>
-                                    <input required="" v-model="name" type="text" name="groupNameModal"
+                                    <input required v-model="name" type="text" name="groupNameModal"
                                         autocomplete="off" class="input" maxlength="30">
                                     <label class="title-label">Group name</label>
                                 </div>
@@ -80,7 +80,7 @@
                             <div class="form-group-modal">
                                 <div class="form-group-modal">
                                     <div class="input-group" v-has-value>
-                                        <input required="" v-model="description" type="text" name="descriptionModal"
+                                        <input required v-model="description" type="text" name="descriptionModal"
                                             autocomplete="off" class="input" maxlength="50">
                                         <label class="title-label">Description</label>
                                     </div>
@@ -131,7 +131,7 @@
                             <div class="form-group-modal">
                                 <div class="form-group-modal">
                                     <div class="input-group" v-has-value>
-                                        <input required="" v-model="name" type="text" name="teamNameModal"
+                                        <input required v-model="name" type="text" name="teamNameModal"
                                             autocomplete="off" class="input" maxlength="30">
                                         <label class="title-label">Team Name</label>
                                     </div>
@@ -214,7 +214,7 @@
                             <div class="form-group-modal">
                                 <div class="form-group-modal">
                                     <div class="input-group" v-has-value>
-                                        <input required="" v-model="name" type="text" name="teamNameModal"
+                                        <input required v-model="name" type="text" name="teamNameModal"
                                             autocomplete="off" class="input" maxlength="30">
                                         <label class="title-label">Team Name</label>
                                     </div>

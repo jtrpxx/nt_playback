@@ -12,7 +12,7 @@
 
                 <div style="display: flex; flex-direction: column; line-height: 1.2; margin: 9px 0px 2px -5px">
                   <span style="font-size: 18px; color: #fff">NT Audio Search</span>
-                  <span style="font-size: 13px; color: #fff">Centralized Search and Playback System</span>
+                  <span style="font-size: 12px; color: #fff">Centralized Search and Playback System</span>
                 </div>
               </a>
             </span>

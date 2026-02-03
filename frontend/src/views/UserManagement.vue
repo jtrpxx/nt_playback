@@ -14,17 +14,16 @@
                                 <h5 class="card-title mb-2 mt-1">User Management</h5>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <div class="search-group" style="width:260px; position:relative;">
-                                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                                    <input v-model="searchQuery" type="text"
-                                        class="form-control form-control-sm search-input"
-                                        placeholder="Search..." @input="onTyping" @keyup.enter="onSearch" />
+                                <div style="width:260px;">
+                                    <SearchInput ref="searchInputRef" v-model="searchQuery" :placeholder="'Search...'" @typing="onTyping" @enter="onSearch" @clear="clearSearchQuery" />
                                 </div>
+                                <router-link to="/user-management/add">
                                 <button class="btn-role btn-primary btn-sm" id="addGroupBtn"
                                     @click.stop="openCreateGroup">
                                     <i class="fas fa-plus"></i>
                                     Add User
                                 </button>
+                                </router-link>
                             </div>
                         </div>
                         <TableTemplate
@@ -106,7 +105,7 @@
                                     <div class="tooltip-after">Team</div>
                                     <ul class="tooltip-after-list">
                                         <li v-for="(g, gi) in groupTooltip.items" :key="gi" style="margin:2px 0">- {{ g
-                                            }}</li>
+                                        }}</li>
                                     </ul>
                                 </div>
                             </div>
@@ -137,7 +136,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-
+import SearchInput from '../components/SearchInput.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import TableTemplate from '../components/TableTemplate.vue'
@@ -145,6 +144,7 @@ import { registerRequest } from '../utils/pageLoad'
 import { API_GET_USER, API_USER_MANAGEMENT_CHANGE_STATUS } from '../api/paths'
 
 const searchQuery = ref('')
+const searchInputRef = ref(null)
 let searchTimeout = null
 
 // dropdown state used by the table per-page control
@@ -197,7 +197,7 @@ const onDocClick = (e) => {
 const router = useRouter()
 
 const onRowEdit = (row, actionId) => {
-    const id = actionId ?? (row && row.user && row.user.id) 
+    const id = actionId ?? (row && row.user && row.user.id)
     if (!id) {
         console.warn('onRowEdit: no id available for row', row)
         return
@@ -505,6 +505,17 @@ const fetchData = async () => {
         loading.value = false
     }
 }
+
+function clearSearchQuery() {
+    searchQuery.value = ''
+    if (searchTimeout) { clearTimeout(searchTimeout); searchTimeout = null }
+    currentPage.value = 1
+    fetchData()
+    nextTick(() => {
+        if (searchInputRef.value && typeof searchInputRef.value.focus === 'function') searchInputRef.value.focus()
+    })
+}
+
 
 </script>
 

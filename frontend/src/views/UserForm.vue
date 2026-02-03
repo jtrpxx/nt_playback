@@ -28,48 +28,57 @@
                                 </div>
 
                                 <div class="permissions-grid-1">
-                                    <div class="input-group" v-has-value>
-                                        <input v-model="form.username" required type="text" name="username" autocomplete="off" class="input" maxlength="50" style="margin-bottom: 20px;">
-                                        <label class="title-label">Username</label>
+                                    <div class="input-group" style="margin-bottom: 12.2px;" v-has-value>
+                                        <input v-model="form.username" required type="text" name="username" autocomplete="off" :class="['input', { 'form-input-modal': usernameCheck || errors.username }]" maxlength="50" >
+                                        <label class="title-label">Username*</label>
+                                        <div v-show="usernameCheck" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This username is already in the system.</div>
+                                        <div v-show="errors.username && !usernameCheck" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.username === 'string' ? errors.username : 'This field is required.' }}</div>
                                     </div>
                                 </div>
 
                                 <div class="permissions-grid-2">
                                     <div class="input-group" v-has-value v-if="mode !== 'edit'">
-                                        <input required="" :type="passwordVisible ? 'text' : 'password'" name="password" autocomplete="off" class="input" maxlength="50">
+                                        <input v-model="form.password" required :type="passwordVisible ? 'text' : 'password'" name="password" autocomplete="off" :class="['input', { 'form-input-modal': errors.password }]" maxlength="50">
                                         <button type="button" class="toggle-visibility" @click="passwordVisible = !passwordVisible" aria-label="Toggle password visibility">
                                             <i :class="passwordVisible ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
                                         </button>
-                                        <label class="title-label">Password</label>
+                                        <label class="title-label">Password*</label>
+                                        <div v-show="errors.password" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.password === 'string' ? errors.password : 'This field is required.' }}</div>
                                     </div>
                                     <div class="input-group" v-has-value v-if="mode !== 'edit'">
-                                        <input required="" :type="confirmPasswordVisible ? 'text' : 'password'" name="confirmPassword" autocomplete="off" class="input" maxlength="50">
+                                        <input v-model="form.confirmPassword" required :type="confirmPasswordVisible ? 'text' : 'password'" name="confirmPassword" autocomplete="off" :class="['input', { 'form-input-modal': errors.confirmPassword }]" maxlength="50">
                                         <button type="button" class="toggle-visibility" @click="confirmPasswordVisible = !confirmPasswordVisible" aria-label="Toggle confirm password visibility">
                                             <i :class="confirmPasswordVisible ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
                                         </button>
-                                        <label class="title-label">Confirm Password</label>
+                                        <label class="title-label">Confirm Password*</label>
+                                        <div v-show="errors.confirmPassword" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.confirmPassword === 'string' ? errors.confirmPassword : 'This field is required.' }}</div>
                                     </div>
                                     <div class="input-group" v-has-value>
-                                        <input v-model="form.firstName" required type="text" name="firstName" autocomplete="off" class="input" maxlength="50">
-                                        <label class="title-label">First Name</label>
+                                        <input v-model="form.firstName" required type="text" name="firstName" autocomplete="off" :class="['input', { 'form-input-modal': errors.firstName }]" maxlength="50">
+                                        <label class="title-label">First Name*</label>
+                                        <div v-show="errors.firstName" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.firstName === 'string' ? errors.firstName : 'This field is required.' }}</div>
                                     </div>
                                     <div class="input-group" v-has-value>
-                                        <input v-model="form.lastName" required type="text" name="lastName" autocomplete="off" class="input" maxlength="50">
-                                        <label class="title-label">Last Name</label>
+                                        <input v-model="form.lastName" required type="text" name="lastName" autocomplete="off" :class="['input', { 'form-input-modal': errors.lastName }]" maxlength="50">
+                                        <label class="title-label">Last Name*</label>
+                                        <div v-show="errors.lastName" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.lastName === 'string' ? errors.lastName : 'This field is required.' }}</div>
                                     </div>
                                     <div class="input-group" v-has-value>
                                         <input v-model="form.email" required type="text" name="email" autocomplete="off" class="input" maxlength="50">
                                         <label class="title-label">Email</label>
+                                        <div v-show="errors.email" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.email === 'string' ? errors.email : 'Please enter a valid email address.' }}</div>
                                     </div>
                                     <div class="input-group" v-has-value>
-                                        <input v-model="form.phone" required type="text" name="phone" autocomplete="off" class="input" maxlength="50">
+                                        <input v-model="form.phone" required type="text" name="phone" autocomplete="off" class="input" maxlength="10">
                                         <label class="title-label">Phone</label>
                                     </div>
                                     <div class="input-group">
-                                        <CustomSelect class="select-search " v-model="selectedGroupId" :options="groupOptions" :always-up="false" placeholder="Select Group" name="groupModal" />
+                                        <CustomSelect :class="['select-search', { 'select-toggle-error': errors.group }]" v-model="selectedGroupId" :options="groupOptions" :always-up="false" placeholder="Select Group*" name="groupModal" />
+                                        <div v-show="errors.group" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This dropdown is required.</div>
                                     </div>
                                     <div class="input-group" :class="{ 'select-disabled': !selectedGroupId }">
-                                        <CustomSelect class="select-search" v-model="selectedTeamId" :always-up="false" :options="teamOptions" placeholder="Select Team" name="teamModal" />
+                                        <CustomSelect :class="['select-search', { 'select-toggle-error': errors.team }]" v-model="selectedTeamId" :always-up="false" :options="teamOptions" placeholder="Select Team*" name="teamModal" />
+                                        <div v-show="errors.team" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This dropdown is required.</div>
                                     </div>
                                 </div>
                             </div>
@@ -93,20 +102,21 @@
                                     </div>
                                 </div>
 
+                                <div v-show="errors.role" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This Select Role is required.</div>
                                 <div class="role-cards" id="roleCards" :class="{ disabled: roleCardsDisabled }">
-                                    <label class="role-card" :class="{ selected: selectedBaseRoleKey==='administrator' }" @click.prevent="selectBaseRole('administrator')">
+                                    <label class="role-card" :class="[ { selected: selectedBaseRoleKey==='administrator' }, { 'role-card-error': errors.role } ]" @click.prevent="selectBaseRole('administrator')">
                                         <input type="checkbox" name="role" value="administrator" :checked="selectedBaseRoleKey==='administrator'">
                                         <div class="role-icon"><i class="fas fa-crown"></i></div>
                                         <div class="role-name">Administrator</div>
                                         <div class="role-desc">Full system access</div>
                                     </label>
-                                    <label class="role-card" :class="{ selected: selectedBaseRoleKey==='auditor' }" @click.prevent="selectBaseRole('auditor')">
+                                    <label class="role-card" :class="[ { selected: selectedBaseRoleKey==='auditor' }, { 'role-card-error': errors.role } ]" @click.prevent="selectBaseRole('auditor')">
                                         <input type="checkbox" name="role" value="auditor" :checked="selectedBaseRoleKey==='auditor'">
                                         <div class="role-icon"><i class="fas fa-clipboard-check"></i></div>
                                         <div class="role-name">Auditor</div>
                                         <div class="role-desc">Read & audit access</div>
                                     </label>
-                                    <label class="role-card" :class="{ selected: selectedBaseRoleKey==='operator' }" @click.prevent="selectBaseRole('operator')">
+                                    <label class="role-card" :class="[ { selected: selectedBaseRoleKey==='operator' }, { 'role-card-error': errors.role } ]" @click.prevent="selectBaseRole('operator')">
                                         <input type="checkbox" name="role" value="operator" :checked="selectedBaseRoleKey==='operator'">
                                         <div class="role-icon"><i class="fas fa-headset"></i></div>
                                         <div class="role-name">Operator</div>
@@ -207,8 +217,8 @@
                                         class="permission-group-header">{{ typeLabels[type] }}</div>
 
                                     <label v-for="perm in groupedPermissions[type]" :key="perm.action"
-                                        :class="['permission-item', { disabled: !permissionInputsEnabled }]">
-                                        <input type="checkbox" :data-permission="perm.action" :disabled="!permissionInputsEnabled" :checked="!!selectedPermissions[perm.action]" @change="() => togglePermission(perm)">
+                                        :class="['permission-item']">
+                                        <input type="checkbox" disabled :data-permission="perm.action" :checked="!!selectedPermissions[perm.action]" @change="() => togglePermission(perm)">
                                         <span class="perm-checkbox"></span>
                                         <span class="perm-label">{{ perm.name }}</span>
                                     </label>
@@ -218,7 +228,7 @@
                             <div class="button-group">
                                 <button class="btn btn-primary" type="button" @click="submit">
                                     <i class="fas fa-check"></i>
-                                    {{ mode === 'edit' ? 'Update User' : 'Create User' }}
+                                    {{ mode === 'edit' ? 'Edit User' : 'Add User' }}
                                 </button>
                                 <button class="btn btn-secondary" @click="cancel">
                                     <i class="fas fa-times"></i>
@@ -235,16 +245,20 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import CustomSelect from '../components/CustomSelect.vue'
 import { registerRequest } from '../utils/pageLoad'
-import { API_GROUP_INDEX, API_GET_DATABASE, API_GET_ALL_ROLES_PERMISSIONS } from '../api/paths'
+import { getCookie, showToast } from '../assets/js/function-all'
+import { API_GROUP_INDEX, API_GET_DATABASE, API_GET_ALL_ROLES_PERMISSIONS, API_CHECK_USERNAME, API_CREATE_USER, API_UPDATE_USER } from '../api/paths'
 
 const loading = ref(false)
 const selectedGroupId = ref(null)
+const usernameCheck = ref(false)
+// CSRF token for POST requests
+const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
 
 const route = useRoute()
 const router = useRouter()
@@ -279,6 +293,65 @@ const form = ref({
     lastName: '',
     email: '',
     phone: ''
+})
+
+// debounce timer for username check
+let _usernameTimer = null
+
+const getInitialUserId = () => {
+    try {
+        const d = props.initialData || null
+        if (!d) return null
+        const up = d.user_profile || d.userProfile || null
+        const u = (up && (up.user || up.user_to_edit || up.user)) || (d.user_to_edit && d.user_to_edit) || d.user || null
+        if (u && (u.id || u.user_id)) return u.id || u.user_id
+        if (d.id) return d.id
+        return null
+    } catch (e) {
+        return null
+    }
+}
+
+// validation error state for form fields (string message or false)
+const errors = reactive({
+    username: false,
+    password: false,
+    confirmPassword: false,
+    firstName: false,
+    lastName: false,
+    email: false,
+    group: false,
+    team: false,
+    role: false
+})
+
+// watch username and debounce check against backend
+watch(() => form.value.username, (val) => {
+    usernameCheck.value = false
+    errors.username = false
+    if (_usernameTimer) clearTimeout(_usernameTimer)
+    _usernameTimer = setTimeout(async () => {
+        try {
+            if (!val || String(val).trim() === '') { usernameCheck.value = false; return }
+            // allow only English letters and numbers
+            const uname = String(val).trim()
+            const unameOk = /^[A-Za-z0-9]+$/.test(uname)
+            if (!unameOk) {
+                errors.username = 'Username must contain only English letters and numbers'
+                usernameCheck.value = false
+                return
+            }
+            const userId = getInitialUserId()
+            const url = API_CHECK_USERNAME() + `?username=${encodeURIComponent(uname)}` + (userId ? `&user_id=${encodeURIComponent(String(userId))}` : '')
+            const res = await fetch(url, { method: 'GET', credentials: 'include' })
+            if (!res.ok) { usernameCheck.value = false; return }
+            const j = await res.json()
+            usernameCheck.value = !!(j && j.is_taken === true)
+        } catch (e) {
+            console.error('username check error', e)
+            usernameCheck.value = false
+        }
+    }, 400)
 })
 
 const groups = ref([])
@@ -327,6 +400,8 @@ function selectCustomRole(role) {
 
     // clear any selected base role
     selectedBaseRoleKey.value = null
+    // clear role error when user selects a role
+    errors.role = false
 
     setSelectedPermissionsFromCustomRole(role.id)
 }
@@ -454,21 +529,140 @@ function clearDatabaseScope() {
     selectedAllDatabases.value = false
 }
 
-function submit() {
-    // minimal client-side submission handler to avoid runtime errors
-    // Real implementation should call backend API
-    const payload = {
-        ...form.value,
-        group_id: selectedGroupId.value,
-        team_id: selectedTeamId.value,
-        base_role: selectedBaseRoleKey.value,
-        custom_role: selectedCustomRoleId.value,
-        databases: selectedDatabaseIds.value,
-        permissions: Object.keys(selectedPermissions.value).filter(k => selectedPermissions.value[k])
+async function submit() {
+    // client-side validation for required fields (fields marked with *)
+    // clear previous errors
+    errors.username = false
+    errors.password = false
+    errors.confirmPassword = false
+    errors.firstName = false
+    errors.lastName = false
+    errors.email = false
+    errors.phone = false
+    errors.group = false
+    errors.team = false
+
+    let hasError = false
+    if (!form.value.username || String(form.value.username).trim() === '') { errors.username = 'This field is required.'; hasError = true }
+    else {
+        // username pattern
+        const uname = String(form.value.username).trim()
+        if (!/^[A-Za-z0-9]+$/.test(uname)) { errors.username = 'Username must contain only English letters and numbers'; hasError = true }
     }
-    console.log('Submit payload:', payload)
-    // navigate back to user list (or go back)
-    try { router.push('/user-management') } catch (e) { router.back() }
+    if (mode && mode.value !== 'edit') {
+        if (!form.value.password || String(form.value.password).trim() === '') { errors.password = 'This field is required.'; hasError = true }
+        else if (String(form.value.password).length < 8) { errors.password = 'Password must be at least 8 characters long'; hasError = true }
+        if (!form.value.confirmPassword || String(form.value.confirmPassword).trim() === '') { errors.confirmPassword = 'This field is required.'; hasError = true }
+        if (form.value.password && form.value.confirmPassword && form.value.password !== form.value.confirmPassword) { errors.confirmPassword = 'Passwords do not match'; hasError = true }
+    }
+    if (!form.value.firstName || String(form.value.firstName).trim() === '') { errors.firstName = 'This field is required.'; hasError = true }
+    else if (!/^[\p{L}\s]+$/u.test(String(form.value.firstName).trim())) { errors.firstName = 'Special characters are not allowed in first name'; hasError = true }
+    if (!form.value.lastName || String(form.value.lastName).trim() === '') { errors.lastName = 'This field is required.'; hasError = true }
+    else if (!/^[\p{L}\s]+$/u.test(String(form.value.lastName).trim())) { errors.lastName = 'Special characters are not allowed in last name'; hasError = true }
+    if (!selectedGroupId.value) { errors.group = true; hasError = true }
+    if (!selectedTeamId.value) { errors.team = true; hasError = true }
+    // email validate if provided
+    if (form.value.email && String(form.value.email).trim() !== '') {
+        const e = String(form.value.email).trim()
+        const eok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
+        if (!eok) { errors.email = 'Please enter a valid email address'; hasError = true }
+    }
+    // phone validate if provided: digits only
+    if (form.value.phone && String(form.value.phone).trim() !== '') {
+        const p = String(form.value.phone).trim()
+        if (!/^[0-9]+$/.test(p)) { errors.phone = 'Phone must contain only numbers'; hasError = true }
+    }
+    // role required (either base role or custom role must be selected)
+    if (!selectedBaseRoleKey.value && !selectedCustomRoleId.value) { errors.role = true; hasError = true }
+
+    if (hasError) {
+        // stop submission so user can correct fields
+        // wait for DOM to update so v-show messages are visible, then scroll to first visible validation message
+        try {
+            await nextTick()
+            const validates = Array.from(document.querySelectorAll('.validate'))
+                .filter(el => el.offsetParent !== null)
+            if (validates.length) {
+                const first = validates[0]
+                const group = first.closest('.input-group') || first
+                try { group.scrollIntoView({ behavior: 'smooth', block: 'center' }) } catch (e) { first.scrollIntoView() }
+            }
+        } catch (e) {
+            console.error('scroll to validation error failed', e)
+        }
+        return
+    }
+
+    // Build FormData for POST
+    const fd = new FormData()
+    fd.append('username', form.value.username || '')
+    if (form.value.password) fd.append('password', form.value.password)
+    fd.append('first_name', form.value.firstName || '')
+    fd.append('last_name', form.value.lastName || '')
+    if (form.value.email) fd.append('email', form.value.email)
+    if (form.value.phone) fd.append('phone', form.value.phone)
+
+    // role: prefer custom role id, otherwise base role key (type)
+    if (selectedCustomRoleId.value) fd.append('role', selectedCustomRoleId.value)
+    else if (selectedBaseRoleKey.value) fd.append('role', selectedBaseRoleKey.value)
+
+    if (selectedTeamId.value) fd.append('team', selectedTeamId.value)
+    if (selectedGroupId.value) fd.append('group', selectedGroupId.value)
+
+    // databases: send either db_id-all=all or db_id-{id} flags
+    if (selectedAllDatabases.value) {
+        fd.append('db_id-all', 'all')
+    } else {
+        for (const db of databases.value || []) {
+            const key = `db_id-${db.id}`
+            if (selectedDatabaseIds.value.includes(String(db.id))) fd.append(key, 'on')
+        }
+    }
+
+    // include permissions as JSON string (optional)
+    try {
+        const perms = Object.keys(selectedPermissions.value).filter(k => selectedPermissions.value[k])
+        fd.append('permissions', JSON.stringify(perms))
+    } catch (e) {}
+
+    // Determine endpoint based on mode
+    let url = API_CREATE_USER()
+    let method = 'POST'
+    const initialUserId = getInitialUserId()
+    if (mode && mode.value === 'edit') {
+        // prefer to call update endpoint with id in URL if available
+        const id = initialUserId || route.params.id || route.query.user_id
+        if (id) {
+            url = API_UPDATE_USER(id)
+        } else {
+            // fallback: include user_id in payload and call create endpoint (backend supports update when user_id present)
+            fd.append('user_id', initialUserId || '')
+            url = API_CREATE_USER()
+        }
+    }
+
+    try {
+        loading.value = true
+        const res = await fetch(url, { method, credentials: 'include', body: fd, headers: { 'X-CSRFToken': csrfToken || '' } })
+        const j = res.ok ? await res.json() : null
+        if (!res.ok) {
+            alert('Request failed')
+            return
+        }
+        if (j && j.status === 'success') {
+            try { router.push('/user-management') } catch (e) { router.back() }
+            return
+        } else {
+            const msg = (j && (j.message || j.error)) || 'Unknown error'
+            alert('Error: ' + msg)
+            return
+        }
+    } catch (e) {
+        console.error('submit error', e)
+        alert('An error occurred')
+    } finally {
+        loading.value = false
+    }
 }
 
 function cancel() {
@@ -594,6 +788,9 @@ function selectBaseRole(roleKey) {
 
     selectedBaseRoleKey.value = roleKey
     selectedCustomRoleId.value = null
+
+    // clear role error when user selects a base role
+    errors.role = false
 
     clearSelectedPermissions()
     const br = baseRoles.value && baseRoles.value[roleKey]
@@ -747,6 +944,71 @@ onMounted(() => {
 watch(() => props.initialData, (val) => {
     if (val) populateFromInitial(val)
 })
+
+// clear individual field errors when user edits inputs
+// Real-time field validation watchers
+watch(() => form.value.firstName, (val) => {
+    if (!val || String(val).trim() === '') {
+        errors.firstName = false
+        return
+    }
+    const v = String(val).trim()
+    if (!/^[\p{L}\s]+$/u.test(v)) errors.firstName = 'Special characters are not allowed in first name'
+    else errors.firstName = false
+})
+
+watch(() => form.value.lastName, (val) => {
+    if (!val || String(val).trim() === '') {
+        errors.lastName = false
+        return
+    }
+    const v = String(val).trim()
+    if (!/^[\p{L}\s]+$/u.test(v)) errors.lastName = 'Special characters are not allowed in last name'
+    else errors.lastName = false
+})
+
+watch(() => form.value.password, (val) => {
+    // clear or validate password length
+    if (!val || String(val).trim() === '') {
+        errors.password = false
+    } else if (String(val).length < 8) {
+        errors.password = 'Password must be at least 8 characters long'
+    } else {
+        errors.password = false
+    }
+    // also validate confirm match when confirm present
+    if (form.value.confirmPassword && String(form.value.confirmPassword).trim() !== '') {
+        if (val !== form.value.confirmPassword) errors.confirmPassword = 'Passwords do not match'
+        else errors.confirmPassword = false
+    }
+})
+
+watch(() => form.value.confirmPassword, (val) => {
+    if (!val || String(val).trim() === '') { errors.confirmPassword = false; return }
+    if (form.value.password !== val) errors.confirmPassword = 'Passwords do not match'
+    else errors.confirmPassword = false
+})
+
+watch(() => selectedGroupId.value, (v) => { if (v) errors.group = false })
+watch(() => selectedTeamId.value, (v) => { if (v) errors.team = false })
+
+watch(() => form.value.email, (val) => {
+    if (!val || String(val).trim() === '') { errors.email = false; return }
+    const e = String(val).trim()
+    const eok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
+    errors.email = eok ? false : 'Please enter a valid email address'
+})
+
+watch(() => form.value.phone, (val) => {
+    if (!val || String(val).trim() === '') { errors.phone = false; return }
+    const v = String(val)
+    // auto-strip non-digit characters to enforce numeric-only input
+    const digits = v.replace(/\D+/g, '')
+    if (digits !== v) {
+        try { if (form && form.value) form.value.phone = digits } catch (e) {}
+    }
+    errors.phone = digits.length > 0 ? false : 'Phone must contain only numbers'
+})
 </script>
 
 <style scoped>
@@ -758,7 +1020,7 @@ watch(() => props.initialData, (val) => {
     border: 1px solid #416fd6;
     border-radius: 20px;
     color: #416fd6;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -837,7 +1099,7 @@ watch(() => props.initialData, (val) => {
     color: rgb(108, 117, 125);
     margin: 16px 0px 8px;
     text-transform: uppercase;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .main-wrapper .card-body {
@@ -879,5 +1141,25 @@ watch(() => props.initialData, (val) => {
     justify-content: center;
 }
 .input-group .toggle-visibility:focus { outline: none; }
+
+/* Role card error styling */
+.role-card.role-card-error {
+    border: 1px solid rgb(245, 163, 163) !important;
+    box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
+    border-radius: 8px;
+}
+.permission-item:has(input:checked):has(input:disabled)  {
+    border-color: #416fd6;
+}
+.permission-item:has(input:checked):has(input:disabled) .perm-checkbox {
+    background: #416fd6 !important;
+    border-color: #416fd6;
+}
+
+.form-input-modal {
+    border-radius: 25px;
+    border: 1px solid rgb(245, 163, 163) !important;
+    box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
+}
 
 </style>

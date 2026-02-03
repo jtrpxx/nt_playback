@@ -86,8 +86,7 @@
                   </div>
                   <div class="custom-role-actions">
                     <span class="role-box-badge">Click to edit</span>
-                    <button type="button" class="group-delete-btn" @click.stop="deleteCustomRole(role.id)"
-                      title="Delete Role">
+                    <button type="button" class="group-delete-btn" @click.stop="deleteCustomRole(role.id)">
                       <i class="fas fa-trash" style="font-size: 12px;"></i>
                     </button>
                   </div>
@@ -104,7 +103,7 @@
       </div>
     </div>
   </MainLayout>
-  <ModalConfiguration v-model="showBaseRoleModal" :role-id="selectedBaseRoleId" :role-name="selectedBaseRoleName" :mode="selectedModalMode" />
+  <ModalConfiguration v-model="showBaseRoleModal" :role-id="selectedBaseRoleId" :role-name="selectedBaseRoleName" :mode="selectedModalMode" @role-created="onRoleCreated" @role-updated="onRoleUpdated" />
 </template>
 <script setup>
 import MainLayout from '../layouts/MainLayout.vue';
@@ -113,7 +112,8 @@ import { ref, onMounted, computed } from 'vue'
 import { registerRequest } from '../utils/pageLoad'
 
 import ModalConfiguration from '../components/ModalConfiguration.vue'
-import { API_INDEX_ROLE } from '../api/paths'
+import { API_INDEX_ROLE, API_DELETE_ROLE } from '../api/paths'
+import { getCookie, showToast } from '../assets/js/function-all'
 
 const userPermissionOther = ref([])
 const loading = ref(true)
@@ -168,16 +168,81 @@ function openEditRole(id, mode = 'base') {
 }
 
 function openCreateRole() {
-  console.log('openCreateRole')
   selectedBaseRoleId.value = null
   selectedBaseRoleName.value = 'Create New Role'
   selectedModalMode.value = 'create'
   showBaseRoleModal.value = true
 }
 
-function deleteCustomRole(id) {
-  console.log('deleteCustomRole', id)
-  // implement delete logic (confirm + API call)
+async function deleteCustomRole(id) {
+  try {
+    if (!id) return
+    const swalLib = (typeof Swal !== 'undefined' && Swal) || (typeof window !== 'undefined' && (window.Swal || window.Sweetalert2 || window.SweetAlert || window.sweetAlert))
+    let result
+    if (swalLib && typeof swalLib.fire === 'function') {
+      result = await swalLib.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      })
+      if (!result || !result.isConfirmed) return
+    } else {
+      const ok = window.confirm("Are you sure? This action cannot be undone.")
+      if (!ok) return
+    }
+
+    const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+    const url = API_DELETE_ROLE(id)
+    const res = await fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken || ''
+      },
+      body: JSON.stringify({ role_id: id })
+    })
+    const j = res.ok ? await res.json() : null
+    if (res.ok && j && j.status === 'success') {
+      showToast(j.message || 'Deleted successfully', 'success')
+      try {
+        const idx = (userPermissionOther.value || []).findIndex(r => String(r.id) === String(id))
+        if (idx !== -1) userPermissionOther.value.splice(idx, 1)
+      } catch (e) {
+        console.warn('List removal failed', e)
+      }
+    } else {
+      showToast((j && j.message) || 'Failed to delete role', 'error')
+    }
+  } catch (e) {
+    console.error('deleteCustomRole error', e)
+    showToast('Failed to delete role', 'error')
+  }
+}
+
+function onRoleCreated(role) {
+  try {
+    if (!role || !role.id) return
+    // add to the beginning of the custom roles list
+    userPermissionOther.value = [{ id: role.id, name: role.name, type: role.type || 'role_other' }].concat(userPermissionOther.value || [])
+  } catch (e) { console.error('onRoleCreated handler error', e) }
+}
+
+function onRoleUpdated(role) {
+  try {
+    if (!role || !role.id) return
+    const idx = (userPermissionOther.value || []).findIndex(r => String(r.id) === String(role.id))
+    if (idx !== -1) {
+      userPermissionOther.value[idx].name = role.name
+    } else {
+      // if not present, add to the start
+      userPermissionOther.value = [{ id: role.id, name: role.name, type: role.type || 'role_other' }].concat(userPermissionOther.value || [])
+    }
+  } catch (e) { console.error('onRoleUpdated handler error', e) }
 }
 
 </script>

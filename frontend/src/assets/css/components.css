@@ -62,7 +62,7 @@
   padding: 8px 12px;
   background: #ffffff;
   color: #333333;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 /* Make focus clearer and avoid strong OS blue overlay */
@@ -219,6 +219,63 @@
 }
 .custom-select-root.up .chev {
   transform: rotate(180deg);
+}
+
+.option-search .search-input-wrap {
+  position: relative;
+}
+
+.option-search .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9aa4ad;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.option-search .select-search-input {
+  padding-left: 26px;
+  border-radius: 25px;
+  font-size: 10px
+}
+
+.option-search .select-search-input {
+  padding-right: 26px;
+}
+
+.option-search .clear-icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9aa4ad;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.option-group {
+  list-style: none;
+  padding: 0;
+}
+.option-group .opt-group-label {
+  font-weight: 700;
+  padding: 8px 12px;
+  background: linear-gradient(90deg, rgba(255,235,205,1) 0%, rgba(255,250,240,1) 100%);
+  color: #444;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.option .option-row { display: flex; align-items: center; gap: 8px; padding: 6px 2px; cursor: pointer }
+.option .opt-label { flex: 1 }
+.no-options {
+  text-align: center;
+}
+
+.options {
+  border-radius: 25px;
+  overflow: hidden;
+  background: #fff;
 }
 
 /* start input */
@@ -533,7 +590,7 @@
   border: 1px solid #e2e8f0;
   padding: 8px 16px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 12px;
   color: #64748b;
   cursor: pointer;
   transition: all 0.2s;
@@ -652,7 +709,7 @@
 }
 
 .perm-label {
-  font-size: 13px;
+  font-size: 12px;
   color: #1e293b;
 }
 
@@ -789,7 +846,7 @@
 }
 
 .custom-role-name {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   color: #1e293b;
 }
@@ -812,7 +869,7 @@
 }
 
 .custom-role-perms {
-  font-size: 12px;
+  font-size: 10px;
   color: #64748b;
 }
 
@@ -1294,6 +1351,7 @@ hr {
   justify-content: center;
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
 }
+
 
 .validate {
   color: #dc3545;

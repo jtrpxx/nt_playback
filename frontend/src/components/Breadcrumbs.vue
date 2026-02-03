@@ -1,5 +1,5 @@
 <template>
-  <div class="page-title text-primary-d2 text-140" style="font-size: 13px; margin-bottom: 12px">
+  <div class="page-title text-primary-d2 text-140" style="font-size: 12px; margin-bottom: 12px">
     <template v-for="(crumb, idx) in items" :key="idx">
       <small v-if="idx === 0" :style="{ color: idx === activeIndex ? '#416FD6' : '#6c757d', marginRight: '-4px' }">
         <router-link :to="crumb.to || '/'" class="no-link"><i class="fa-solid fa-house" :style="{ color: idx === activeIndex ? '#416FD6' : '#6c757d' }"></i> {{ crumb.text }}</router-link>

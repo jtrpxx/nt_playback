@@ -17,6 +17,10 @@ export const API_LOGIN = () => `${getApiBase()}/login/`
 // หน้า Role
 export const API_INDEX_ROLE = () => `${getApiBase()}/api/role/index/`
 export const API_GET_DETAILS_ROLE = () => `${getApiBase()}/api/role/get-details/`
+export const API_CHECK_ROLE_NAME = () => `${getApiBase()}/api/role/check/role-name/`
+export const API_CREATE_ROLE = () => `${getApiBase()}/api/role/create/`
+export const API_UPDATE_ROLE = (roleId) => `${getApiBase()}/api/role/edit/${roleId}/`
+export const API_DELETE_ROLE = (roleId) => `${getApiBase()}/api/role/delete/${roleId}/`
 
 // หน้า  Group
 export const API_GROUP_INDEX = () => `${getApiBase()}/api/group/index/`
@@ -33,5 +37,13 @@ export const API_GET_LOG_USER = (type) => `${getApiBase()}/api/log-user/get-log/
 
 // หน้า Add User
 export const API_GET_ALL_ROLES_PERMISSIONS = () => `${getApiBase()}/api/add-user/get-all-roles-permissions/`
-// Get user profile for edit (expects user_id)
 export const API_GET_USER_PROFILE = (id) => `${getApiBase()}/api/user-management/get-profile/${id}/`
+export const API_CHECK_USERNAME = () => `${getApiBase()}/api/add-user/check-username/`
+export const API_CREATE_USER = () => `${getApiBase()}/api/add-user/`
+export const API_UPDATE_USER = (id) => `${getApiBase()}/api/edit-user/${id}/`
+
+// หน้า Settings
+export const API_SETTINGS_INDEX = () => `${getApiBase()}/api/settings/index/`
+export const API_UPDATE_SETTINGS = () => `${getApiBase()}/api/settings/update/`
+
+

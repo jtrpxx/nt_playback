@@ -342,9 +342,8 @@ def DeleteUserPermission(request, user_id):
         create_user_log(user=request.user, action="Delete User", detail=f"Failed to delete user with ID: {user_id}", status="error", request=request, exception=e)
         return JsonResponse({'status': 'error', 'message': f'An error occurred: {str(e)}'})
 
-
 @login_required(login_url='/login')
-def CheckUsername(request):
+def ApiCheckUsername(request):
     username = request.GET.get('username', None)
     user_id = request.GET.get('user_id', None)
     if not username:
@@ -358,3 +357,163 @@ def CheckUsername(request):
         return JsonResponse({'status': 'success', 'is_taken': True, 'message': 'This name is already in the system.'})
     else:
         return JsonResponse({'status': 'success', 'is_taken': False})
+
+@login_required(login_url='/login')
+@require_POST
+def ApiCreateUser(request, user_id=None):
+    """สร้างหรืออัพเดตผู้ใช้
+
+    ถ้าใน POST มีค่าของ `user_id` ให้ทำการอัพเดต มิฉะนั้นให้สร้างผู้ใช้ใหม่
+    """
+    User = get_user_model()
+    post_data = request.POST.dict()
+
+    # ฟิลด์ทั่วไป
+    # ให้ยก user_id ที่มาจาก path parameter (ถ้ามี) ไว้ก่อน
+    post_user_id = post_data.get('user_id')
+    # ถ้า user_id ถูกส่งจาก URL (path) ให้ใช้ค่านั้นก่อน หากไม่มีก็ใช้ค่าใน POST
+    user_id = user_id or post_user_id
+    username = post_data.get('username')
+    password = post_data.get('password')
+    email = post_data.get('email')
+    first_name = post_data.get('first_name')
+    last_name = post_data.get('last_name')
+    phone = post_data.get('phone')
+
+    # บทบาทและทีม
+    role_input = post_data.get('role')
+    team_id = post_data.get('team')
+
+    user_permission_obj = None
+    if role_input:
+        if str(role_input).isdigit():
+            user_permission_obj = UserPermission.objects.filter(id=role_input).first()
+        else:
+            user_permission_obj = UserPermission.objects.filter(type=role_input).first()
+
+    team_obj = UserTeam.objects.filter(id=team_id).first() if team_id else None
+
+    # กรณีอัพเดตเมื่อมี user_id
+    if user_id:
+        try:
+            user_to_update = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'User not found.'})
+
+        # ตรวจสอบความซ้ำของ username โดยยกเว้นตัวเอง
+        new_username = username or user_to_update.username
+        if User.objects.filter(username=new_username).exclude(id=user_id).exists():
+            return JsonResponse({"status": "error", "message": "This name is already in the system."})
+
+        try:
+            with transaction.atomic():
+                user_to_update.username = new_username
+                user_to_update.first_name = first_name or user_to_update.first_name
+                user_to_update.last_name = last_name or user_to_update.last_name
+                user_to_update.email = email or user_to_update.email
+
+                if password:
+                    user_to_update.set_password(password)
+                user_to_update.save()
+
+                # อัพเดตโปรไฟล์
+                profile_to_update = UserProfile.objects.filter(user=user_to_update).first()
+                if profile_to_update:
+                    profile_to_update.phone = phone or profile_to_update.phone
+                    if team_id:
+                        profile_to_update.team = UserTeam.objects.filter(id=team_id).first()
+                    profile_to_update.save()
+                else:
+                    # create profile if missing
+                    UserProfile.objects.create(user=user_to_update, phone=phone, team=team_obj)
+
+                # รีเซ็ต UserAuth (ลบของเก่าแล้วสร้างใหม่)
+                UserAuth.objects.filter(user=user_to_update).delete()
+
+                main_dbs = MainDatabase.objects.all()
+                is_all_dbs = post_data.get('db_id-all') == 'all'
+
+                user_auths = []
+                for db in main_dbs:
+                    allow = True if is_all_dbs else bool(post_data.get(f'db_id-{db.id}', None))
+                    user_auths.append(UserAuth(
+                        user=user_to_update,
+                        maindatabase=db,
+                        allow=allow,
+                        user_permission=user_permission_obj
+                    ))
+                UserAuth.objects.bulk_create(user_auths)
+
+            create_user_log(user=request.user, action="Update User", detail=f"Updated user: {user_to_update.username}", status="success", request=request)
+            return JsonResponse({'status': 'success', 'message': 'User updated successfully.', 'username': user_to_update.username})
+
+        except IntegrityError as e:
+            error_message = str(e)
+            create_user_log(user=request.user, action="Update User", detail=f"IntegrityError: {error_message}", status="error", request=request)
+            return JsonResponse({"status": "error", "message": "Error: " + error_message})
+        except Exception as e:
+            create_user_log(user=request.user, action="Update User", detail=f"Error updating user: {str(e)}", status="error", request=request)
+            return JsonResponse({'status': 'error', 'message': f'An error occurred: {str(e)}'})
+
+    # กรณีสร้างผู้ใช้
+    # ตรวจสอบว่าชื่อผู้ใช้มีอยู่แล้วหรือไม่
+    if not username:
+        return JsonResponse({'status': 'error', 'message': 'Username is required'})
+
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({"status": "error", "message": "This name is already in the system."})
+
+    try:
+        with transaction.atomic():
+            auth_user_create = User.objects.create_user(
+                username=username,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                is_active=True,
+            )
+
+            if auth_user_create:
+                main_dbs = list(MainDatabase.objects.only('id').order_by('id'))
+
+                is_all_dbs = post_data.get('db_id-all') == 'all'
+
+                user_auths = []
+                for db in main_dbs:
+                    if is_all_dbs:
+                        db_select = post_data.get(f'db_id-{db.id}', None)
+                        allow = True
+                    else:
+                        db_select = post_data.get(f'db_id-{db.id}', None)
+                        allow = bool(db_select)
+                    user_auths.append(UserAuth(
+                        user=auth_user_create,
+                        maindatabase=db,
+                        allow=allow,
+                        user_permission=user_permission_obj
+                    ))
+                UserAuth.objects.bulk_create(user_auths)
+
+                UserProfile.objects.create(
+                    user=auth_user_create,
+                    phone=phone,
+                    team=team_obj
+                )
+
+            context = {
+                'status': "success",
+                'message': "User created successfully",
+                'username': username
+            }
+            create_user_log(user=request.user, action="Created User", detail=f"User created successfully: {username}", status="success", request=request)
+        return JsonResponse(context)
+
+    except IntegrityError as e:
+        error_message = str(e)
+        create_user_log(user=request.user, action="Created User",  detail=f"IntegrityError: {error_message}", status="error", request=request)
+        return JsonResponse({"status": "error", "message": "Error: " + error_message})
+
+    except Exception as e:
+        create_user_log(user=request.user, action="Created User", detail=f"Error: {str(e)}", status="error", request=request)
+        return JsonResponse({"status": "error", "message": f"Error: {str(e)}"})

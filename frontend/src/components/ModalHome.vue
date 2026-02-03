@@ -68,13 +68,13 @@
                 <form id="addFavoriteForm" @submit.prevent>
                   <div class="permissions-grid-1">
                       <div class="input-group" v-has-value>
-                        <input v-model="addForm.firstName" required="" type="text" name="favoriteName" autocomplete="off"
+                        <input v-model="addForm.firstName" required type="text" name="favoriteName" autocomplete="off"
                           :class="['input', { 'form-input-modal': addNameTaken }]">
                         <label class="title-label">Favorite name</label>
                         <div v-show="addNameTaken" class="validate" id="validateAddMyfavoriteName"><i class="fa-solid fa-circle-exclamation"></i> This name is already in the system.</div>
                       </div>
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.description" required="" type="text" name="descriptionModal" autocomplete="off" class="input">
+                      <input v-model="addForm.description" required type="text" name="descriptionModal" autocomplete="off" class="input">
                       <label class="title-label">Description</label>
                     </div>
                   </div>
@@ -100,12 +100,12 @@
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.duration" required="" type="text" name="durationModal" autocomplete="off" class="input">
+                      <input v-model="addForm.duration" required type="text" name="durationModal" autocomplete="off" class="input">
                       <label class="title-label">Duration</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.fileName" required="" type="text" name="fileNameModal" autocomplete="off" class="input">
+                      <input v-model="addForm.fileName" required type="text" name="fileNameModal" autocomplete="off" class="input">
                       <label class="title-label">File Name</label>
                     </div>
 
@@ -116,12 +116,12 @@
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.customerNumber" required="" type="text" name="customerNumberModal" autocomplete="off" class="input">
+                      <input v-model="addForm.customerNumber" required type="text" name="customerNumberModal" autocomplete="off" class="input">
                       <label class="title-label">Customer Number</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.extension" required="" type="text" name="extensionModal" autocomplete="off" class="input">
+                      <input v-model="addForm.extension" required type="text" name="extensionModal" autocomplete="off" class="input">
                       <label class="title-label">Extension</label>
                     </div>
 
@@ -131,12 +131,12 @@
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.fullName" required="" type="text" name="fullNameModal" autocomplete="off" class="input">
+                      <input v-model="addForm.fullName" required type="text" name="fullNameModal" autocomplete="off" class="input">
                       <label class="title-label">Full Name</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.customField" required="" type="text" name="customFieldModal" autocomplete="off" class="input">
+                      <input v-model="addForm.customField" required type="text" name="customFieldModal" autocomplete="off" class="input">
                       <label class="title-label">Custom Field</label>
                     </div>
                   </div>
@@ -155,14 +155,14 @@
                 <form id="addFavoriteForm" @submit.prevent>
                   <div class="permissions-grid-1">
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.firstName" required="" type="text" name="favoriteName" autocomplete="off"
+                      <input v-model="editForm.firstName" required type="text" name="favoriteName" autocomplete="off"
                         :class="['input', { 'form-input-modal': editNameTaken }]">
-                      <input v-model="editForm.id" required="" type="text" name="favoriteId" autocomplete="off" class="input d-none"></input>
+                      <input v-model="editForm.id" required type="text" name="favoriteId" autocomplete="off" class="input d-none"></input>
                       <label class="title-label">Favorite name</label>
                       <div v-show="editNameTaken" class="validate" id="validateEditMyfavoriteName"><i class="fa-solid fa-circle-exclamation"></i> This name is already in the system.</div>
                     </div>
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.description" required="" type="text" name="descriptionModal" autocomplete="off" class="input">
+                      <input v-model="editForm.description" required type="text" name="descriptionModal" autocomplete="off" class="input">
                       <label class="title-label">Description</label>
                     </div>
                   </div>
@@ -188,12 +188,12 @@
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.duration" required="" type="text" name="durationModal" autocomplete="off" class="input">
+                      <input v-model="editForm.duration" required type="text" name="durationModal" autocomplete="off" class="input">
                       <label class="title-label">Duration</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.fileName" required="" type="text" name="fileNameModal" autocomplete="off" class="input">
+                      <input v-model="editForm.fileName" required type="text" name="fileNameModal" autocomplete="off" class="input">
                       <label class="title-label">File Name</label>
                     </div>
 
@@ -204,12 +204,12 @@
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.customerNumber" required="" type="text" name="customerNumberModal" autocomplete="off" class="input">
+                      <input v-model="editForm.customerNumber" required type="text" name="customerNumberModal" autocomplete="off" class="input">
                       <label class="title-label">Customer Number</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.extension" required="" type="text" name="extensionModal" autocomplete="off" class="input">
+                      <input v-model="editForm.extension" required type="text" name="extensionModal" autocomplete="off" class="input">
                       <label class="title-label">Extension</label>
                     </div>
 
@@ -219,12 +219,12 @@
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.fullName" required="" type="text" name="fullNameModal" autocomplete="off" class="input">
+                      <input v-model="editForm.fullName" required type="text" name="fullNameModal" autocomplete="off" class="input">
                       <label class="title-label">Full Name</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.customField" required="" type="text" name="customFieldModal" autocomplete="off" class="input">
+                      <input v-model="editForm.customField" required type="text" name="customFieldModal" autocomplete="off" class="input">
                       <label class="title-label">Custom Field</label>
                     </div>
                   </div>

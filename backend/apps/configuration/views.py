@@ -28,6 +28,12 @@ from apps.configuration.models import UserPermission,UserPermissionDetail
 #serializer
 from apps.core.model.authorize.serializers import MainDatabaseSerializer
 
+class MainDatabaseAPIView(BaseListAPIView):
+    serializer_class = MainDatabaseSerializer
+
+    def get_queryset(self):
+        queryset = MainDatabase.objects.all()
+        return queryset
 
 def check_permission(view_func):
     @wraps(view_func)
@@ -131,9 +137,151 @@ def ApiGetTeamByGroup(request, group_id):
         
     return JsonResponse({'status': 'success', 'teams': team_list})
 
-class MainDatabaseAPIView(BaseListAPIView):
-    serializer_class = MainDatabaseSerializer
+@login_required(login_url='/login')
+def ApiCheckRoleName(request):
+    role_name = request.GET.get('role_name', None)
+    role_id = request.GET.get('role_id', None)
+    if not role_name:
+        return JsonResponse({'status': 'error', 'message': 'Role name is required'})
+    
+    query = UserPermission.objects.filter(name=role_name)
+    if role_id:
+        query = query.exclude(id=role_id)
 
-    def get_queryset(self):
-        queryset = MainDatabase.objects.all()
-        return queryset
+    if query.exists():
+        return JsonResponse({'status': 'success', 'is_taken': True, 'message': 'This name is already in the system.'})
+    else:
+        return JsonResponse({'status': 'success', 'is_taken': False})
+
+@require_POST
+@login_required(login_url='/login')
+def ApiCreateRole(request, role_id=None):
+    """
+    Create a new role or update an existing one.
+    If POST JSON contains `role_id`, perform update; otherwise create a new role.
+    """
+    try:
+        data = json.loads(request.body)
+        # prefer role_id from URL if provided, otherwise check POST body
+        if role_id is None:
+            role_id = data.get('role_id')
+        else:
+            # ensure we have a consistent type (int)
+            try:
+                role_id = int(role_id)
+            except Exception:
+                pass
+
+        # role_name may be optional for update flows; only require it for create
+        role_name_raw = data.get('role_name', None)
+        role_name = role_name_raw.strip() if isinstance(role_name_raw, str) else None
+        permissions = data.get('permissions', [])  # List of action IDs
+
+        # If no role_id provided, this is a create flow and role_name is required.
+        if not role_id and not role_name:
+            return JsonResponse({'status': 'error', 'message': 'Role name is required.'})
+
+        # Update flow
+        if role_id:
+            role = UserPermission.objects.filter(id=role_id).first()
+            if not role:
+                return JsonResponse({'status': 'error', 'message': 'Role not found.'})
+
+            # If a new role_name was provided, check duplicates (excluding current role)
+            if role_name:
+                if UserPermission.objects.filter(name__iexact=role_name).exclude(id=role_id).exists():
+                    return JsonResponse({'status': 'error', 'message': 'Role name already exists.'})
+
+            with transaction.atomic():
+                # Only update the role name when provided (allow permission-only updates)
+                if role_name:
+                    role.name = role_name
+                    role.save()
+
+                # Update Permissions
+                details = UserPermissionDetail.objects.filter(user_permission=role)
+                for detail in details:
+                    is_active = str(detail.action) in map(str, permissions)
+                    detail.status = is_active
+                    detail.save()
+
+                create_user_log(user=request.user, action="Update Custom Role", detail=f"Updated role: {role_name}", status="success", request=request)
+
+            return JsonResponse({'status': 'success', 'message': 'Role updated successfully.', 'role': {'id': role.id, 'name': role.name}})
+
+        # Create flow
+        # Check for duplicate name
+        if UserPermission.objects.filter(name__iexact=role_name).exists():
+            return JsonResponse({'status': 'error', 'message': 'Role name already exists.'})
+
+        with transaction.atomic():
+            # Create Role
+            new_role = UserPermission.objects.create(type='role_other', name=role_name)
+
+            # Use 'administrator' as a template for all possible actions
+            admin_role = UserPermission.objects.filter(type='administrator').first()
+
+            if admin_role:
+                admin_details = UserPermissionDetail.objects.filter(user_permission=admin_role)
+                new_details = []
+
+                for detail in admin_details:
+                    # Check if this action is in the selected permissions
+                    is_active = str(detail.action) in map(str, permissions)
+
+                    new_details.append(UserPermissionDetail(
+                        user_permission=new_role,
+                        action=detail.action,
+                        status=is_active,
+                        type=detail.type,
+                        default='t' if is_active else 'f'
+                    ))
+
+                UserPermissionDetail.objects.bulk_create(new_details)
+
+            # Log the action
+            create_user_log(user=request.user, action="Create Custom Role", detail=f"Created role: {role_name}", status="success", request=request)
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Role created successfully.',
+            'role': {
+                'id': new_role.id,
+                'name': new_role.name,
+                'type': new_role.type
+            }
+        })
+
+    except Exception as e:
+        create_user_log(user=request.user, action="Create/Update Custom Role", detail=f"Error creating/updating role: {str(e)}", status="error", request=request)
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+@require_POST
+@login_required(login_url='/login')
+def ApiDeleteRole(request, role_id=None):
+    try:
+        body_role_id = None
+        try:
+            data = json.loads(request.body) if request.body else {}
+            body_role_id = data.get('role_id')
+        except Exception:
+            body_role_id = None
+
+        # prefer role_id from URL if provided, otherwise fall back to body
+        rid = role_id or body_role_id
+        if not rid:
+            return JsonResponse({'status': 'error', 'message': 'No role id provided.'})
+
+        role = UserPermission.objects.filter(id=rid).first()
+        if role:
+            # capture values before deletion
+            deleted_id = role.id
+            deleted_name = role.name
+            role.delete()
+            create_user_log(user=request.user, action="Delete Custom Role", detail=f"Deleted role: {deleted_name}", status="success", request=request)
+            return JsonResponse({'status': 'success', 'message': 'Role deleted successfully.', 'role': {'id': deleted_id, 'name': deleted_name}})
+
+        return JsonResponse({'status': 'error', 'message': 'Role not found.'})
+    except Exception as e:
+        create_user_log(user=request.user, action="Delete Custom Role", detail=f"Error deleting role: {str(e)}", status="error", request=request)
+        return JsonResponse({'status': 'error', 'message': str(e)})

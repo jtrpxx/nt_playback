@@ -1,6 +1,6 @@
 <template>
   <div class="custom-select-root" :class="{ 'is-open': open, 'has-value': hasValue, 'up': up }" ref="root">
-    <button type="button" class="select-toggle" @click="toggle" @keydown.down.prevent="openList"
+    <button type="button" :class="['select-toggle', attrs.class]" @click="toggle" @keydown.down.prevent="openList"
       @keydown.up.prevent="openList" :aria-expanded="open" :aria-haspopup="true">
       <span class="selected-text">{{ hasValue ? selectedLabel : '' }}</span>
       <span class="chev" aria-hidden><i class="fa-solid fa-angle-down" style="font-size: 12px;"></i></span>
@@ -11,8 +11,9 @@
         <li v-if="searchable" class="option option-search">
           <div class="search-input-wrap">
             <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
-            <input v-model="searchTerm" class="form-control form-control-sm select-search-input"
+            <input ref="searchInputRef" v-model="searchTerm" class="form-control form-control-sm select-search-input"
               placeholder="Search..." />
+            <i v-if="searchTerm" class="fa-solid fa-xmark fa-times clear-icon" aria-hidden="true" @click.stop="clearSearch"></i>
           </div>
         </li>
       <div class="options-inner">
@@ -46,7 +47,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch, useAttrs } from 'vue'
 const props = defineProps({
   modelValue: { type: [String, Number, Array], default: '' },
   options: { type: Array, required: true },
@@ -56,6 +57,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue'])
 
+const attrs = useAttrs()
 const open = ref(false)
 const hoverIndex = ref(null)
 const root = ref(null)
@@ -63,6 +65,7 @@ const up = ref(false)
 const searchable = ref(false)
 const checkboxable = ref(false)
 const searchTerm = ref('')
+const searchInputRef = ref(null)
 
 // Normalize props.options into a flat list that may include group headers.
 // Supported input shapes:
@@ -106,8 +109,9 @@ const filteredOptions = computed(() => {
 
 const selectedLabel = computed(() => {
   if (checkboxable.value && Array.isArray(props.modelValue)) {
+    // Exclude any special 'all' option from the displayed labels/count
     const labels = normalizedOptions.value
-      .filter(o => !o.isGroup && props.modelValue.includes(o.value))
+      .filter(o => !o.isGroup && String(o.value).toLowerCase() !== 'all' && props.modelValue.includes(o.value))
       .map(o => o.label)
     const count = labels.length
     if (count === 0) return ''
@@ -218,7 +222,6 @@ function select(v) {
 }
 
 function onOptionClick(v) {
-  // For checkboxable selects, clicking the row should toggle the checkbox as well.
   select(v)
 }
 
@@ -231,6 +234,13 @@ onMounted(() => {
     checkboxable.value = cls.contains('select-checkbox')
   }
 })
+
+function clearSearch() {
+  searchTerm.value = ''
+  nextTick(() => {
+    if (searchInputRef.value && typeof searchInputRef.value.focus === 'function') searchInputRef.value.focus()
+  })
+}
 onBeforeUnmount(() => {
   document.removeEventListener('click', onDocClick)
   window.removeEventListener('resize', computeUp)
@@ -239,41 +249,9 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.option-search .search-input-wrap {
-  position: relative;
-}
-
-.option-search .search-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9aa4ad;
-  font-size: 10px;
-  pointer-events: none;
-}
-
-.option-search .select-search-input {
-  padding-left: 26px;
-  border-radius: 25px;
-  font-size: 10px
-}
-
-/* Group header styling inside the dropdown */
-.option-group {
-  list-style: none;
-  padding: 0;
-}
-.option-group .opt-group-label {
-  font-weight: 700;
-  padding: 8px 12px;
-  background: linear-gradient(90deg, rgba(255,235,205,1) 0%, rgba(255,250,240,1) 100%);
-  color: #444;
-  border-bottom: 1px solid rgba(0,0,0,0.04);
-}
-.option .option-row { display: flex; align-items: center; gap: 8px; padding: 6px 2px; cursor: pointer }
-.option .opt-label { flex: 1 }
-.no-options {
-  text-align: center;
+/* Error style applied to the toggle button when parent marks the component with error class */
+.select-toggle.select-toggle-error {
+  border: 1px solid rgb(245, 163, 163) !important;
+  box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
 }
 </style>

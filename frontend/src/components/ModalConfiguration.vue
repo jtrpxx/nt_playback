@@ -68,10 +68,15 @@
             <div class="modal-body">
                 <div class="form-group-modal">
                     <label class="form-label-modal">Role Name</label>
-                    <input v-model="roleNameInput" type="text" class="form-input-modal" id="createRoleName"
-                        placeholder="Enter role name..." maxlength="25">
+                    <div class="input-group" v-has-value>
+                        <input v-model="roleNameInput" required type="text" name="roleNameModal" autocomplete="off" class="input" 
+                            maxlength="25">
+                        <label class="title-label">Role Name</label>
+                        <div v-show="roleNameCheck" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This role name is already in the system.</div>
+                        <div v-show="roleNameError" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof roleNameError === 'string' ? roleNameError : 'This field is required.' }}</div>
+                    </div>
                 </div>
-                <div class="form-group-modal">                  
+                <div class="form-group-modal">
                     <div class="permissions-grid-3" id="createRolePermissionsGrid">
                         <template v-if="loading">
                             <div class="container-overlay" style="height: 487px;">
@@ -79,14 +84,12 @@
                             </div>
                         </template>
                         <template v-else>
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                 <div class="permissions-section-title" style="margin-bottom: 0;">Select Permissions
                                 </div>
                                 <div style="width: 250px;">
                                     <div class="input-group">
-                                    <CustomSelect class="select-search select-checkbox" v-model="filters.roleAll"
-                                        :options="roleAllOptions" placeholder="Copy from Role..." name="copyRoleModal" />
+                                        <CustomSelect class="select-search" v-model="filters.roleAll" :options="roleAllOptions" placeholder="Copy from Role..." name="copyRoleModal" />
                                     </div>
                                 </div>
                             </div>
@@ -94,8 +97,7 @@
                                 <div class="permission-group-header">{{ type }}</div>
                                 <div class="permission-list">
                                     <label v-for="perm in perms" :key="perm.action" class="permission-item">
-                                        <input type="checkbox" :value="perm.action" v-model="rolePermissions"
-                                            :disabled="checkDisabled" />
+                                        <input type="checkbox" :value="perm.action" v-model="rolePermissions" :disabled="checkDisabled" />
                                         <span class="perm-checkbox" aria-hidden></span>
                                         <span class="perm-label">{{ perm.name }}</span>
                                     </label>
@@ -137,8 +139,9 @@
             <div class="modal-body">
                 <div class="form-group-modal">
                     <label class="form-label-modal">Role Name</label>
-                    <input v-model="roleNameInput" type="text" class="form-input-modal" id="editRoleName"
-                        placeholder="Enter role name..." maxlength="25">
+                    <input v-model="roleNameInput" type="text" class="form-input-modal" id="editRoleName" placeholder="Enter role name..." maxlength="25">
+                    <div v-show="roleNameCheck" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This role name is already in the system.</div>
+                    <div v-show="roleNameError" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof roleNameError === 'string' ? roleNameError : 'This field is required.' }}</div>
                 </div>
                 <div class="form-group-modal">
                     <div class="permissions-section-title">Select Permissions</div>
@@ -186,8 +189,8 @@
 import { watch, computed, ref } from 'vue'
 import CustomSelect from './CustomSelect.vue'
 import '../assets/css/components.css'
-
-import { API_GET_DETAILS_ROLE, API_INDEX_ROLE } from '../api/paths'
+import { API_GET_DETAILS_ROLE, API_INDEX_ROLE, API_CHECK_ROLE_NAME, API_CREATE_ROLE, API_UPDATE_ROLE } from '../api/paths'
+import { getCookie, showToast } from '../assets/js/function-all'
 
 const props = defineProps({
     modelValue: { type: Boolean, default: false },
@@ -203,14 +206,110 @@ const onReset = () => {
     if (window && typeof window.resetBaseRole === 'function') window.resetBaseRole()
 }
 
-const onSave = () => {
-    if (window && typeof window.updateBaseRole === 'function') window.updateBaseRole()
+const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+
+const onSave = async () => {
+    // clear previous errors
+    roleNameError.value = false
+
+    const isBase = props.mode === 'base'
+    const name = String(roleNameInput.value || '').trim()
+
+    // For base-role modal, we only send permissions (no name required)
+    if (!isBase) {
+        if (!name) {
+            roleNameError.value = 'This field is required.'
+            return
+        }
+        // if duplicate flag set from watcher, block submit
+        if (roleNameCheck.value) {
+            roleNameError.value = 'This role name is already in the system.'
+            return
+        }
+    }
+
+    const payload = {
+        permissions: Array.isArray(rolePermissions.value) ? rolePermissions.value.slice() : []
+    }
+    if (!isBase) payload.role_name = name
+
+    let url = API_CREATE_ROLE()
+    // treat base modal as an update (edit) for the given roleId
+    if ((props.mode === 'edit' || isBase) && props.roleId) {
+        url = API_UPDATE_ROLE(props.roleId)
+        payload.role_id = props.roleId
+    }
+
+    try {
+        loading.value = true
+        const res = await fetch(url, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken || ''
+            },
+            body: JSON.stringify(payload)
+        })
+        const j = res.ok ? await res.json() : null
+        if (!res.ok) {
+            console.error('Role save failed', res.status)
+            roleNameError.value = 'Request failed'
+            return
+        }
+        if (j && j.status === 'success') {
+            const roleObj = (j.role && typeof j.role === 'object') ? j.role : (j.role || { id: j.id || payload.role_id || null, name: payload.role_name || props.roleName })
+
+            if (props.mode === 'create') {
+                try { emit('role-created', roleObj) } catch (e) {}
+                try { showToast(`Create ${roleObj.name} successfully`, 'success') } catch (e) {}
+                try {
+                    if (Array.isArray(roleAllOptions.value) && roleAllOptions.value.length > 1 && Array.isArray(roleAllOptions.value[1].options)) {
+                        roleAllOptions.value[1].options.unshift({ label: roleObj.name, value: `custom:${roleObj.id}` })
+                    }
+                } catch (e) {}
+                try { roleNameInput.value = ''; rolePermissions.value = []; roleNameCheck.value = false; roleNameError.value = false; filters.value.roleAll = '' } catch (e) {}
+            } else if (isBase) {
+                // base role updated
+                const displayName = props.roleName || (props.roleId === 1 ? 'Administrator' : props.roleId === 2 ? 'Auditor' : props.roleId === 3 ? 'Operator/Agent' : (roleObj.name || 'Role'))
+                try { emit('role-updated', roleObj) } catch (e) {}
+                try { showToast(`${displayName} successfully`, 'success') } catch (e) {}
+                // keep inputs as-is; just clear transient errors
+                try { roleNameCheck.value = false; roleNameError.value = false } catch (e) {}
+            } else {
+                try { emit('role-updated', roleObj) } catch (e) {}
+                try { showToast(`Edit ${roleObj.name} successfully`, 'success') } catch (e) {}
+                try {
+                    if (Array.isArray(roleAllOptions.value) && roleAllOptions.value.length > 1 && Array.isArray(roleAllOptions.value[1].options)) {
+                        const opts = roleAllOptions.value[1].options
+                        const idx = opts.findIndex(o => String(o.value).endsWith(`:${roleObj.id}`) || o.value === `custom:${roleObj.id}`)
+                        if (idx !== -1) opts[idx].label = roleObj.name
+                    }
+                } catch (e) {}
+                try { roleNameInput.value = ''; rolePermissions.value = []; roleNameCheck.value = false; roleNameError.value = false; filters.value.roleAll = '' } catch (e) {}
+            }
+
+            close()
+            return
+        } else {
+            const msg = (j && (j.message || j.error)) || 'Unknown error'
+            roleNameError.value = msg
+            return
+        }
+    } catch (e) {
+        console.error('onSave error', e)
+        roleNameError.value = 'An error occurred'
+    } finally {
+        loading.value = false
+    }
 }
 
 // using centralized endpoint functions from src/api/paths.js
 
 const loading = ref(false)
 const roleNameInput = ref('')
+const roleNameCheck = ref(false)
+const roleNameError = ref(false)
 const allPermissions = ref([])
 const rolePermissions = ref([])
 const isAdministrator = ref(false)
@@ -218,7 +317,10 @@ const checkDisabled = computed(() => String(props.roleId) === '1')
 
 // For the "Copy from Role" select
 const roleAllOptions = ref([])
-const filters = ref({ roleAll: [] })
+const filters = ref({ roleAll: '' })
+
+// debounce timer for role name check
+let _roleNameTimer = null
 
 async function fetchIndexRoles() {
     try {
@@ -249,16 +351,13 @@ async function fetchIndexRoles() {
 // When user selects an option to copy from, fetch that role's permissions and apply
 watch(() => filters.value.roleAll, async (val) => {
     if (!props.modelValue || props.mode !== 'create') return
-    if (!Array.isArray(val) || val.length === 0) {
+    if (!val) {
         rolePermissions.value = []
         return
     }
-    // take the last selected (most recent) as the source to copy
-    const sel = val[val.length - 1]
-    if (!sel) return
-    if (String(sel).startsWith('base:')) {
-        const id = String(sel).split(':')[1]
-        // fetch the base role details and set rolePermissions
+    const sel = String(val)
+    if (sel.startsWith('base:')) {
+        const id = sel.split(':')[1]
         try {
             const res = await fetch(API_GET_DETAILS_ROLE() + id, { credentials: 'include' })
             if (!res.ok) throw new Error('Failed to fetch role details')
@@ -268,8 +367,8 @@ watch(() => filters.value.roleAll, async (val) => {
         } catch (e) {
             console.error('Error copying base role permissions', e)
         }
-    } else if (String(sel).startsWith('custom:')) {
-        const id = String(sel).split(':')[1]
+    } else if (sel.startsWith('custom:')) {
+        const id = sel.split(':')[1]
         try {
             const res = await fetch(API_GET_DETAILS_ROLE() + id, { credentials: 'include' })
             if (!res.ok) throw new Error('Failed to fetch custom role details')
@@ -282,7 +381,27 @@ watch(() => filters.value.roleAll, async (val) => {
     }
 })
 
-async function fetchRoleDetails(roleId) {
+// watch roleNameInput and debounce-check against backend for duplicate role name
+watch(() => roleNameInput.value, (val) => {
+    roleNameCheck.value = false
+    if (_roleNameTimer) clearTimeout(_roleNameTimer)
+    _roleNameTimer = setTimeout(async () => {
+        try {
+            if (!val || String(val).trim() === '') { roleNameCheck.value = false; return }
+            const name = String(val).trim()
+            const url = API_CHECK_ROLE_NAME() + `?role_name=${encodeURIComponent(name)}` + (props.mode === 'edit' && props.roleId ? `&role_id=${encodeURIComponent(String(props.roleId))}` : '')
+            const res = await fetch(url, { method: 'GET', credentials: 'include' })
+            if (!res.ok) { roleNameCheck.value = false; return }
+            const j = await res.json()
+            roleNameCheck.value = !!(j && (j.is_taken === true || j.exists === true || j.is_taken))
+        } catch (e) {
+            console.error('role name check error', e)
+            roleNameCheck.value = false
+        }
+    }, 400)
+})
+
+async function fetchRoleDetails(roleId, template = false) {
     if (!roleId) return
     loading.value = true
     const startTime = Date.now()
@@ -291,19 +410,25 @@ async function fetchRoleDetails(roleId) {
         if (!res.ok) throw new Error('Failed to fetch role details')
         const data = await res.json()
         if (data && data.status) {
-            roleNameInput.value = data.role_name || ''
+            // always populate the available permissions list
             allPermissions.value = Array.isArray(data.all_permissions) ? data.all_permissions : []
-            rolePermissions.value = Array.isArray(data.role_permissions) ? data.role_permissions : []
+
+            // when not in template mode, populate form inputs (edit flow)
+            if (!template) {
+                roleNameInput.value = data.role_name || ''
+                rolePermissions.value = Array.isArray(data.role_permissions) ? data.role_permissions : []
+            }
+
             // fallback for administrator detection
             isAdministrator.value = Boolean(data.is_administrator) || String(roleId) === '1' || (data.role_name && String(data.role_name).toLowerCase() === 'administrator')
         } else {
             allPermissions.value = []
-            rolePermissions.value = []
+            if (!template) rolePermissions.value = []
         }
     } catch (e) {
         console.error('Error fetching role details:', e)
         allPermissions.value = []
-        rolePermissions.value = []
+        if (!template) rolePermissions.value = []
     } finally {
         // ensure loading indicator is visible at least 1s for UX
         const elapsed = Date.now() - startTime
@@ -348,17 +473,17 @@ watch(() => props.modelValue, async (val) => {
     }
 
     // When opening the modal in `create` mode, use roleId=1 (Administrator) as the
-    // source of available permissions but do not pre-check any boxes.
+    // source of available permissions but do not pre-fill the create form inputs.
     if (props.mode === 'create') {
-        // Fetch admin permissions as the default available set
-        await fetchRoleDetails(1)
-        rolePermissions.value = []
-        // Clear any role name input so the user provides a new name (roleName prop may provide placeholder)
+        // ensure inputs are empty first (avoid later overwrite/flicker)
         roleNameInput.value = ''
+        rolePermissions.value = []
+        // Fetch admin permissions as the default available set (template mode: do not populate inputs)
+        await fetchRoleDetails(1, true)
         // populate copy-select options
         await fetchIndexRoles()
         // reset copy selection
-        filters.value.roleAll = []
+        filters.value.roleAll = ''
         return
     }
 
@@ -412,7 +537,7 @@ const groupedPermissions = computed(() => {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.6);
     border-radius: 8px;
     width: 100%;
     padding-top: 15%;
@@ -469,5 +594,4 @@ const groupedPermissions = computed(() => {
     max-height: 60vh;
     overflow: auto
 }
-
 </style>

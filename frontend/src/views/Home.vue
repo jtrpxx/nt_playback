@@ -20,7 +20,7 @@
               <div class="filter-card">
 
                 <div class="input-group" style="margin-top: 6px;">
-                  <CustomSelect class="select-search select-checkbox" v-model="filters.databaseServer"
+                  <CustomSelect class="select-checkbox" v-model="filters.databaseServer"
                     :options="mainDbOptions"
                     placeholder="Database Server" name="databaseServer" />
                 </div>
@@ -42,12 +42,12 @@
                 </div>
 
                 <div class="input-group" v-has-value>
-                  <input v-model="filters.duration" required="" type="text" name="duration" autocomplete="off" class="input">
+                  <input v-model="filters.duration" required type="text" name="duration" autocomplete="off" class="input">
                   <label class="floating-label">Duration</label>
                 </div>
 
                 <div class="input-group" v-has-value>
-                  <input v-model="filters.fileName" required="" type="text" name="fileName" autocomplete="off" class="input">
+                  <input v-model="filters.fileName" required type="text" name="fileName" autocomplete="off" class="input">
                   <label class="floating-label">File Name</label>
                 </div>
 
@@ -58,12 +58,12 @@
                 </div>
 
                 <div class="input-group" v-has-value>
-                  <input v-model="filters.customerNumber" required="" type="text" name="customerNumber" autocomplete="off" class="input">
+                  <input v-model="filters.customerNumber" required type="text" name="customerNumber" autocomplete="off" class="input">
                   <label class="floating-label">Customer Number</label>
                 </div>
 
                 <div class="input-group" v-has-value>
-                  <input v-model="filters.extension" required="" type="text" name="extension" autocomplete="off" class="input">
+                  <input v-model="filters.extension" required type="text" name="extension" autocomplete="off" class="input">
                   <label class="floating-label">Extension</label>
                 </div>
 
@@ -74,12 +74,12 @@
                 </div>
 
                 <div class="input-group" v-has-value>
-                  <input v-model="filters.fullName" required="" type="text" name="fullName" autocomplete="off" class="input">
+                  <input v-model="filters.fullName" required type="text" name="fullName" autocomplete="off" class="input">
                   <label class="floating-label">Full Name</label>
                 </div>
 
                 <div class="input-group" v-has-value>
-                  <input v-model="filters.customField" required="" type="text" name="customField" autocomplete="off" class="input">
+                  <input v-model="filters.customField" required type="text" name="customField" autocomplete="off" class="input">
                   <label class="floating-label">Custom Field</label>
                 </div>
 
@@ -144,10 +144,9 @@
                   <h5 class="card-title mb-2 mt-1">Audio Records</h5>
                 </div>
                 <div class="d-flex align-items-center">
-                  <div class="search-group" style="width:260px; position:relative;">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input v-model="searchQuery" type="text" class="form-control form-control-sm search-input"
-                      placeholder="Search..." @input="onTyping" @keyup.enter="onSearch" />
+                  <div style="width:260px;">
+                    <SearchInput ref="searchInputRef" v-model="searchQuery" :placeholder="'Search...'"
+                      @typing="onTyping" @enter="onSearch" @clear="clearSearchQuery" />
                   </div>
                   <div class="ms-2 export-group" ref="exportWrap">
                     <button type="button" class="btn btn-primary btn-sm export-icon" @click.stop="toggleExport" :aria-expanded="exportOpen">
@@ -195,6 +194,7 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import CustomSelect from '../components/CustomSelect.vue'
 import ModalHome from '../components/ModalHome.vue'
 import TableTemplate from '../components/TableTemplate.vue'
+import SearchInput from '../components/SearchInput.vue'
 import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { registerRequest } from '../utils/pageLoad'
 
@@ -220,6 +220,7 @@ const filters = reactive({
 })
 
 const searchQuery = ref('')
+const searchInputRef = ref(null)
 let searchTimeout = null
 
 const onTyping = () => {
@@ -229,6 +230,16 @@ const onTyping = () => {
     fetchData()
     searchTimeout = null
   }, 450)
+}
+
+function clearSearchQuery() {
+  searchQuery.value = ''
+  if (searchTimeout) { clearTimeout(searchTimeout); searchTimeout = null }
+  currentPage.value = 1
+  fetchData()
+  nextTick(() => {
+    if (searchInputRef.value && typeof searchInputRef.value.focus === 'function') searchInputRef.value.focus()
+  })
 }
 
 const perPageOptions = [50, 100, 500, 1000]
@@ -713,35 +724,61 @@ const onReset = async () => {
 async function applyFavorite(fav){
   try{
     const raw = typeof fav.raw_data === 'string' ? JSON.parse(fav.raw_data || '{}') : (fav.raw_data || {})
-    // map raw_data keys to local `filters` keys
-    const keyMap = {
-      database_name: 'databaseServer',
-      start_date: 'from',
-      end_date: 'to',
-      file_name: 'fileName',
-      duration: 'duration',
-      customer: 'customerNumber',
-      agent: 'agent',
-      call_direction: 'callDirection',
-      extension: 'extension',
-      full_name: 'fullName',
-      custom_field: 'customField'
-    }
-    for (const [rawKey, val] of Object.entries(raw)){
-      const target = keyMap[rawKey]
-      if (target && Object.prototype.hasOwnProperty.call(filters, target)){
-        filters[target] = val
+      // map raw_data keys to local `filters` keys and normalize multi-selects
+      const keyMap = {
+        database_name: 'databaseServer',
+        start_date: 'from',
+        end_date: 'to',
+        file_name: 'fileName',
+        duration: 'duration',
+        customer: 'customerNumber',
+        agent: 'agent',
+        call_direction: 'callDirection',
+        extension: 'extension',
+        full_name: 'fullName',
+        custom_field: 'customField'
       }
-    }
+      for (const [rawKey, val] of Object.entries(raw)){
+        const target = keyMap[rawKey]
+        if (target && Object.prototype.hasOwnProperty.call(filters, target)){
+          filters[target] = val
+        }
+      }
 
-    // normalize call direction to match option values (case-insensitive)
-    try {
-      if (filters.callDirection) {
-        const v = String(filters.callDirection)
-        const found = callDirectionOptions.find(o => String(o.value).toLowerCase() === v.toLowerCase() || String(o.label).toLowerCase() === v.toLowerCase())
-        if (found) filters.callDirection = found.value
-      }
-    } catch (e) {}
+      // Normalize multi-select fields so CustomSelect (checkbox mode) receives arrays
+      try {
+        const multiFields = ['databaseServer', 'agent', 'callDirection']
+        for (const mf of multiFields) {
+          if (!Object.prototype.hasOwnProperty.call(filters, mf)) continue
+          const cur = filters[mf]
+          let vals = []
+          if (cur == null || cur === '') vals = []
+          else if (Array.isArray(cur)) vals = cur.slice()
+          else if (typeof cur === 'string') {
+            if (cur.indexOf(',') !== -1) vals = cur.split(',').map(x => x.trim()).filter(Boolean)
+            else vals = [cur]
+          } else {
+            vals = [cur]
+          }
+
+          if (mf === 'databaseServer' || mf === 'agent') {
+            vals = vals.map(x => { const s = String(x).trim(); return /^\d+$/.test(s) ? Number(s) : s })
+          }
+          if (mf === 'callDirection') {
+            vals = vals.map(x => { const s = String(x || '').trim(); return s ? (s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()) : s })
+          }
+          filters[mf] = vals
+        }
+
+        // Also normalize callDirection values to match option values if possible
+        if (Array.isArray(filters.callDirection)) {
+          filters.callDirection = filters.callDirection.map(v => {
+            const s = String(v || '')
+            const found = callDirectionOptions.find(o => String(o.value).toLowerCase() === s.toLowerCase() || String(o.label).toLowerCase() === s.toLowerCase())
+            return found ? found.value : v
+          }).filter(Boolean)
+        }
+      } catch (e) {}
 
     // ensure DOM inputs and flatpickr reflect the loaded values so labels float correctly
     showFavoriteModal.value = false
@@ -914,5 +951,17 @@ const onRowDelete = (row) => { console.log('delete row', row) }
 /* Prevent my-favorite-search card from clipping the dropup */
 .my-favorite-search .card,
 .my-favorite-search .card-body { overflow: visible; }
+
+/* Clear icon for top search input */
+.search-group .search-input { padding-right: 28px; }
+.search-group .clear-icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9aa4ad;
+  font-size: 12px;
+  cursor: pointer;
+}
 
 </style>

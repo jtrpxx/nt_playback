@@ -14,11 +14,10 @@
                 <h5 class="card-title mb-2 mt-1">{{ cardTitle }}</h5>
               </div>
               <div class="d-flex align-items-center">
-                <div class="search-group" style="width:260px; position:relative;">
-                  <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                  <input v-model="searchQuery" type="text" class="form-control form-control-sm search-input"
-                    placeholder="Search..." @input="onTyping" @keyup.enter="onSearch" />
-                </div>
+                 <div style="width:260px;">
+                    <SearchInput ref="searchInputRef" v-model="searchQuery" :placeholder="'Search...'"
+                      @typing="onTyping" @enter="onSearch" @clear="clearSearchQuery" />
+                  </div>
                 <div class="ms-2 export-group">
                   <button type="button" class="btn btn-primary btn-sm export-icon" data-bs-toggle="dropdown"
                     aria-expanded="false">
@@ -112,6 +111,7 @@ import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import CustomSelect from '../components/CustomSelect.vue'
+import SearchInput from '../components/SearchInput.vue'
 import { registerRequest } from '../utils/pageLoad'
 import {  API_GET_LOG_USER } from '../api/paths'
 
@@ -254,6 +254,17 @@ const fetchData = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const searchInputRef = ref(null)
+function clearSearchQuery() {
+  searchQuery.value = ''
+  if (searchTimeout) { clearTimeout(searchTimeout); searchTimeout = null }
+  currentPage.value = 1
+  fetchData()
+  nextTick(() => {
+    if (searchInputRef.value && typeof searchInputRef.value.focus === 'function') searchInputRef.value.focus()
+  })
 }
 
 </script>

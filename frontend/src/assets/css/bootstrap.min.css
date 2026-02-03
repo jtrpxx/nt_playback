@@ -5259,7 +5259,7 @@ fieldset:disabled .btn {
 .modal-dialog-scrollable .modal-body {
   overflow-y: auto;
   padding: 20px;
-  font-size: 13px;
+  font-size: 12px;
 }
 .modal-dialog-centered {
   display: flex;
@@ -5323,7 +5323,7 @@ fieldset:disabled .btn {
   position: relative;
   flex: 1 1 auto;
   padding: 20px;
-  font-size: 13px;
+  font-size: 12px;
 }
 .modal-footer {
   display: flex;

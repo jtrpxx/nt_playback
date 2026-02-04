@@ -67,9 +67,8 @@
                       class="fa-regular fa-calendar"></i></span>
                 </div>
 
-
                 <div class="input-group" style="flex: 0 0 auto;">
-                  <button type="button" class="btn btn-light" id="resetFilterBtn"
+                  <button type="button" class="btn btn-light" id="resetFilterBtn" @click="resetFilters"
                     style="height: 31px; border: 1px solid #e2e8f0;border-radius: 10px;font-size: 12px;margin-top: -7px;">
                     <i class="fas fa-undo"></i> Reset
                   </button>
@@ -92,10 +91,17 @@
               @edit="onRowEdit"
               @delete="onRowDelete"
               @page-change="changePage"
-              @per-change="setPerPage" />
+              @per-change="setPerPage">
+
+              <template #cell-status="{ row }">
+                <span :class="['badge', (row.status || '').toString().toLowerCase() === 'success' ? 'badge-success' : ( (row.status || '').toString().toLowerCase() === 'error' ? 'badge-danger' : 'bg-secondary') ]">
+                  {{ row.status }}
+                </span>
+              </template>
+
+            </TableTemplate>
             </div>
 
-            <!-- Content Audio Records-->
           </div>
         </div>
       </div>
@@ -104,7 +110,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import MainLayout from '../layouts/MainLayout.vue'
@@ -113,13 +119,15 @@ import TableTemplate from '../components/TableTemplate.vue'
 import CustomSelect from '../components/CustomSelect.vue'
 import SearchInput from '../components/SearchInput.vue'
 import { registerRequest } from '../utils/pageLoad'
-import {  API_GET_LOG_USER } from '../api/paths'
+import { API_GET_USER, API_GET_USER_ALL, API_GET_LOG_USER } from '../api/paths'
 
 const searchQuery = ref('')
 let searchTimeout = null
+let userFilterTimeout = null
 
 onMounted(() => {
   registerRequest(fetchData())
+  fetchUsers()
   document.addEventListener('click', onDocClick)
 })
 
@@ -159,7 +167,7 @@ import { reactive } from 'vue'
 const filters = reactive({ name: '', action: '', start_date: '', end_date: '' })
 const userOptions = ref([])
 const actionOptions = ref([
-  { label: 'All Actions', value: '' },
+  { label: 'All Actions', value: 'all' },
   { label: 'Change User Status', value: 'Change User Status' },
   { label: 'Create Columns', value: 'Create Columns' },
   { label: 'Create Config Group', value: 'Create Config Group' },
@@ -239,8 +247,8 @@ const fetchData = async () => {
     params.set('start', start)
     params.set('length', perPage.value)
     params.set('search[value]', searchQuery.value || '')
-    if (filters.name) params.set('name', filters.name)
-    if (filters.action) params.set('action', filters.action)
+    if (filters.name && filters.name !== 'all') params.set('name', filters.name)
+    if (filters.action && filters.action !== 'all') params.set('action', filters.action)
     if (filters.start_date) params.set('start_date', filters.start_date)
     if (filters.end_date) params.set('end_date', filters.end_date)
 
@@ -256,6 +264,47 @@ const fetchData = async () => {
   }
 }
 
+const fetchUsers = async () => {
+  try {
+    const params = new URLSearchParams()
+    params.set('draw', 1)
+    params.set('start', 0)
+    params.set('length', 1000)
+    // include current log type so backend can tailor results
+    params.set('type', type.value)
+    if (filters.action && filters.action !== 'all') params.set('action', filters.action)
+    if (filters.start_date) params.set('start_date', filters.start_date)
+    if (filters.end_date) params.set('end_date', filters.end_date)
+    const res = await fetch(`${API_GET_USER_ALL()}?${params.toString()}`, { credentials: 'include' })
+    if (!res.ok) throw new Error('Failed to fetch users')
+    const json = await res.json()
+    const list = json.data || []
+    const opts = [{ label: 'All Users', value: 'all' }]
+      for (const p of list) {
+        const u = p.user ? p.user : p
+        const uname = u?.username || ''
+        const fullname = `${u?.first_name || ''} ${u?.last_name || ''}`.trim()
+        const label = fullname ? `${uname} (${fullname})` : uname
+        opts.push({ label, value: uname })
+      }
+    userOptions.value = opts
+  } catch (e) {
+    console.error('fetchUsers error', e)
+  }
+}
+
+// Watch filter changes and refetch users/logs (debounced)
+watch(filters, () => {
+  if (userFilterTimeout) clearTimeout(userFilterTimeout)
+  userFilterTimeout = setTimeout(() => {
+    fetchUsers()
+    // also refresh logs for immediate feedback
+    currentPage.value = 1
+    fetchData()
+    userFilterTimeout = null
+  }, 350)
+}, { deep: true })
+
 const searchInputRef = ref(null)
 function clearSearchQuery() {
   searchQuery.value = ''
@@ -265,6 +314,21 @@ function clearSearchQuery() {
   nextTick(() => {
     if (searchInputRef.value && typeof searchInputRef.value.focus === 'function') searchInputRef.value.focus()
   })
+}
+
+function resetFilters() {
+  try {
+    filters.name = ''
+    filters.action = ''
+    filters.start_date = ''
+    filters.end_date = ''
+    // reset pagination and refresh
+    currentPage.value = 1
+    fetchUsers()
+    fetchData()
+  } catch (e) {
+    console.error('resetFilters error', e)
+  }
 }
 
 </script>

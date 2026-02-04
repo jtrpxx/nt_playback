@@ -16,7 +16,7 @@
               </div>
             </td>
           </tr>
-          <tr v-else v-for="(r, idx) in rows" :key="r.id ?? idx">
+          <tr v-else v-for="(r, idx) in rows" :key="r.id ?? idx" @dblclick.stop="$emit('row-dblclick', r)" @click="onRowClick(idx, r)" :class="{ 'selected-row': props.showSelection && selectedIndex === idx }">
             <td v-for="col in columns" :key="col.key" :style="colWidthStyle(col)">
               <slot :name="`cell-${col.key}`" :row="r" :index="idx">
                 <template v-if="col.isIndex">{{ startIndex + idx + 1 }}</template>
@@ -115,6 +115,8 @@ const props = defineProps({
   startIndex: { type: Number, default: 0 },
   loading: { type: Boolean, default: false },
   callDirectionKey: { type: String, default: '' },
+  // whether to visually highlight the selected row (use from pages that need it)
+  showSelection: { type: Boolean, default: false },
   // optional key (supports dot-path) to derive an action id from a row
   actionIdKey: { type: String, default: '' },
   // pagination-related props (UI-only)
@@ -124,9 +126,18 @@ const props = defineProps({
   totalItems: { type: Number, default: 0 }
 })
 
-const emit = defineEmits(['edit', 'delete', 'page-change', 'per-change'])
+const emit = defineEmits(['edit', 'delete', 'page-change', 'per-change', 'row-dblclick', 'row-click'])
 
 const activeTooltip = ref(null)
+// selected row index for visual highlight
+const selectedIndex = ref(null)
+
+function onRowClick(idx, row) {
+  try {
+    selectedIndex.value = idx
+    emit('row-click', row)
+  } catch (e) { console.warn('onRowClick error', e) }
+}
 const tooltipIndex = ref(null)
 const tooltipText = ref('')
 const tooltipRect = ref(null)
@@ -433,6 +444,11 @@ function getActionId(row) {
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
   border-top: 6px solid rgba(0, 0, 0, 0.85);
+}
+
+.table-container table tr.selected-row td {
+  background-color: #49ABFF !important;
+  color: #fff !important;
 }
 
 .file-name-tooltip.tooltip-bottom .tooltip-arrow {

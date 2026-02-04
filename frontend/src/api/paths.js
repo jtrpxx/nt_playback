@@ -10,6 +10,9 @@ export const API_AUDIO_LIST = () => `${getApiBase()}/api/audio/list/`
 export const API_CHECK_MY_FAVORITE_NAME = () => `${getApiBase()}/api/home/check/my-favorite-search/`
 export const API_ADD_MY_FAVORITE_SEARCH = () => `${getApiBase()}/api/home/add/my-favorite-search/`
 export const API_EDIT_MY_FAVORITE_SEARCH = (myfavoriteId) => `${getApiBase()}/api/home/edit/my-favorite-search/${myfavoriteId}/`
+export const API_LOG_PLAY_AUDIO = () => `${getApiBase()}/api/log/play-audio/`
+export const API_GET_CREDENTIALS = () => `${getApiBase()}/api/get/credentials/`
+export const API_LOG_SAVE_FILE = () => `${getApiBase()}/api/log/save-file/`
 
 // หน้า Login
 export const API_LOGIN = () => `${getApiBase()}/login/`
@@ -22,14 +25,21 @@ export const API_CREATE_ROLE = () => `${getApiBase()}/api/role/create/`
 export const API_UPDATE_ROLE = (roleId) => `${getApiBase()}/api/role/edit/${roleId}/`
 export const API_DELETE_ROLE = (roleId) => `${getApiBase()}/api/role/delete/${roleId}/`
 
-// หน้า  Group
+// หน้า  Group and Team
 export const API_GROUP_INDEX = () => `${getApiBase()}/api/group/index/`
 export const API_TEAM_INDEX = () => `${getApiBase()}/api/team/index/`
 export const API_GET_TEAM_BY_GROUP = (groupId) => `${getApiBase()}/api/group/get/team-by-group/${groupId}/`
 export const API_GET_DATABASE = () => `${getApiBase()}/api/get/database/`
+export const API_CHECK_GROUP_NAME = () => `${getApiBase()}/api/group/check/group-name/`
+export const API_CHECK_TEAM_NAME = () => `${getApiBase()}/api/team/check/team-name/`
+export const API_SAVE_GROUP = () => `${getApiBase()}/api/group/save/`
+export const API_SAVE_TEAM = () => `${getApiBase()}/api/team/save/`
+export const API_DELETE_GROUP = (groupId) => `${getApiBase()}/api/group/delete/${groupId}/`
+export const API_DELETE_TEAM = (teamId) => `${getApiBase()}/api/team/delete/${teamId}/`
 
 // หน้า  User Management
 export const API_GET_USER = () => `${getApiBase()}/api/get/user/`
+export const API_GET_USER_ALL = () => `${getApiBase()}/api/get/user-all/`
 export const API_USER_MANAGEMENT_CHANGE_STATUS = (id) => `${getApiBase()}/api/user-management/change-status/${id}/`
 
 // หน้า log user

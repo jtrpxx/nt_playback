@@ -453,7 +453,11 @@
   color: #171515;
 }
 
-
+.badge-danger {
+  background-color: #ff7878; 
+  border: 1px solid #bc5a5a; 
+  color: #fff !important;
+}
 
 .card:hover {
   border-color: rgba(65, 111, 214, 0.3);

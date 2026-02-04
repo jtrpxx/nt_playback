@@ -23,6 +23,15 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 @login_required(login_url='/login')
+def ApiGetUserAll(request):
+    try:
+        users = User.objects.all().values('id', 'username', 'first_name', 'last_name', 'email').order_by('username')
+        user_list = list(users)
+        return JsonResponse({'status': 'success', 'data': user_list})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+@login_required(login_url='/login')
 def ApiGetUser(request):
     # prepare base query
     qs = UserProfile.objects.exclude(user=request.user).select_related('user', 'team')
@@ -360,7 +369,7 @@ def ApiCheckUsername(request):
 
 @login_required(login_url='/login')
 @require_POST
-def ApiCreateUser(request, user_id=None):
+def ApiSaveUser(request, user_id=None):
     """สร้างหรืออัพเดตผู้ใช้
 
     ถ้าใน POST มีค่าของ `user_id` ให้ทำการอัพเดต มิฉะนั้นให้สร้างผู้ใช้ใหม่

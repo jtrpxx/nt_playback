@@ -142,6 +142,7 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import { registerRequest } from '../utils/pageLoad'
 import { API_GET_USER, API_USER_MANAGEMENT_CHANGE_STATUS } from '../api/paths'
+import { showToast } from '../assets/js/function-all'
 
 const searchQuery = ref('')
 const searchInputRef = ref(null)
@@ -152,6 +153,17 @@ let searchTimeout = null
 
 onMounted(() => {
     registerRequest(fetchData())
+    // show pending toast (if any) persisted by previous page
+    try {
+        const raw = localStorage.getItem('pending_toast')
+        if (raw) {
+            try {
+                const t = JSON.parse(raw)
+                if (t && t.message) showToast(t.message, t.type || 'success')
+            } catch (e) { console.error('invalid pending_toast', e) }
+            try { localStorage.removeItem('pending_toast') } catch (e) {}
+        }
+    } catch (e) { }
     document.addEventListener('click', onDocClick)
 })
 

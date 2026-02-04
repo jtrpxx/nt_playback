@@ -325,7 +325,7 @@ def ApiGetAudioList(request):
         "data": data
     })
 
-def ApiCreateMyFavoriteSearch(request):
+def ApiSaveMyFavoriteSearch(request):
     if request.method == "POST":
         action = request.POST.get("action")
         user = request.user
@@ -437,3 +437,111 @@ def ApiCheckMyFavoriteName(request):
         return JsonResponse({'status': 'success', 'is_taken': True, 'message': 'This name is already in the system.'})
     else:
         return JsonResponse({'status': 'success', 'is_taken': False})
+    
+# --- Encryption Helper (Simple XOR + Base64) ---
+SECRET_KEY = b"9Xv2M4p7Q8r1Z3w5Y6t8B0n2V4c6X8m0L2k4J6h8F0d2S4a" # (ต้องตรงกับ Wrapper exe)
+
+def encrypt_credential(text):
+    if not text: return ""
+    data = text.encode('utf-8')
+    encrypted = bytes(a ^ b for a, b in zip(data, SECRET_KEY * (len(data) // len(SECRET_KEY) + 1)))
+    return base64.b64encode(encrypted).decode('utf-8')
+    
+@login_required
+def ApiGetCredentials(request):
+    """
+    API endpoint ที่ส่งข้อมูล username/password สำหรับเชื่อมต่อ network share
+    โดยดึงข้อมูลจากโมเดล ConfigKey
+    """
+    try:
+        # ดึงข้อมูลโดยใช้ 'type' เพื่อระบุว่าเป็น username หรือ password
+        config_key = ConfigKey.objects.get(type='player_connect')
+        info = get_user_os_browser_architecture(request)
+
+        credentials = {
+            "username": encrypt_credential(config_key.key_username),
+            "password": encrypt_credential(config_key.key_password)
+        }
+        return JsonResponse(credentials)
+    except ConfigKey.DoesNotExist:
+        UserLog.objects.create(
+            user=request.user,
+            action="Credentials",
+            detail={"error": "Credentials not configured. Please create 'niceplayer_username' and 'niceplayer_password' types in ConfigKey."},
+            status="error",
+            client_type=f"{info['os']} / {info['browser']}",
+            ip_address=server_ip,  
+        )
+        return JsonResponse({"error": "Credentials not configured. Please create 'niceplayer_username' and 'niceplayer_password' types in ConfigKey."}, status=500)
+    except Exception as e:
+        UserLog.objects.create(
+            user=request.user,
+            action="Credentials",
+            detail={"error": str(e)},
+            status="error",
+            client_type=f"{info['os']} / {info['browser']}",
+            ip_address=server_ip,  
+        )
+        return JsonResponse({"error": str(e)}, status=500)
+    
+@require_POST
+def ApiLogPlayAudio(request):
+    """
+    API endpoint สำหรับรับ Log การเล่นไฟล์เสียงจาก Frontend
+    """
+    try:
+        info = get_user_os_browser_architecture(request)
+        data = json.loads(request.body)
+
+        UserLog.objects.create(
+            user=request.user,
+            action="Play audio",
+            detail=data.get('detail', ''),
+            status=data.get('status', ''),
+            client_type=f"{info['os']} / {info['browser']}",
+            ip_address=server_ip,  
+        )
+
+        return JsonResponse({"message": "Log received"}, status=201)
+    except Exception as e:
+        UserLog.objects.create(
+            user=request.user,
+            action="Play audio",
+            detail={"error": str(e)},
+            status="error",
+            client_type=f"{info['os']} / {info['browser']}",
+            ip_address=server_ip,  
+        )
+        
+        return JsonResponse({"error": str(e)}, status=400)
+
+@require_POST
+def ApiLogSaveFile(request):
+    try:
+        data = json.loads(request.body)
+        detail = data.get('detail', '')
+        info = get_user_os_browser_architecture(request)
+        UserLog.objects.create(
+            user=request.user,
+            action="Save file",
+            detail=detail,
+            status="success",
+            client_type=f"{info['os']} / {info['browser']}",
+            ip_address=server_ip
+        )
+        return JsonResponse({"status": "ok"})
+    except Exception as e:
+        try:
+            info = get_user_os_browser_architecture(request)
+            UserLog.objects.create(
+                user=request.user,
+                action="Save file",
+                detail={"error": str(e)},
+                status="error",
+                client_type=f"{info['os']} / {info['browser']}",
+                ip_address=server_ip
+            )
+        except Exception:
+            # swallow secondary errors when logging fails
+            pass
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)

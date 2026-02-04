@@ -24,7 +24,7 @@ export default defineConfig({
       clientPort: 8001,
     },
     // allow Host headers coming from the proxy container and LAN
-    allowedHosts: ['frontend', 'localhost', '127.0.0.1', '192.168.1.203']
+    allowedHosts: ['frontend', 'localhost', '127.0.0.1', '192.168.1.204']
     ,
     // Proxy API and auth requests from the dev server to the backend container
     proxy: {

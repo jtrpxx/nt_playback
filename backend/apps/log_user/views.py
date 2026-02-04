@@ -42,13 +42,29 @@ def ApiGetUserLogs(request,type):
 
     # apply explicit filters from form
     if name:
-        log_list = log_list.filter(user__username=name)
+        # allow comma-separated list of usernames from frontend (e.g. "snadmin,wisitp")
+        try:
+            names = [n.strip() for n in str(name).split(',') if n.strip()]
+            if len(names) > 1:
+                log_list = log_list.filter(user__username__in=names)
+            else:
+                log_list = log_list.filter(user__username=names[0])
+        except Exception:
+            log_list = log_list.filter(user__username=name)
     if username:
         log_list = log_list.filter(user__username__icontains=username)
     if full_name:
         log_list = log_list.filter(Q(user__first_name__icontains=full_name) | Q(user__last_name__icontains=full_name))    
     if action:
-        log_list = log_list.filter(action__icontains=action)
+        # allow comma-separated list of actions (e.g. "Login,Play audio")
+        try:
+            acts = [a.strip() for a in str(action).split(',') if a.strip()]
+            if len(acts) > 1:
+                log_list = log_list.filter(action__in=acts)
+            else:
+                log_list = log_list.filter(action__icontains=acts[0])
+        except Exception:
+            log_list = log_list.filter(action__icontains=action)
     if status:
         log_list = log_list.filter(status__icontains=status)
     if description:

@@ -7,7 +7,7 @@ from apps.core.utils.function import BaseListAPIView, PageNumberPagination
 from django.db.models import Q
 from django.http import JsonResponse,FileResponse,Http404
 from django.core import serializers
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.http import JsonResponse
 from django.db import transaction, DatabaseError,IntegrityError
 import socket
@@ -155,7 +155,7 @@ def ApiCheckRoleName(request):
 
 @require_POST
 @login_required(login_url='/login')
-def ApiCreateRole(request, role_id=None):
+def ApiSaveRole(request, role_id=None):
     """
     Create a new role or update an existing one.
     If POST JSON contains `role_id`, perform update; otherwise create a new role.
@@ -284,4 +284,139 @@ def ApiDeleteRole(request, role_id=None):
         return JsonResponse({'status': 'error', 'message': 'Role not found.'})
     except Exception as e:
         create_user_log(user=request.user, action="Delete Custom Role", detail=f"Error deleting role: {str(e)}", status="error", request=request)
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+@require_GET
+@login_required(login_url='/login')
+def ApiCheckGroupName(request):
+    group_name = request.GET.get('group_name', None)
+    group_id = request.GET.get('group_id', None)
+    if not group_name:
+        return JsonResponse({'status': 'error', 'message': 'Group name is required'})
+    
+    query = UserGroup.objects.filter(group_name=group_name)
+    if group_id:
+        query = query.exclude(id=group_id)
+
+    if query.exists():
+        return JsonResponse({'status': 'success', 'is_taken': True, 'message': 'This group name is already in the system.'})
+    else:
+        return JsonResponse({'status': 'success', 'is_taken': False})
+    
+@require_GET
+@login_required(login_url='/login')
+def ApiCheckTeamName(request):
+    team_name = request.GET.get('team_name', None)
+    team_id = request.GET.get('team_id', None)
+    if not team_name:
+        return JsonResponse({'status': 'error', 'message': 'Team name is required'})
+    
+    query = UserTeam.objects.filter(name=team_name)
+    if team_id:
+        query = query.exclude(id=team_id)
+
+    if query.exists():
+        return JsonResponse({'status': 'success', 'is_taken': True, 'message': 'This team name is already in the system.'})
+    else:
+        return JsonResponse({'status': 'success', 'is_taken': False})
+    
+
+
+@require_POST
+@login_required(login_url='/login')
+def ApiSaveGroup(request):
+    """
+    Single endpoint to Create / Update / Delete a UserGroup.
+    JSON body should include `action` = 'create'|'update'|'delete'.
+    - create: requires `group_name`, optional `description`.
+    - update: requires `group_id`, `group_name`, optional `description`.
+    - delete: requires `group_id`.
+    Supports form POST as fallback for non-JSON requests.
+    """
+    try:
+        data = {}
+        if request.content_type and 'application/json' in request.content_type:
+            try:
+                data = json.loads(request.body) if request.body else {}
+            except Exception:
+                data = {}
+        else:
+            data = request.POST.dict()
+
+        action = (data.get('action') or '').lower()
+        if action not in ('create', 'update', 'delete'):
+            return JsonResponse({'status': 'error', 'message': 'Invalid action. Use create, update, or delete.'}, status=400)
+
+        # CREATE
+        if action == 'create':
+            group_name = (data.get('group_name') or '').strip()
+            description = data.get('description', '')
+
+            if not group_name:
+                return JsonResponse({'status': 'error', 'message': 'Group name is required.'})
+
+            existing_group = UserGroup.objects.filter(group_name__iexact=group_name).first()
+            if existing_group:
+                create_user_log(user=request.user, action='Create Config Group', detail=f'Duplicate group : {group_name}', status='error', request=request)
+                return JsonResponse({'status': 'error', 'message': 'This group name is already in the system.'})
+
+            try:
+                with transaction.atomic():
+                    new_group = UserGroup.objects.create(group_name=group_name, description=description, status=1)
+                    create_user_log(user=request.user, action='Create Config Group', detail=f'Created group : {group_name} | Description: {description}', status='success', request=request)
+
+                return JsonResponse({'status': 'success', 'group': {'id': new_group.id, 'group_name': new_group.group_name, 'description': new_group.description}})
+            except IntegrityError as e:
+                create_user_log(user=request.user, action='Create Config Group', detail=f'Database error : {str(e)}', status='error', request=request)
+                return JsonResponse({'status': 'error', 'message': 'เกิดข้อผิดพลาดกับฐานข้อมูล'})
+
+        # UPDATE
+        if action == 'update':
+            group_id = data.get('group_id')
+            group_name = (data.get('group_name') or '').strip()
+            description = data.get('description', '')
+
+            if not group_id or not group_name:
+                return JsonResponse({'status': 'error', 'message': 'Group ID and Name are required.'})
+
+            group = UserGroup.objects.filter(id=group_id).first()
+            if not group:
+                return JsonResponse({'status': 'error', 'message': 'Group not found.'})
+
+            if UserGroup.objects.filter(group_name__iexact=group_name).exclude(id=group_id).exists():
+                create_user_log(user=request.user, action='Update Config Group', detail=f'Duplicate group : {group_name}', status='error', request=request)
+                return JsonResponse({'status': 'error', 'message': 'This group name is already in the system.'})
+
+            try:
+                with transaction.atomic():
+                    group.group_name = group_name
+                    group.description = description
+                    group.save()
+                    create_user_log(user=request.user, action='Update Config Group', detail=f'Updated group : {group_name}', status='success', request=request)
+
+                return JsonResponse({'status': 'success', 'group': {'id': group.id, 'group_name': group.group_name, 'description': group.description}})
+            except Exception as e:
+                create_user_log(user=request.user, action='Update Config Group', detail=f'Error: {str(e)}', status='error', request=request)
+                return JsonResponse({'status': 'error', 'message': str(e)})
+
+        # DELETE
+        if action == 'delete':
+            group_id = data.get('group_id')
+            if not group_id:
+                return JsonResponse({'status': 'error', 'message': 'Group ID is required.'})
+
+            group = UserGroup.objects.filter(id=group_id).first()
+            if group:
+                group_name = group.group_name
+                group.delete()
+                create_user_log(user=request.user, action='Delete Config Group', detail=f'Deleted group: {group_name}', status='success', request=request)
+                return JsonResponse({'status': 'success', 'message': 'Group deleted successfully.'})
+
+            return JsonResponse({'status': 'error', 'message': 'Group not found.'})
+
+    except IntegrityError as e:
+        create_user_log(user=request.user, action='ApiSaveGroup', detail=f'Database error : {str(e)}', status='error', request=request)
+        return JsonResponse({'status': 'error', 'message': 'An error occurred with the database.'})
+    except Exception as e:
+        create_user_log(user=request.user, action='ApiSaveGroup', detail=f'Unexpected error: {str(e)}', status='error', request=request)
         return JsonResponse({'status': 'error', 'message': str(e)})

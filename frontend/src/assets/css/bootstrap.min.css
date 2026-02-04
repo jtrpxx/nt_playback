@@ -418,6 +418,7 @@ th {
 }
 tr {
   font-size: 10px;
+  cursor: pointer;
 }
 tbody,
 td,
@@ -447,6 +448,7 @@ textarea {
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
+  cursor: pointer;
 }
 button,
 select {
@@ -2319,6 +2321,7 @@ textarea.form-control-lg {
 }
 .form-check-input[type="checkbox"] {
   border-radius: 0.25em;
+  cursor: pointer;
 }
 .form-check-input[type="radio"] {
   border-radius: 50%;
@@ -2342,6 +2345,7 @@ textarea.form-control-lg {
   --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%23fff'/%3e%3c/svg%3e");
 }
 .form-check-input[type="checkbox"]:indeterminate {
+  cursor: pointer;
   background-color: #416FD6;
   border-color: #416FD6;
   --bs-form-check-bg-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e");
@@ -8247,7 +8251,7 @@ fieldset:disabled .btn {
   pointer-events: auto !important;
 }
 .rounded {
-  border-radius: var(--bs-border-radius) !important;
+  /* border-radius: var(--bs-border-radius) !important; */
 }
 .rounded-0 {
   border-radius: 0 !important;

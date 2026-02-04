@@ -646,20 +646,27 @@ async function submit() {
         const res = await fetch(url, { method, credentials: 'include', body: fd, headers: { 'X-CSRFToken': csrfToken || '' } })
         const j = res.ok ? await res.json() : null
         if (!res.ok) {
-            alert('Request failed')
+            showToast(`Error: Request failed`, 'error')
             return
         }
         if (j && j.status === 'success') {
-            try { router.push('/user-management') } catch (e) { router.back() }
+            try {
+                try {
+                    const name = form.value.firstName || form.value.username || ''
+                    const toast = { message: `Create ${name} successfully`, type: 'success' }
+                    localStorage.setItem('pending_toast', JSON.stringify(toast))
+                } catch (e) {}
+                try { router.push('/user-management') } catch (e) { router.back() }
+            } catch (e) { console.error('redirect error', e) }
             return
         } else {
             const msg = (j && (j.message || j.error)) || 'Unknown error'
-            alert('Error: ' + msg)
+            showToast(`Error: ${msg}`, 'error')
             return
         }
     } catch (e) {
         console.error('submit error', e)
-        alert('An error occurred')
+        showToast(`submit error ${e.message || e}`, 'error')
     } finally {
         loading.value = false
     }

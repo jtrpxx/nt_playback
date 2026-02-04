@@ -5,9 +5,11 @@ urlpatterns = [
 	path('api/audio/list/', views.ApiGetAudioList, name='ApiGetAudioList'),
 	path('api/home/index/', views.ApiIndexHome, name='ApiIndexHome'),
 	path('api/home/index/', views.ApiIndexHome, name='ApiIndexHome'),
-	path('api/home/add/my-favorite-search/', views.ApiCreateMyFavoriteSearch, name='ApiAddMyFavoriteSearch'),
+	path('api/home/add/my-favorite-search/', views.ApiSaveMyFavoriteSearch, name='ApiAddMyFavoriteSearch'),
 	path('api/home/check/my-favorite-search/', views.ApiCheckMyFavoriteName, name='ApiCheckMyFavoriteName'),
 	path('api/home/edit/my-favorite-search/<int:myfavoriteId>/', views.ApiIndexHome, name='ApiEditMyFavoriteSearch'),
- 
+	path('api/log/play-audio/', views.ApiLogPlayAudio, name='ApiLogPlayAudio'),
+	path('api/get/credentials/', views.ApiGetCredentials, name='ApiGetCredentials'),
+    path('api/log/save-file/', views.ApiLogSaveFile, name='ApiLogSaveFile'),
 ]
 

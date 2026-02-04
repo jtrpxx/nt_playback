@@ -69,11 +69,12 @@
                 <div class="form-group-modal">
                     <label class="form-label-modal">Role Name</label>
                     <div class="input-group" v-has-value>
-                        <input v-model="roleNameInput" required type="text" name="roleNameModal" autocomplete="off" class="input" 
-                            maxlength="25">
+                        <input v-model="roleNameInput" required type="text" name="roleNameModal" autocomplete="off" class="input" maxlength="25" :class="{ 'form-input-modal': roleNameError || roleNameCheck }">
                         <label class="title-label">Role Name</label>
-                        <div v-show="roleNameCheck" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This role name is already in the system.</div>
-                        <div v-show="roleNameError" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof roleNameError === 'string' ? roleNameError : 'This field is required.' }}</div>
+                        <div v-show="roleNameCheck || roleNameError" class="validate"><i class="fa-solid fa-circle-exclamation"></i>
+                            <span v-if="roleNameCheck">This role name is already in the system.</span>
+                            <span v-else>{{ typeof roleNameError === 'string' ? roleNameError : 'This field is required.' }}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="form-group-modal">
@@ -139,9 +140,14 @@
             <div class="modal-body">
                 <div class="form-group-modal">
                     <label class="form-label-modal">Role Name</label>
-                    <input v-model="roleNameInput" type="text" class="form-input-modal" id="editRoleName" placeholder="Enter role name..." maxlength="25">
-                    <div v-show="roleNameCheck" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This role name is already in the system.</div>
-                    <div v-show="roleNameError" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof roleNameError === 'string' ? roleNameError : 'This field is required.' }}</div>
+                    <div class="input-group" v-has-value>
+                        <input v-model="roleNameInput" required type="text" name="roleNameModal" id="editRoleName" autocomplete="off" class="input" maxlength="25" :class="{ 'form-input-modal': roleNameError || roleNameCheck }">
+                        <label class="title-label">Role Name</label>
+                        <div v-show="roleNameCheck || roleNameError" class="validate"><i class="fa-solid fa-circle-exclamation"></i>
+                            <span v-if="roleNameCheck">This role name is already in the system.</span>
+                            <span v-else>{{ typeof roleNameError === 'string' ? roleNameError : 'This field is required.' }}</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group-modal">
                     <div class="permissions-section-title">Select Permissions</div>
@@ -383,6 +389,10 @@ watch(() => filters.value.roleAll, async (val) => {
 
 // watch roleNameInput and debounce-check against backend for duplicate role name
 watch(() => roleNameInput.value, (val) => {
+    // clear the required-field error when the user starts typing
+    if (roleNameError.value === 'This field is required.' && String(val).trim() !== '') {
+        roleNameError.value = false
+    }
     roleNameCheck.value = false
     if (_roleNameTimer) clearTimeout(_roleNameTimer)
     _roleNameTimer = setTimeout(async () => {
@@ -467,6 +477,14 @@ const iconClass = computed(() => {
 
 watch(() => props.modelValue, async (val) => {
     if (!val) return
+    // reset modal state on open so inputs/selects start fresh
+    roleNameInput.value = ''
+    rolePermissions.value = []
+    roleNameError.value = false
+    roleNameCheck.value = false
+    filters.value.roleAll = ''
+    roleAllOptions.value = []
+    allPermissions.value = []
     // prefer legacy initializer only for non-create flows
     if (props.mode !== 'create' && window && typeof window.initBaseRoleModal === 'function') {
         try { window.initBaseRoleModal(props.roleId) } catch (e) { console.error(e) }
@@ -593,5 +611,10 @@ const groupedPermissions = computed(() => {
 .modal-body {
     max-height: 60vh;
     overflow: auto
+}
+.form-input-modal {
+    border-radius: 25px;
+    border: 1px solid rgb(245, 163, 163) !important;
+    box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
 }
 </style>

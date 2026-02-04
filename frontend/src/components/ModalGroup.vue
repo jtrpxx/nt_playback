@@ -16,10 +16,13 @@
                     <div class="permissions-grid-2" id="groupGrid">
                         <div class="col-lg-12">
                             <div class="form-group-modal">
-                                <div class="input-group" v-has-value>
-                                    <input required v-model="name" type="text" name="groupNameModal"
-                                        autocomplete="off" class="input" maxlength="30">
+                                    <div class="input-group" v-has-value>
+                                    <input required v-model="name" type="text" name="groupNameModal" autocomplete="off" class="input" :class="{ 'form-input-modal': nameError || nameCheck }" maxlength="30">
                                     <label class="title-label">Group name</label>
+                                    <div v-show="nameCheck || nameError" class="validate"><i class="fa-solid fa-circle-exclamation"></i>
+                                        <span v-if="nameCheck">This {{ nameType }} name is already in the system.</span>
+                                        <span v-else>{{ typeof nameError === 'string' ? nameError : 'This field is required.' }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -28,8 +31,7 @@
                             <div class="form-group-modal">
                                 <div class="form-group-modal">
                                     <div class="input-group" v-has-value>
-                                        <input required v-model="description" type="text" name="descriptionModal"
-                                            autocomplete="off" class="input" maxlength="50">
+                                        <input required v-model="description" type="text" name="descriptionModal" autocomplete="off" class="input" maxlength="50">
                                         <label class="title-label">Description</label>
                                     </div>
                                 </div>
@@ -70,8 +72,12 @@
                             <div class="form-group-modal">
                                 <div class="input-group" v-has-value>
                                     <input required v-model="name" type="text" name="groupNameModal"
-                                        autocomplete="off" class="input" maxlength="30">
+                                        autocomplete="off" class="input" :class="{ 'form-input-modal': nameError || nameCheck }" maxlength="30">
                                     <label class="title-label">Group name</label>
+                                    <div v-show="nameCheck || nameError" class="validate"><i class="fa-solid fa-circle-exclamation"></i>
+                                        <span v-if="nameCheck">This {{ nameType }} name is already in the system.</span>
+                                        <span v-else>{{ typeof nameError === 'string' ? nameError : 'This field is required.' }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -121,8 +127,8 @@
                         <div class="col-lg-12">
                             <div class="form-group-modal">
                                 <div class="input-group">
-                                    <CustomSelect class="select-search select-checkbox" v-model="selectedGroupId"
-                                        :options="groupOptions" placeholder="Select Group" name="groupModal" />
+                                    <CustomSelect :class="['select-search','select-checkbox', { 'select-toggle-error': selectedGroupError }]" v-model="selectedGroupId" :options="groupOptions" placeholder="Select Group" name="groupModal" />
+                                    <div v-show="selectedGroupError" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof selectedGroupError === 'string' ? selectedGroupError : 'This field is required.' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -131,9 +137,12 @@
                             <div class="form-group-modal">
                                 <div class="form-group-modal">
                                     <div class="input-group" v-has-value>
-                                        <input required v-model="name" type="text" name="teamNameModal"
-                                            autocomplete="off" class="input" maxlength="30">
+                                        <input required v-model="name" type="text" name="teamNameModal" autocomplete="off" class="input" :class="{ 'form-input-modal': nameError || nameCheck }" maxlength="30">
                                         <label class="title-label">Team Name</label>
+                                        <div v-show="nameCheck || nameError" class="validate"><i class="fa-solid fa-circle-exclamation"></i>
+                                            <span v-if="nameCheck">This {{ nameType }} name is already in the system.</span>
+                                            <span v-else>{{ typeof nameError === 'string' ? nameError : 'This field is required.' }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -204,8 +213,9 @@
                         <div class="col-lg-12">
                             <div class="form-group-modal">
                                 <div class="input-group">
-                                    <CustomSelect class="select-search select-checkbox" v-model="selectedGroupId"
+                                    <CustomSelect :class="['select-search','select-checkbox', { 'select-toggle-error': selectedGroupError }]" v-model="selectedGroupId"
                                         :options="groupOptions" placeholder="Select Group" name="groupModal" />
+                                    <div v-show="selectedGroupError" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof selectedGroupError === 'string' ? selectedGroupError : 'This field is required.' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -215,8 +225,12 @@
                                 <div class="form-group-modal">
                                     <div class="input-group" v-has-value>
                                         <input required v-model="name" type="text" name="teamNameModal"
-                                            autocomplete="off" class="input" maxlength="30">
+                                            autocomplete="off" class="input" :class="{ 'form-input-modal': nameError || nameCheck }" maxlength="30">
                                         <label class="title-label">Team Name</label>
+                                         <div v-show="nameCheck || nameError" class="validate"><i class="fa-solid fa-circle-exclamation"></i>
+                                            <span v-if="nameCheck">This {{ nameType }} name is already in the system.</span>
+                                            <span v-else>{{ typeof nameError === 'string' ? nameError : 'This field is required.' }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -273,7 +287,8 @@
 <script setup>
 import { watch, computed, ref } from 'vue'
 import CustomSelect from './CustomSelect.vue'
-import { API_GET_DATABASE } from '../api/paths'
+import { API_GET_DATABASE, API_CHECK_GROUP_NAME, API_CHECK_TEAM_NAME, API_SAVE_GROUP, API_SAVE_TEAM } from '../api/paths'
+import { getCookie, showToast } from '../assets/js/function-all'
 
 import '../assets/css/components.css'
 
@@ -286,8 +301,12 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'saved'])
 
 const name = ref('')
+const nameCheck = ref(false)
+const nameError = ref(false)
+let _nameTimer = null
 const description = ref('')
 const selectedGroupId = ref(null)
+const selectedGroupError = ref(false)
 
 const databases = ref([])
 const selectedDatabaseIds = ref([])
@@ -343,7 +362,42 @@ watch(() => props.modelValue, (val) => {
     }
 })
 
+// watch name and debounce-check against backend for duplicate group/team name
+watch(() => name.value, (val) => {
+    nameCheck.value = false
+    nameError.value = false
+    if (_nameTimer) clearTimeout(_nameTimer)
+    _nameTimer = setTimeout(async () => {
+        try {
+            if (!val || String(val).trim() === '') { nameCheck.value = false; return }
+            const trimmed = String(val).trim()
+            let url = ''
+            if (props.mode === 'createGroup' || props.mode === 'editGroup') {
+                url = API_CHECK_GROUP_NAME() + `?group_name=${encodeURIComponent(trimmed)}` + (props.mode === 'editGroup' && props.group && props.group.id ? `&group_id=${encodeURIComponent(String(props.group.id))}` : '')
+            } else if (props.mode === 'createTeam' || props.mode === 'editTeam') {
+                // for team check, include team id when editing
+                url = API_CHECK_TEAM_NAME() + `?team_name=${encodeURIComponent(trimmed)}` + (props.mode === 'editTeam' && props.group && props.group.id ? `&team_id=${encodeURIComponent(String(props.group.id))}` : '')
+            } else {
+                return
+            }
+            const res = await fetch(url, { method: 'GET', credentials: 'include' })
+            if (!res.ok) { nameCheck.value = false; return }
+            const j = await res.json()
+            nameCheck.value = !!(j && (j.is_taken === true || j.exists === true || j.is_taken))
+        } catch (e) {
+            console.error('name check error', e)
+            nameCheck.value = false
+        }
+    }, 400)
+})
+
 watch(() => props.modelValue, (val) => {
+    if (val) {
+        // clear previous validation when modal opens
+        nameError.value = false
+        nameCheck.value = false
+        selectedGroupError.value = false
+    }
     if (val && props.mode === 'editGroup' && props.group) {
         name.value = props.group.group_name || ''
         description.value = props.group.description || ''
@@ -360,6 +414,11 @@ watch(() => props.modelValue, (val) => {
         selectedDatabaseIds.value = []
         selectAll.value = false
     }
+})
+
+// clear selectedGroupError when user picks a group
+watch(() => selectedGroupId.value, (val) => {
+    if (val) selectedGroupError.value = false
 })
 
 watch(() => props.group, (g) => {
@@ -389,19 +448,116 @@ const groupOptions = computed(() => {
     return Array.isArray(props.groups) ? props.groups.map(g => ({ label: g.group_name, value: g.id })) : []
 })
 
+const nameType = computed(() => {
+    if (String(props.mode || '').toLowerCase().includes('group')) return 'group'
+    if (String(props.mode || '').toLowerCase().includes('team')) return 'team'
+    return 'item'
+})
+
 function close() {
     emit('update:modelValue', false)
 }
 
-function onSave() {
-    let payload = { id: props.group?.id, group_name: name.value, description: description.value }
-    if (props.mode === 'createTeam' || props.mode === 'editTeam') {
-        // serialize selected database ids as array of strings to match backend format
-        const maindb = Array.isArray(selectedDatabaseIds.value) ? selectedDatabaseIds.value.map(String) : []
-        payload = { id: props.group?.id, name: name.value, maindatabase: JSON.stringify(maindb), user_group_id: selectedGroupId.value }
+async function onSave() {
+    // clear previous error
+    nameError.value = false
+
+    // immediate required-field validation (do this first so Save shows errors right away)
+    const trimmed = String(name.value || '').trim()
+    let hasError = false
+
+    // check Group select for team flows
+    if ((props.mode === 'createTeam' || props.mode === 'editTeam') && !selectedGroupId.value) {
+        selectedGroupError.value = 'This field is required.'
+        hasError = true
     }
-    emit('saved', { mode: props.mode, data: payload })
-    emit('update:modelValue', false)
+
+    // check name required
+    if (!trimmed) {
+        nameError.value = 'This field is required.'
+        hasError = true
+    }
+
+    if (hasError) {
+        // focus first invalid field: prefer group select then name
+        try {
+            if ((props.mode === 'createTeam' || props.mode === 'editTeam') && !selectedGroupId.value) {
+                const el = document.querySelector('[name="groupModal"]')
+                if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                if (el && typeof el.focus === 'function') el.focus()
+            } else {
+                const selName = props.mode && props.mode.toLowerCase().includes('team') ? 'teamNameModal' : 'groupNameModal'
+                const el = document.querySelector(`[name="${selName}"]`)
+                if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                if (el && typeof el.focus === 'function') el.focus()
+            }
+        } catch (e) { console.warn('focus failed', e) }
+        return
+    }
+
+    // after required checks, if duplicate flag already set block submit
+    if (nameCheck.value) {
+        nameError.value = 'This name is already in the system.'
+        return
+    }
+
+    try {
+        const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+        let url = ''
+        let body = {}
+        if (props.mode === 'createGroup' || props.mode === 'editGroup') {
+            url = API_SAVE_GROUP()
+            body = { action: props.mode === 'createGroup' ? 'create' : 'update', group_name: name.value, description: description.value }
+            if (props.mode === 'editGroup' && props.group && props.group.id) body.group_id = props.group.id
+        } else if (props.mode === 'createTeam' || props.mode === 'editTeam') {
+            url = API_SAVE_TEAM()
+            const maindb = Array.isArray(selectedDatabaseIds.value) ? selectedDatabaseIds.value.map(String) : []
+            body = { action: props.mode === 'createTeam' ? 'create' : 'update', name: name.value, maindatabase: JSON.stringify(maindb), user_group_id: selectedGroupId.value }
+            if (props.mode === 'editTeam' && props.group && props.group.id) body.team_id = props.group.id
+        } else {
+            // fallback emit if unknown mode
+            emit('saved', { mode: props.mode, data: {}})
+            emit('update:modelValue', false)
+            return
+        }
+
+        const res = await fetch(url, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken || ''
+            },
+            body: JSON.stringify(body)
+        })
+
+        const j = res.ok ? await res.json() : null
+        if (res.ok && j && (j.status === 'success' || j.status === 'ok')) {
+            // determine item name from response or payload
+            const returned = j.data || j.group || j.team || j.result || body
+            const itemName = (returned && (returned.group_name || returned.name || returned.team_name || returned.group_name || returned.label)) || name.value || ''
+            if (props.mode === 'createGroup' || props.mode === 'createTeam') {
+                showToast(`Create ${itemName} successfully`, 'success')
+            } else if (props.mode === 'editGroup' || props.mode === 'editTeam') {
+                showToast(`Edit ${itemName} successfully`, 'success')
+            } else {
+                showToast(j.message || 'Saved successfully', 'success')
+            }
+            emit('saved', { mode: props.mode, data: returned })
+            emit('update:modelValue', false)
+            return
+        } else {
+            const msg = (j && (j.message || j.error)) || 'Save failed'
+            showToast(msg, 'error')
+            // optionally set field error
+            nameError.value = msg
+            return
+        }
+    } catch (e) {
+        console.error('onSave error', e)
+        showToast('An error occurred while saving', 'error')
+        nameError.value = 'An error occurred'
+    }
 }
 </script>
 
@@ -410,5 +566,9 @@ function onSave() {
     min-height: 60vh;
     overflow: auto
 }
-
+.form-input-modal {
+    border-radius: 25px;
+    border: 1px solid rgb(245, 163, 163) !important;
+    box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
+}
 </style>

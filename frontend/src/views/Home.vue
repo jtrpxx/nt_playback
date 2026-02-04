@@ -161,18 +161,20 @@
                 </div>
               </div>
 
-              <TableTemplate
+                <TableTemplate
                     :columns="columns"
                     :rows="paginatedRecords"
                     :start-index="startIndex"
                     :loading="loading"
+                    show-selection
                     call-direction-key="call_direction"
                     :per-page="perPage"
                     :per-page-options="perPageOptions"
                     :current-page="currentPage"
                     :total-items="totalItems"
-                    @edit="onRowEdit"
-                    @delete="onRowDelete"
+                        @edit="onRowEdit"
+                        @delete="onRowDelete"
+                        @row-dblclick="onRowDblClick"
                     @page-change="changePage"
                     @per-change="setPerPage"
                   />
@@ -200,12 +202,12 @@ import { registerRequest } from '../utils/pageLoad'
 
 import { onBeforeUnmount } from 'vue'
 import { nextTick } from 'vue'
-import { API_AUDIO_LIST, API_HOME_INDEX } from '../api/paths'
+import { API_AUDIO_LIST, API_HOME_INDEX, API_LOG_PLAY_AUDIO, API_GET_CREDENTIALS, API_LOG_SAVE_FILE } from '../api/paths'
 
 import '../assets/js/jspdf.umd.min.js'
 import '../assets/js/jspdf.plugin.autotable.min.js'
 
-import { exportTableToFormat } from '../assets/js/function-all'
+import { exportTableToFormat,getCookie, showToast } from '../assets/js/function-all'
 
 
 const filters = reactive({
@@ -307,6 +309,9 @@ const recentWrap = ref(null)
 const recentOpen = ref(false)
 const recentList = ref([])
 const showFavoriteModal = ref(false)
+// save-log polling state
+const processedSaveLogs = new Set()
+let saveLogsInterval = null
 
 const onDocClick = (e) => {
   if (perWrap.value && !perWrap.value.contains(e.target)) perDropdownOpen.value = false
@@ -504,10 +509,17 @@ onMounted(() => {
   registerRequest(fetchData())
   loadRecentFromStorage()
   document.addEventListener('click', onDocClick)
+  // start polling local wrapper for save-file logs every 3 seconds
+  try {
+    // start immediately and then every 3s
+    pollSaveLogs()
+    saveLogsInterval = setInterval(pollSaveLogs, 3000)
+  } catch (e) { console.warn('start pollSaveLogs failed', e) }
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', onDocClick)
+  try { if (saveLogsInterval) clearInterval(saveLogsInterval) } catch (e) {}
 })
 
 const records = ref([])
@@ -602,7 +614,7 @@ const pagesToShow = computed(() => {
   return pages
 })
 
-const changePage = async (p) => {
+const changePage = async (p) => { 
   if (p < 1) p = 1
   if (p > totalPages.value) p = totalPages.value
   currentPage.value = p
@@ -871,10 +883,7 @@ function truncate(s, max) {
   return str.slice(0, max - 3) + '...'
 }
 
-
-
 onMounted(() => {
-  // moved fetchData to combined onMounted above to ensure dropdown listener setup
 })
 
 const onExport = () => console.log('Export triggered')
@@ -911,6 +920,127 @@ const columns = [
   { key: 'full_name', label: 'Full Name' },
   { key: 'custom_field_1', label: 'Custom Field' }
 ]
+
+
+const onRowDblClick = async (row) => {
+  if (!row) return
+  const fileName = row.file_name || row.fileName || ''
+  if (!fileName) return
+
+  const uncPath = `\\\\nichetel-niceplayer\\Users\\Administrator\\Desktop\\Music\\${fileName}`
+  const url_check_local_server = 'http://127.0.0.1:54321/check'
+  const url_get_credentials = API_GET_CREDENTIALS()
+  const url_log_playback = API_LOG_PLAY_AUDIO()
+  const url_log_save_file = API_LOG_SAVE_FILE()
+
+  const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+
+  const sendLog = (status, detail) => {
+    fetch(url_log_playback, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      body: JSON.stringify({ status, detail })
+    }).catch(err => console.error('Failed to send log:', err))
+  }
+
+  loading.value = true
+
+  try {
+    const checkResponse = await fetch(url_check_local_server)
+    if (!checkResponse.ok) throw new Error('Local server responded with an error.')
+    const checkData = await checkResponse.json()
+
+    if (!checkData.installed) {
+      try {
+        Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', html: `ไม่สามารถเล่นไฟล์เสียงได้ กรุณาติดตั้งโปรแกรม <a href="set-audio-launcher://" style="color:#3085d6; text-decoration: underline;">Nice Player</a>`, confirmButtonText: 'OK' })
+      } catch (e) {}
+      sendLog('error', `FAIL_NOT_INSTALLED | NICE Player executable not found. File: ${uncPath}`)
+      showAudioLoading(false)
+      return
+    }
+
+    const credsResponse = await fetch(url_get_credentials, { credentials: 'include' })
+    if (!credsResponse.ok) throw new Error(`Failed to get credentials from server. Status: ${credsResponse.status}`)
+    const credentials = await credsResponse.json()
+    if (credentials.error) throw new Error(`Server returned an error: ${credentials.error}`)
+
+    const encodedPath = encodeURIComponent(uncPath)
+    const encodedUser = encodeURIComponent(credentials.username || '')
+    const encodedPass = encodeURIComponent(credentials.password || '')
+    const protocolLink = `niceplayer://?path=${encodedPath}&user=${encodedUser}&pass=${encodedPass}`
+
+    try {
+      window.location.href = protocolLink
+
+      let checkCount = 0
+      const maxChecks = 60
+      const pollInterval = setInterval(async () => {
+        checkCount++
+        try {
+          const res = await fetch(url_check_local_server)
+          const data = await res.json()
+          if (data.running || checkCount >= maxChecks) {
+            clearInterval(pollInterval)
+            loading.value = false
+            if (data.running) sendLog('success', `Playback file: ${uncPath}`)
+            else {
+              sendLog('warning', `Playback initiated but process not detected: ${uncPath}`)
+              try { Swal.fire('แจ้งเตือน', 'ไม่สามารถเปิด NICE Player ได้ อาจเกิดข้อผิดพลาดบางอย่าง', 'warning') } catch (e) {}
+            }
+          }
+        } catch (err) {
+          if (checkCount >= maxChecks) {
+            clearInterval(pollInterval)
+            loading.value = false
+          }
+        }
+      }, 500)
+    } catch (e) {
+      console.error('Error launching protocol:', e)
+      try { Swal.fire('แจ้งเตือน', 'ไม่สามารถเปิด NICE Player ได้ อาจเกิดข้อผิดพลาดบางอย่าง', 'warning') } catch (er) {}
+      sendLog('error', `FAIL_PLAYER_ERROR | Error launching protocol for file: ${uncPath}. Error: ${e.message}`)
+            loading.value = false
+    }
+
+  } catch (error) {
+    console.error('Playback process failed:', error)
+    try {
+      Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', html: `ไม่สามารถเล่นไฟล์เสียงได้ กรุณาติดตั้งโปรแกรม<br><a href="/set-audio-launcher" style="color:#3085d6; text-decoration: underline;"> NT Player Connect</a> หรือ ตรวจสอบว่าโปรแกรมกำลังทำงานอยู่<br> โดยไปที่ Task Manager > Details ><br> ค้นหา NT Player Connect.exe`, confirmButtonText: 'OK' })
+    } catch (e) {}
+    sendLog('error', `FAIL_NT_Player_Connect_RUNNING | Could not connect to local NT Player Connect or another error occurred: ${error.message}. File: ${uncPath}`)
+    loading.value = false
+  }
+}
+
+async function pollSaveLogs() {
+  const localUrl = 'http://127.0.0.1:54321/get_save_logs'
+  const url_log_save_file = API_LOG_SAVE_FILE()
+  const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+  try {
+    const res = await fetch(localUrl)
+    if (!res.ok) return
+    const data = await res.json()
+    if (!data || !Array.isArray(data.logs) || data.logs.length === 0) return
+
+    for (const log of data.logs) {
+      try {
+        const key = `${log.timestamp || ''}|${log.file_path || log.path || ''}`
+        if (processedSaveLogs.has(key)) continue
+        processedSaveLogs.add(key)
+        const detail = `Time: ${log.timestamp} | Path name: ${log.file_path || log.path || ''}`
+        fetch(url_log_save_file, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ detail })
+        }).catch(err => console.warn('Failed to forward save-log', err))
+      } catch (e) { console.warn('process log failed', e) }
+    }
+  } catch (e) {
+
+  }
+}
 
 const onRowEdit = (row) => { console.log('edit row', row) }
 const onRowDelete = (row) => { console.log('delete row', row) }
@@ -964,4 +1094,7 @@ const onRowDelete = (row) => { console.log('delete row', row) }
   cursor: pointer;
 }
 
+input[type="checkbox" i] {
+ cursor: pointer
+}
 </style>

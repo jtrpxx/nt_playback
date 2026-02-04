@@ -25,7 +25,7 @@
           <template v-else>
             <div @click="onOptionClick(opt.value)" class="option-row">
               <template v-if="checkboxable">
-                <input type="checkbox" :checked="isSelected(opt.value)" @click.stop.prevent="select(opt.value)" />
+                <input type="checkbox" :checked="isSelected(opt.value)" @click.stop @change="select(opt.value)" />
                 <span class="opt-label">{{ opt.label }}</span>
               </template>
               <template v-else>
@@ -249,9 +249,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Error style applied to the toggle button when parent marks the component with error class */
 .select-toggle.select-toggle-error {
   border: 1px solid rgb(245, 163, 163) !important;
   box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
+}
+
+.input[type="checkbox" i] {
+ cursor: pointer;
 }
 </style>

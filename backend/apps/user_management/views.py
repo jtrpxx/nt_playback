@@ -200,7 +200,7 @@ def ApiGetAllRolesPermissions(request):
         all_perms_data = []
         
         if admin_role:
-            details = UserPermissionDetail.objects.filter(user_permission=admin_role).order_by('type', 'action')
+            details = UserPermissionDetail.objects.filter(user_permission=admin_role).order_by('id')
             for d in details:
                 all_perms_data.append({
                     'action': d.action,

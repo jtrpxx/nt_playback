@@ -524,8 +524,9 @@ function clearUserInfo() {
 }
 
 function clearDatabaseScope() {
+    // Clear the user's explicit selection but keep the "default" databases
+    // provided by the selected team so that "Reset to Default" can restore them.
     selectedDatabaseIds.value = []
-    defaultDatabaseIds.value = []
     selectedAllDatabases.value = false
 }
 
@@ -757,7 +758,8 @@ watch(selectedTeamId, (teamId) => {
 
 function resetDatabase() {
     selectedDatabaseIds.value = [...defaultDatabaseIds.value]
-    selectedAllDatabases.value = false
+    // reflect if all databases are selected by the default
+    selectedAllDatabases.value = databases.value.length > 0 && selectedDatabaseIds.value.length === databases.value.length
 }
 
 function toggleAllDatabases() {

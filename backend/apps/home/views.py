@@ -179,7 +179,7 @@ def ApiGetAudioList(request):
     # Mapping simple filters (duration handled separately below)
     filter_map = {
         "start_datetime__gte": start_date,
-        "end_datetime__lte": end_date,
+        "start_datetime__lte": end_date,
         "audiofile__file_name__icontains": file_name,
     }
 

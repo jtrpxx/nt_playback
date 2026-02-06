@@ -309,6 +309,23 @@ function getActionId(row) {
 </script>
 
 <style scoped>
+.table-container {
+  position: relative;
+}
+
+/* make the table body scrollable while keeping the header visible */
+.table-scroll {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+/* sticky header */
+.table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  background: var(--bs-table-bg, #fff);
+}
 .file-name-cell {
   position: relative;
   display: inline-block;

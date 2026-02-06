@@ -510,7 +510,8 @@ watch(() => props.modelValue, async (val) => {
 })
 
 const groupedPermissions = computed(() => {
-    const ap = allPermissions.value || []
+    // sort permissions by numeric `id` then group so groups preserve id order
+    const ap = (allPermissions.value || []).slice().sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0))
     const grouped = ap.reduce((acc, perm) => {
         const type = perm.type || 'Other'
         if (!acc[type]) acc[type] = []
@@ -609,7 +610,7 @@ const groupedPermissions = computed(() => {
 
 /* make modal body scrollable if content tall */
 .modal-body {
-    max-height: 60vh;
+    max-height: calc(62vh - 114px);
     overflow: auto
 }
 .form-input-modal {

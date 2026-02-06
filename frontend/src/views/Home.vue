@@ -42,7 +42,7 @@
                 </div>
 
                 <div class="input-group" v-has-value>
-                  <input v-model="filters.duration" required type="text" name="duration" autocomplete="off" class="input">
+                  <input v-model="filters.duration" v-flatpickr="{ target: filters, key: 'duration', options: { enableTime: true, noCalendar: true, enableSeconds: true, time_24hr: true, dateFormat: 'H:i:S', defaultHour: 0, defaultMinute: 0 } }" required type="text" name="duration" autocomplete="off" class="input">
                   <label class="floating-label">Duration</label>
                 </div>
 
@@ -909,8 +909,8 @@ const callDirectionClass = (dir) => {
 const columns = [
   { key: 'index', label: '#', isIndex: true },
   { key: 'main_db', label: 'Database Server' },
-  { key: 'start_datetime', label: 'START DATE & TIME' },
-  { key: 'end_datetime', label: 'END DATE & TIME' },
+  { key: 'start_datetime', label: 'Start Date & Time' },
+  { key: 'end_datetime', label: 'End Date & Time' },
   { key: 'duration', label: 'Duration' },
   { key: 'file_name', label: 'File Name', tooltip: true },
   { key: 'call_direction', label: 'Call Direction' },

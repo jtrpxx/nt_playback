@@ -50,7 +50,7 @@ def check_permission(view_func):
 def ApiIndexRole(request):
     
     base_user_permission_qs = UserPermission.objects.filter(type__in=["administrator", "auditor", "operator"])
-    user_permission_other_qs = UserPermission.objects.exclude(type__in=["administrator", "auditor", "operator"]).order_by('name')
+    user_permission_other_qs = UserPermission.objects.exclude(type__in=["administrator", "auditor", "operator"])
     user_permission_detail_qs = UserPermissionDetail.objects.exclude(user_permission__in=["1", "2", "3"])
 
     # Convert QuerySets to plain lists/dicts so JsonResponse can serialize them
@@ -90,7 +90,8 @@ def ApiGetRoleDetails(request, role_id):
         all_permissions.append({
             'action': detail.action,
             'name': f"{detail.action}",
-            'type': detail.type
+            'type': detail.type,
+            'id': detail.id
         })
 
         if detail.status:

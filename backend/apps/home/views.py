@@ -176,17 +176,43 @@ def ApiGetAudioList(request):
         if q_global:
             audio_list = audio_list.filter(q_global)
             
-    # Mapping simple filters
+    # Mapping simple filters (duration handled separately below)
     filter_map = {
         "start_datetime__gte": start_date,
         "end_datetime__lte": end_date,
         "audiofile__file_name__icontains": file_name,
-        "duration_seconds__icontains": duration,
     }
 
     for field, value in filter_map.items():
         if value:
             audio_list = audio_list.filter(**{field: value})
+
+    # Handle duration filter: accept 'HH:MM:SS', 'MM:SS' or 'SS' formats
+    if duration:
+        try:
+            parts = [p for p in duration.strip().split(":") if p != ""]
+            parts = [int(p) for p in parts]
+            if len(parts) == 3:
+                hours, minutes, seconds = parts
+            elif len(parts) == 2:
+                hours = 0
+                minutes, seconds = parts
+            elif len(parts) == 1:
+                hours = 0
+                minutes = 0
+                seconds = parts[0]
+            else:
+                raise ValueError("invalid duration format")
+
+            td = timedelta(hours=hours, minutes=minutes, seconds=seconds)
+            # treat provided duration as an upper bound: match durations <= td
+            audio_list = audio_list.filter(audiofile__duration__lte=td)
+        except Exception:
+            # fallback: try matching string representation (best-effort)
+            try:
+                audio_list = audio_list.filter(audiofile__duration__icontains=duration)
+            except Exception:
+                pass
 
     if customer:
         parts = [p.strip() for p in customer.split(',') if p.strip()]

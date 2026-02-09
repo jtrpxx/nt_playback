@@ -217,7 +217,7 @@
   top: auto;
   bottom: calc(100% + 6px);
 }
-.custom-select-root.up .chev {
+.custom-select-root.up-internal .chev {
   transform: rotate(180deg);
 }
 
@@ -348,6 +348,7 @@
 .filter-card {
   overflow-x: auto;
   max-height: 70%;
+  height: calc(100vh - 346px);
   padding-right: 6px; /* reserve space so scrollbar doesn't overlap inputs */
   padding-left: 4px;
   scrollbar-gutter: stable; /* reserve scrollbar gutter when supported */

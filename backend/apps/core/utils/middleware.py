@@ -9,7 +9,7 @@ class DynamicDBHostMiddleware(MiddlewareMixin):
 	Middleware to switch the default database HOST based on the incoming request host.
 
 	- If request host is localhost/127.0.0.1 -> use 'host.docker.internal'
-	- If request host is 192.168.1.206 -> use '192.168.1.90'
+	- If request host is 192.168.1.210 -> use '192.168.1.90'
 
 	NOTE: This mutates `settings.DATABASES` and `connections['default'].settings_dict` and
 	closes the existing connection so the next DB use picks up the new host. Intended
@@ -49,7 +49,7 @@ class DynamicDBHostMiddleware(MiddlewareMixin):
 			_cfg_192['USER'] = _postgres_user
 		if _postgres_password:
 			_cfg_192['PASSWORD'] = _postgres_password
-		HOST_CONFIG['192.168.1.206'] = _cfg_192
+		HOST_CONFIG['192.168.1.210'] = _cfg_192
 
 	if POSTGRES_PORT:
 		for k in list(HOST_CONFIG.keys()):

@@ -42,7 +42,7 @@
                 </div>
 
                 <div class="input-group" v-has-value>
-                  <input v-model="filters.duration" v-flatpickr="{ target: filters, key: 'duration', options: { enableTime: true, noCalendar: true, enableSeconds: true, time_24hr: true, dateFormat: 'H:i:S', defaultHour: 0, defaultMinute: 0 } }" required type="text" name="duration" autocomplete="off" class="input">
+                  <input v-model="filters.duration" v-flatpickr="{ target: filters, key: 'duration', mode: 'duration_range', options: { enableTime: true, noCalendar: true, enableSeconds: true, time_24hr: true, dateFormat: 'H:i:S', defaultHour: 0, defaultMinute: 0 } }" required type="text" name="duration" autocomplete="off" class="input">
                   <label class="floating-label">Duration</label>
                 </div>
 
@@ -52,7 +52,7 @@
                 </div>
 
                 <div class="input-group">
-                  <CustomSelect class="select-checkbox" v-model="filters.callDirection"
+                  <CustomSelect class="select-checkbox"  v-model="filters.callDirection"
                     :options="callDirectionOptions"
                     placeholder="Call Direction" name="callDirection" />
                 </div>
@@ -68,7 +68,7 @@
                 </div>
 
                 <div class="input-group" >
-                  <CustomSelect class="select-search select-checkbox" v-model="filters.agent"
+                  <CustomSelect class="select-search select-checkbox" :class="{ up: 'up' }" v-model="filters.agent"
                     :options="agentOptions"
                     placeholder="Agent" name="agent" />
                 </div>
@@ -692,16 +692,18 @@ const onSearch = async () => {
 const onReset = async () => {
   try {
     // clear all filter fields
-    filters.databaseServer = ''
+    // reset multi-selects to empty arrays so CustomSelect checkbox mode clears
+    filters.databaseServer = []
     filters.from = ''
     filters.to = ''
     filters.duration = ''
     filters.fileName = ''
-    filters.callDirection = ''
+    filters.callDirection = []
     filters.customerNumber = ''
-    filters.agent = ''
+    filters.agent = []
     filters.fullName = ''
     filters.customField = ''
+    filters.extension = ''
     // clear search and pagination
     searchQuery.value = ''
     currentPage.value = 1
@@ -726,6 +728,20 @@ const onReset = async () => {
       }
     } catch (e) { console.warn('clear toInput failed', e) }
 
+    // Remove has-value classes and clear any remaining input values inside filter-card
+    try {
+      const wrap = document.querySelector('.filter-card')
+      if (wrap) {
+        const groups = wrap.querySelectorAll('.input-group')
+        groups.forEach(g => {
+          try {
+            g.classList.remove('has-value')
+            const input = g.querySelector('input, textarea, select')
+            if (input) input.value = ''
+          } catch (ign) {}
+        })
+      }
+    } catch (e) { console.warn('clear filter-card values failed', e) }
     // fetch default data
     await fetchData()
   } catch (e) {

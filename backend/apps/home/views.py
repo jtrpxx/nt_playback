@@ -108,6 +108,7 @@ def ApiGetAudioList(request):
     file_name = request.POST.get("file_name") or request.GET.get("file_name")
     duration = request.POST.get("duration") or request.GET.get("duration")
     customer = request.POST.get("customer") or request.GET.get("customer") 
+    customer_number = request.POST.get("customer_number") or request.GET.get("customer_number")
     agent_id = request.POST.get("agent_id") or request.GET.get("agent_id")
     agent_group = request.POST.get("agent_group") or request.GET.get("agent_group")
     time_type = request.POST.get("type") or request.GET.get("type")
@@ -116,6 +117,7 @@ def ApiGetAudioList(request):
     extension = request.POST.get("extension") or request.GET.get("extension")
     agent_name = request.POST.get("agent") or request.GET.get("agent")
     full_name = request.POST.get("full_name") or request.GET.get("full_name")
+    custom_field = request.POST.get("custom_field") or request.GET.get("custom_field")
     
     now = datetime.now()
     if time_type:
@@ -187,32 +189,66 @@ def ApiGetAudioList(request):
         if value:
             audio_list = audio_list.filter(**{field: value})
 
-    # Handle duration filter: accept 'HH:MM:SS', 'MM:SS' or 'SS' formats
+    # Handle duration filter: accept 'HH:MM:SS', 'MM:SS', 'SS' or range 'HH:MM:SS - HH:MM:SS'
     if duration:
-        try:
-            parts = [p for p in duration.strip().split(":") if p != ""]
-            parts = [int(p) for p in parts]
-            if len(parts) == 3:
-                hours, minutes, seconds = parts
-            elif len(parts) == 2:
-                hours = 0
-                minutes, seconds = parts
-            elif len(parts) == 1:
-                hours = 0
-                minutes = 0
-                seconds = parts[0]
-            else:
-                raise ValueError("invalid duration format")
-
-            td = timedelta(hours=hours, minutes=minutes, seconds=seconds)
-            # treat provided duration as an upper bound: match durations <= td
-            audio_list = audio_list.filter(audiofile__duration__lte=td)
-        except Exception:
-            # fallback: try matching string representation (best-effort)
+        def parse_duration_to_timedelta(s):
+            s = s.strip()
+            if not s:
+                return None
+            parts = [p for p in s.split(":") if p != ""]
             try:
-                audio_list = audio_list.filter(audiofile__duration__icontains=duration)
+                parts = [int(p) for p in parts]
             except Exception:
-                pass
+                return None
+            if len(parts) == 3:
+                h, m, sec = parts
+            elif len(parts) == 2:
+                h = 0
+                m, sec = parts
+            elif len(parts) == 1:
+                h = 0
+                m = 0
+                sec = parts[0]
+            else:
+                return None
+            try:
+                return timedelta(hours=h, minutes=m, seconds=sec)
+            except Exception:
+                return None
+
+        dur_str = duration.strip()
+        # check for range separator '-' (allow spaces around)
+        if "-" in dur_str:
+            parts = [p.strip() for p in dur_str.split("-") if p.strip()]
+            if len(parts) == 2:
+                start_td = parse_duration_to_timedelta(parts[0])
+                end_td = parse_duration_to_timedelta(parts[1])
+                if start_td is not None and end_td is not None:
+                    # ensure start <= end
+                    if start_td > end_td:
+                        start_td, end_td = end_td, start_td
+                    audio_list = audio_list.filter(audiofile__duration__gte=start_td, audiofile__duration__lte=end_td)
+                else:
+                    # fallback to best-effort string match
+                    try:
+                        audio_list = audio_list.filter(audiofile__duration__icontains=duration)
+                    except Exception:
+                        pass
+            else:
+                try:
+                    audio_list = audio_list.filter(audiofile__duration__icontains=duration)
+                except Exception:
+                    pass
+        else:
+            # single duration value - keep previous behavior (upper bound)
+            td = parse_duration_to_timedelta(dur_str)
+            if td is not None:
+                audio_list = audio_list.filter(audiofile__duration__lte=td)
+            else:
+                try:
+                    audio_list = audio_list.filter(audiofile__duration__icontains=duration)
+                except Exception:
+                    pass
 
     if customer:
         parts = [p.strip() for p in customer.split(',') if p.strip()]
@@ -221,6 +257,23 @@ def ApiGetAudioList(request):
             for p in parts:
                 q |= Q(customer_number__icontains=p)
             audio_list = audio_list.filter(q)
+
+    # Support payloads that send `customer_number` explicitly
+    if customer_number:
+        parts = [p.strip() for p in customer_number.split(',') if p.strip()]
+        if parts:
+            q = Q()
+            for p in parts:
+                q |= Q(customer_number__icontains=p)
+            audio_list = audio_list.filter(q)
+            
+    if custom_field:
+        parts = [p.strip() for p in custom_field.split(',') if p.strip()]
+        if parts:
+            q = Q()
+            for p in parts:
+                q |= Q(custom_field_1__icontains=p)
+            audio_list = audio_list.filter(q)        
 
     if extension:
         parts = [p.strip() for p in extension.split(',') if p.strip()]
@@ -339,7 +392,7 @@ def ApiGetAudioList(request):
             "full_name": full_name,
             "file_path": audio.audiofile.file_path if getattr(audio, 'audiofile', None) else None,
             "set_audio": set_audio.audio_path if set_audio else None,
-            "custom_field_1": ""
+            "custom_field_1": custom_field
         })
         
 

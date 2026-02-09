@@ -1,5 +1,5 @@
 <template>
-  <div class="custom-select-root" :class="{ 'is-open': open, 'has-value': hasValue, 'up': up }" ref="root">
+  <div class="custom-select-root" :class="{ 'is-open': open, 'has-value': hasValue, 'up': up, 'up-internal': up }" ref="root">
     <button type="button" :class="['select-toggle', attrs.class]" @click="toggle" @keydown.down.prevent="openList"
       @keydown.up.prevent="openList" :aria-expanded="open" :aria-haspopup="true">
       <span class="selected-text">{{ hasValue ? selectedLabel : '' }}</span>

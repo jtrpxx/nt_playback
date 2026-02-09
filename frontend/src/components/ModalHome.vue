@@ -126,7 +126,7 @@
                     </div>
 
                     <div class="input-group">
-                      <CustomSelect class="select-search select-checkbox" v-model="addForm.agent"
+                      <CustomSelect class="select-search select-checkbox" :class="{ up: 'up' }" v-model="addForm.agent"
                         :options="agentOptions" placeholder="Agent" name="agentModal" />
                     </div>
 

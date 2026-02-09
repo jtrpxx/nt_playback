@@ -181,13 +181,37 @@ const endItem = computed(() => Math.min(props.totalItems, startIndexLocal.value 
 const pagesToShow = computed(() => {
   const pages = []
   const total = totalPages.value
-  if (total <= 6) {
+  const current = props.currentPage
+
+  // show all when small
+  if (total <= 7) {
     for (let i = 1; i <= total; i++) pages.push(i)
     return pages
   }
-  const end = Math.min(5, total)
-  for (let i = 1; i <= end; i++) pages.push(i)
-  if (total > end + 1) pages.push('...')
+
+  // beginning range: 1..5, ..., total
+  if (current <= 4) {
+    for (let i = 1; i <= 5; i++) pages.push(i)
+    pages.push('...')
+    pages.push(total)
+    return pages
+  }
+
+  // ending range: 1, ..., total-4 .. total
+  if (current >= total - 3) {
+    pages.push(1)
+    pages.push('...')
+    for (let i = total - 4; i <= total; i++) pages.push(i)
+    return pages
+  }
+
+  // middle: 1, ..., current-1, current, current+1, ..., total
+  pages.push(1)
+  pages.push('...')
+  pages.push(current - 1)
+  pages.push(current)
+  pages.push(current + 1)
+  pages.push('...')
   pages.push(total)
   return pages
 })

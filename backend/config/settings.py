@@ -53,9 +53,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8001",
     "http://localhost:3000",
     "http://172.27.96.1:8001",
-    "http://192.168.1.210:8001",
+    "http://192.168.1.90:8001",
     "http://localhost",
-    "http://192.168.1.210",
+    "http://192.168.1.90",
 ]
 SESSION_COOKIE_DOMAIN = None  # ให้ Django ใช้ host จาก request
 
@@ -185,8 +185,8 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8001",
     "http://127.0.0.1:8001",
-    "http://192.168.1.210:8001",
+    "http://192.168.1.90:8001",
     # support nginx default port (no :8001)
     "http://localhost",
-    "http://192.168.1.210",
+    "http://192.168.1.90",
 ]

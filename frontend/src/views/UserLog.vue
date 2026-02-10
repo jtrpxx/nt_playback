@@ -54,7 +54,7 @@
                   <input ref="startInput" v-flatpickr="{ target: filters, key: 'start_date' }" required type="text"
                     name="start_date"
                     autocomplete="off" class="input">
-                  <label class="floating-label">Start Date</label>
+                  <label class="floating-label">From</label>
                   <span class="calendar-icon" @click="startInput && startInput.focus()"><i
                       class="fa-regular fa-calendar"></i></span>
                 </div>
@@ -62,7 +62,7 @@
                   <input ref="endInput" v-flatpickr="{ target: filters, key: 'end_date' }" required type="text"
                     name="end_date"
                     autocomplete="off" class="input">
-                  <label class="floating-label">End Date</label>
+                  <label class="floating-label">To</label>
                   <span class="calendar-icon" @click="endInput && endInput.focus()"><i
                       class="fa-regular fa-calendar"></i></span>
                 </div>

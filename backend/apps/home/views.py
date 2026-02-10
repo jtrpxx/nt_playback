@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
+from django.middleware.csrf import get_token
+from django.conf import settings
 from apps.core.utils.function import create_user_log, get_user_os_browser_architecture
 
 # models
@@ -41,6 +43,22 @@ def check_permission(view_func):
                 return redirect('/')
         return view_func(request, *args, **kwargs)
     return _wrapped_view
+
+
+@login_required(login_url='/login')
+def ApiGetCsrfToken(request):
+    token = get_token(request)
+    resp = JsonResponse({'csrfToken': token})
+    try:
+        # Ensure the CSRF cookie is explicitly set on the response so client can read/send it.
+        # Use project settings fallbacks for secure and samesite behavior.
+        secure = getattr(settings, 'CSRF_COOKIE_SECURE', False)
+        samesite = getattr(settings, 'CSRF_COOKIE_SAMESITE', 'Lax')
+        # Django's default CSRF cookie name is settings.CSRF_COOKIE_NAME
+        resp.set_cookie(getattr(settings, 'CSRF_COOKIE_NAME', 'csrftoken'), token, secure=secure, samesite=samesite)
+    except Exception:
+        pass
+    return resp
 
 @login_required(login_url='/login')
 def ApiIndexHome(request):
@@ -563,6 +581,7 @@ def ApiGetCredentials(request):
         )
         return JsonResponse({"error": str(e)}, status=500)
     
+@login_required
 @require_POST
 def ApiLogPlayAudio(request):
     """
@@ -594,6 +613,7 @@ def ApiLogPlayAudio(request):
         
         return JsonResponse({"error": str(e)}, status=400)
 
+@login_required
 @require_POST
 def ApiLogSaveFile(request):
     try:

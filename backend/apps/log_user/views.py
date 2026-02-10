@@ -2,6 +2,11 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.db.models import Q
 
+from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+from django.conf import settings
+from datetime import datetime, timedelta
+
 from apps.core.model.authorize.models import UserLog
 
 def ApiGetUserLogs(request,type):
@@ -72,9 +77,27 @@ def ApiGetUserLogs(request,type):
     if ip_address:
         log_list = log_list.filter(ip_address__icontains=ip_address)
     if start_date:
-        log_list = log_list.filter(timestamp__gte=start_date)
+        try:
+            dt = parse_datetime(start_date)
+            if dt is None:
+                dt = datetime.strptime(start_date, "%Y-%m-%d %H:%M")
+            if settings.USE_TZ and dt.tzinfo is None:
+                dt = timezone.make_aware(dt, timezone.get_current_timezone())
+            log_list = log_list.filter(timestamp__gte=dt)
+        except Exception:
+            pass
     if end_date:
-        log_list = log_list.filter(timestamp__lte=end_date)
+        try:
+            dt = parse_datetime(end_date)
+            if dt is None:
+                dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M")
+            if settings.USE_TZ and dt.tzinfo is None:
+                dt = timezone.make_aware(dt, timezone.get_current_timezone())
+            # include the full minute of the provided end time (up to :59)
+            dt_end = dt + timedelta(seconds=59)
+            log_list = log_list.filter(timestamp__lte=dt_end)
+        except Exception:
+            pass
     if client_type:
         log_list = log_list.filter(client_type__icontains=client_type)
 

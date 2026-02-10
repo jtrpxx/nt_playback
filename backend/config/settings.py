@@ -49,13 +49,16 @@ ALLOWED_HOSTS = ['*', '127.0.0.1', '172.27.96.1']
 # CORS Configuration
 # อนุญาตให้ Frontend (เช่น localhost:8001) ยิง API เข้ามาได้
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8001",
-    "http://127.0.0.1:8001",
-    "http://localhost:3000",
-    "http://172.27.96.1:8001",
-    "http://192.168.1.90:8001",
-    "http://localhost",
-    "http://192.168.1.90",
+    "https://localhost:8001",
+    "https://127.0.0.1:8001",
+    "https://localhost:3000",
+    "https://172.27.96.1:8001",
+    "https://192.168.1.90:8001",
+    "https://localhost",
+    "https://192.168.1.90",
+    
+    "https://192.168.1.210:8001",
+    "https://192.168.1.210",
 ]
 SESSION_COOKIE_DOMAIN = None  # ให้ Django ใช้ host จาก request
 
@@ -163,7 +166,7 @@ TIME_ZONE = 'Asia/Bangkok'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -183,10 +186,13 @@ CORS_ALLOW_CREDENTIALS = True
 
 # เพิ่ม CSRF trusted origins เพื่อให้การส่ง cookie/csrf ทำงานจากทั้ง localhost และ LAN
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:8001",
-    "http://127.0.0.1:8001",
-    "http://192.168.1.90:8001",
+    "https://localhost:8001",
+    "https://127.0.0.1:8001",
+    "https://192.168.1.90:8001",
     # support nginx default port (no :8001)
-    "http://localhost",
-    "http://192.168.1.90",
+    "https://localhost",
+    "https://192.168.1.90",
+    # frontend LAN host
+    "https://192.168.1.210:8001",
+    "https://192.168.1.210",
 ]

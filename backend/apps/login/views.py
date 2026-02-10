@@ -40,6 +40,8 @@ def index(request):
                 request.session['show_toast'] = True
                 if user_profile:
                     request.session['privilege_history'] = user_profile.privilege_history
+                    
+            print(f"User login {user.username} logged in successfully.")
 
             # ✅ บันทึก Log สำเร็จ
             create_user_log(

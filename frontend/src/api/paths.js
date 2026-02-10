@@ -4,6 +4,9 @@ const ENV_API_BASE = import.meta.env.VITE_API_BASE || 'http://172.27.96.1:8000'
 
 export const getApiBase = () => getRuntime('VITE_API_BASE', ENV_API_BASE)
 
+// GET csrf
+export const API_GET_CSRF = () => `${getApiBase()}/api/get/csrf/`
+
 // หน้า Home
 export const API_HOME_INDEX = () => `${getApiBase()}/api/home/index/`
 export const API_AUDIO_LIST = () => `${getApiBase()}/api/audio/list/`

@@ -262,6 +262,7 @@
 import { defineProps, defineEmits, ref, computed, reactive, onMounted, watch } from 'vue'
 import { API_ADD_MY_FAVORITE_SEARCH, API_CHECK_MY_FAVORITE_NAME } from '../api/paths'
 import { getCookie, showToast } from '../assets/js/function-all'
+import { ensureCsrf, getCsrfToken } from '../api/csrf'
 import CustomSelect from './CustomSelect.vue'
 
 import '../assets/js/sweetalert2@11.min.js'
@@ -571,9 +572,8 @@ async function postFavoriteAction(formObj) {
       else if (v === null || v === undefined) fd.append(k, '')
       else fd.append(k, String(v))
     }
-    const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
-    // const csrfToken = ''
-
+    try { await ensureCsrf() } catch (e) {}
+    const csrfToken = getCsrfToken()
     const res = await fetch(API_ADD_MY_FAVORITE_SEARCH(), { method: 'POST', body: fd, credentials: 'include', headers: { 'X-CSRFToken': csrfToken || '' } })
     if (!res.ok) throw new Error('Network response not ok')
     return await res.json()

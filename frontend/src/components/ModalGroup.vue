@@ -289,6 +289,7 @@ import { watch, computed, ref } from 'vue'
 import CustomSelect from './CustomSelect.vue'
 import { API_GET_DATABASE, API_CHECK_GROUP_NAME, API_CHECK_TEAM_NAME, API_SAVE_GROUP, API_SAVE_TEAM } from '../api/paths'
 import { getCookie, showToast } from '../assets/js/function-all'
+import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 import '../assets/css/components.css'
 
@@ -501,8 +502,8 @@ async function onSave() {
         return
     }
 
-    try {
-        const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+        try { await ensureCsrf() } catch (e) {}
+        const csrfToken = getCsrfToken()
         let url = ''
         let body = {}
         if (props.mode === 'createGroup' || props.mode === 'editGroup') {

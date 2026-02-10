@@ -271,10 +271,12 @@ def create_user_log(
             timestamp=timezone.now(),
             detail=detail,
             ip_address=server_ip,
-            audiofile_id=audiofile_id,
+            # audiofile_id=audiofile_id,
             client_type=f"{info['os']} / {info['browser']}",
             status=status,
         )
+        
+        print('timezone:', timezone.now())
     except Exception as log_error:
         # ถ้าแม้แต่การเขียน log เองยัง error จะ print ออก console เพื่อไม่ให้ระบบล่ม
         print(f"[UserLog ERROR] Failed to write log: {log_error}")

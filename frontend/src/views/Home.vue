@@ -203,6 +203,7 @@ import { registerRequest } from '../utils/pageLoad'
 import { onBeforeUnmount } from 'vue'
 import { nextTick } from 'vue'
 import { API_AUDIO_LIST, API_HOME_INDEX, API_LOG_PLAY_AUDIO, API_GET_CREDENTIALS, API_LOG_SAVE_FILE } from '../api/paths'
+import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 import '../assets/js/jspdf.umd.min.js'
 import '../assets/js/jspdf.plugin.autotable.min.js'
@@ -947,15 +948,14 @@ const onRowDblClick = async (row) => {
   const url_check_local_server = 'http://127.0.0.1:54321/check'
   const url_get_credentials = API_GET_CREDENTIALS()
   const url_log_playback = API_LOG_PLAY_AUDIO()
-  const url_log_save_file = API_LOG_SAVE_FILE()
 
-  const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
-
-  const sendLog = (status, detail) => {
+  const sendLog = async (status, detail) => {
+    try { await ensureCsrf() } catch (e) {}
+    const csrfToken = getCsrfToken()
     fetch(url_log_playback, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken || '' },
       body: JSON.stringify({ status, detail })
     }).catch(err => console.error('Failed to send log:', err))
   }
@@ -1032,7 +1032,7 @@ const onRowDblClick = async (row) => {
 async function pollSaveLogs() {
   const localUrl = 'http://127.0.0.1:54321/get_save_logs'
   const url_log_save_file = API_LOG_SAVE_FILE()
-  const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+  try { await ensureCsrf() } catch (e) {}
   try {
     const res = await fetch(localUrl)
     if (!res.ok) return
@@ -1045,10 +1045,11 @@ async function pollSaveLogs() {
         if (processedSaveLogs.has(key)) continue
         processedSaveLogs.add(key)
         const detail = `Time: ${log.timestamp} | Path name: ${log.file_path || log.path || ''}`
+        const csrfToken = getCsrfToken()
         fetch(url_log_save_file, {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken || '' },
           body: JSON.stringify({ detail })
         }).catch(err => console.warn('Failed to forward save-log', err))
       } catch (e) { console.warn('process log failed', e) }

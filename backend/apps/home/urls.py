@@ -11,5 +11,6 @@ urlpatterns = [
 	path('api/log/play-audio/', views.ApiLogPlayAudio, name='ApiLogPlayAudio'),
 	path('api/get/credentials/', views.ApiGetCredentials, name='ApiGetCredentials'),
     path('api/log/save-file/', views.ApiLogSaveFile, name='ApiLogSaveFile'),
+    path('api/get/csrf/', views.ApiGetCsrfToken, name='ApiGetCsrfToken'),
 ]
 

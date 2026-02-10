@@ -37,7 +37,7 @@ class UserAuth(models.Model):
 
         
 class UserLog(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='User',null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, verbose_name='User',null=True, blank=True)
     action = models.CharField(max_length=255, verbose_name='Action')
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name='Timestamp')
     detail = models.TextField(blank=True, verbose_name='Detail')

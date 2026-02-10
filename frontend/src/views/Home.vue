@@ -42,7 +42,7 @@
                 </div>
 
                 <div class="input-group" v-has-value>
-                  <input v-model="filters.duration" v-flatpickr="{ target: filters, key: 'duration', mode: 'duration_range', options: { enableTime: true, noCalendar: true, enableSeconds: true, time_24hr: true, dateFormat: 'H:i:S', defaultHour: 0, defaultMinute: 0 } }" required type="text" name="duration" autocomplete="off" class="input">
+                  <input ref="durationInput" v-model="filters.duration" v-flatpickr="{ target: filters, key: 'duration', mode: 'duration_range', options: { enableTime: true, noCalendar: true, enableSeconds: true, time_24hr: true, dateFormat: 'H:i:S', defaultHour: 0, defaultMinute: 0 } }" required type="text" name="duration" autocomplete="off" class="input">
                   <label class="floating-label">Duration</label>
                 </div>
 
@@ -304,6 +304,7 @@ const setPerPage = (opt) => {
 const perWrap = ref(null)
 const fromInput = ref(null)
 const toInput = ref(null)
+const durationInput = ref(null)
 const exportWrap = ref(null)
 const exportOpen = ref(false)
 const recentWrap = ref(null)
@@ -844,6 +845,27 @@ async function applyFavorite(fav){
         }
       }
     } catch (e) { console.warn('applyFavorite update toInput failed', e) }
+
+    try {
+      if (durationInput.value) {
+        const inst3 = durationInput.value._flatpickrInstance || durationInput.value._flatpickr
+        const dstr = filters.duration
+        if (inst3 && typeof inst3.setDate === 'function') {
+          if (dstr && dstr.indexOf(':') !== -1) {
+            const parts = String(dstr).split(':').map(x => parseInt(x, 10) || 0)
+            const now = new Date()
+            now.setHours(parts[0] || 0, parts[1] || 0, parts[2] || 0, 0)
+            inst3.setDate(now, true)
+          } else if (!dstr) {
+            inst3.clear()
+          } else {
+            durationInput.value.value = dstr || ''
+          }
+        } else {
+          durationInput.value.value = filters.duration || ''
+        }
+      }
+    } catch (e) { console.warn('applyFavorite update durationInput failed', e) }
 
     // sync has-value classes for inputs inside the filter-card
     try {

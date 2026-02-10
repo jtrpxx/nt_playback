@@ -68,13 +68,12 @@
                 <form id="addFavoriteForm" @submit.prevent>
                   <div class="permissions-grid-1">
                       <div class="input-group" v-has-value>
-                        <input v-model="addForm.firstName" required type="text" name="favoriteName" autocomplete="off"
-                          :class="['input', { 'form-input-modal': addNameTaken }]">
+                        <input v-model="addForm.firstName" required type="text" name="favoriteName" autocomplete="off" :class="['input', { 'form-input-modal': addNameTaken }]" maxlength="30">
                         <label class="title-label">Favorite name</label>
                         <div v-show="addNameTaken" class="validate" id="validateAddMyfavoriteName"><i class="fa-solid fa-circle-exclamation"></i> This name is already in the system.</div>
                       </div>
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.description" required type="text" name="descriptionModal" autocomplete="off" class="input">
+                      <input v-model="addForm.description" required type="text" name="descriptionModal" autocomplete="off" class="input" maxlength="100">
                       <label class="title-label">Description</label>
                     </div>
                   </div>
@@ -100,12 +99,12 @@
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.duration" required type="text" name="durationModal" autocomplete="off" class="input">
+                      <input v-model="addForm.duration" v-flatpickr="{ target: addForm, key: 'duration',  options: { enableTime: true, noCalendar: true, enableSeconds: true, time_24hr: true, dateFormat: 'H:i:S', defaultHour: 0, defaultMinute: 0 } }" required type="text" name="durationModal" autocomplete="off" class="input" >
                       <label class="title-label">Duration</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.fileName" required type="text" name="fileNameModal" autocomplete="off" class="input">
+                      <input v-model="addForm.fileName" required type="text" name="fileNameModal" autocomplete="off" class="input" maxlength="255">
                       <label class="title-label">File Name</label>
                     </div>
 
@@ -116,22 +115,21 @@
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.customerNumber" required type="text" name="customerNumberModal" autocomplete="off" class="input">
+                      <input v-model="addForm.customerNumber" required type="text" name="customerNumberModal" autocomplete="off" class="input" maxlength="10">
                       <label class="title-label">Customer Number</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.extension" required type="text" name="extensionModal" autocomplete="off" class="input">
+                      <input v-model="addForm.extension" required type="text" name="extensionModal" autocomplete="off" class="input" maxlength="10">
                       <label class="title-label">Extension</label>
                     </div>
 
                     <div class="input-group">
-                      <CustomSelect class="select-search select-checkbox" :class="{ up: 'up' }" v-model="addForm.agent"
-                        :options="agentOptions" placeholder="Agent" name="agentModal" />
+                      <CustomSelect class="select-search select-checkbox" :class="{ up: 'up' }" v-model="addForm.agent" :options="agentOptions" placeholder="Agent" name="agentModal" />
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="addForm.fullName" required type="text" name="fullNameModal" autocomplete="off" class="input">
+                      <input v-model="addForm.fullName" required type="text" name="fullNameModal" autocomplete="off" class="input" maxlength="30">
                       <label class="title-label">Full Name</label>
                     </div>
 
@@ -155,14 +153,13 @@
                 <form id="addFavoriteForm" @submit.prevent>
                   <div class="permissions-grid-1">
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.firstName" required type="text" name="favoriteName" autocomplete="off"
-                        :class="['input', { 'form-input-modal': editNameTaken }]">
-                      <input v-model="editForm.id" required type="text" name="favoriteId" autocomplete="off" class="input d-none"></input>
+                      <input v-model="editForm.firstName" required type="text" name="favoriteName" autocomplete="off" :class="['input', { 'form-input-modal': editNameTaken }]"  maxlength="30">
+                      <input v-model="editForm.id" required type="text" name="favoriteId" autocomplete="off" class="input d-none">
                       <label class="title-label">Favorite name</label>
                       <div v-show="editNameTaken" class="validate" id="validateEditMyfavoriteName"><i class="fa-solid fa-circle-exclamation"></i> This name is already in the system.</div>
                     </div>
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.description" required type="text" name="descriptionModal" autocomplete="off" class="input">
+                      <input v-model="editForm.description" required type="text" name="descriptionModal" autocomplete="off" class="input"  maxlength="50">
                       <label class="title-label">Description</label>
                     </div>
                   </div>
@@ -188,12 +185,12 @@
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.duration" required type="text" name="durationModal" autocomplete="off" class="input">
+                      <input v-model="editForm.duration" v-flatpickr="{ target: editForm, key: 'duration',  options: { enableTime: true, noCalendar: true, enableSeconds: true, time_24hr: true, dateFormat: 'H:i:S', defaultHour: 0, defaultMinute: 0 } }" required type="text" name="durationModal" autocomplete="off" class="input" >
                       <label class="title-label">Duration</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.fileName" required type="text" name="fileNameModal" autocomplete="off" class="input">
+                      <input v-model="editForm.fileName" required type="text" name="fileNameModal" autocomplete="off" class="input" maxlength="255">
                       <label class="title-label">File Name</label>
                     </div>
 
@@ -204,22 +201,21 @@
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.customerNumber" required type="text" name="customerNumberModal" autocomplete="off" class="input">
+                      <input v-model="editForm.customerNumber" required type="text" name="customerNumberModal" autocomplete="off" class="input" maxlength="10">
                       <label class="title-label">Customer Number</label>
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.extension" required type="text" name="extensionModal" autocomplete="off" class="input">
+                      <input v-model="editForm.extension" required type="text" name="extensionModal" autocomplete="off" class="input" maxlength="10">
                       <label class="title-label">Extension</label>
                     </div>
 
                     <div class="input-group">
-                      <CustomSelect class="select-search select-checkbox" v-model="editForm.agent"
-                        :options="agentOptions" placeholder="Agent" name="agentEdit" />
+                      <CustomSelect class="select-search select-checkbox" v-model="editForm.agent" :options="agentOptions" placeholder="Agent" name="agentEdit" />
                     </div>
 
                     <div class="input-group" v-has-value>
-                      <input v-model="editForm.fullName" required type="text" name="fullNameModal" autocomplete="off" class="input">
+                      <input v-model="editForm.fullName" required type="text" name="fullNameModal" autocomplete="off" class="input" maxlength="100">
                       <label class="title-label">Full Name</label>
                     </div>
 
@@ -259,7 +255,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref, computed, reactive, onMounted, watch } from 'vue'
+import { defineProps, defineEmits, ref, computed, reactive, onMounted, watch, nextTick } from 'vue'
 import { API_ADD_MY_FAVORITE_SEARCH, API_CHECK_MY_FAVORITE_NAME } from '../api/paths'
 import { getCookie, showToast } from '../assets/js/function-all'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
@@ -288,6 +284,8 @@ const filteredFavorites = computed(() => {
 
 const fromInputAdd = ref(null)
 const toInputAdd = ref(null)
+const fromInput = ref(null)
+const toInput = ref(null)
 
 // add form state
 const addForm = reactive({
@@ -343,6 +341,8 @@ function applyFavorite(f) { emit('apply', f); emit('update:modelValue', false) }
 function editFavorite(f) {
   // populate editForm from favorite.raw_data and metadata
   try {
+    // clear previous edit values first so missing keys don't retain old values
+    try { resetEditForm() } catch (e) {}
     const raw = typeof f.raw_data === 'string' ? JSON.parse(f.raw_data || '{}') : (f.raw_data || {})
     editForm.id = f.id || null
     editForm.firstName = f.favorite_name || ''
@@ -400,6 +400,33 @@ function editFavorite(f) {
     showEditPlaceholder.value = false
     showEditForm.value = true
     activeTab.value = 'edit'
+    // sync duration input value into flatpickr instance after DOM updates
+    nextTick(() => {
+      try {
+        const el = document.querySelector('#edit-form-container input[name="durationModal"]')
+        if (el) {
+          // set the raw input value (v-model already updated editForm.duration)
+          el.value = editForm.duration || ''
+          // update has-value class
+          try { el.parentNode && el.parentNode.classList.toggle('has-value', (el.value || '').toString().trim() !== '') } catch(e){}
+          // sync flatpickr instance: set date if value exists, otherwise clear it
+          if (el._flatpickrInstance) {
+            if (editForm.duration && String(editForm.duration).trim() !== '') {
+              try { el._flatpickrInstance.setDate(String(editForm.duration), true) } catch (e) {}
+            } else {
+              try { el._flatpickrInstance.clear() } catch (e) {}
+              // ensure any cloned "To" time inputs are reset to 00
+              try {
+                if (el._flatpickrToContainer) {
+                  const inputs = el._flatpickrToContainer.querySelectorAll('input')
+                  inputs.forEach(i => i.value = '00')
+                }
+              } catch(e){}
+            }
+          }
+        }
+      } catch (e) {}
+    })
     // optionally focus first input in edit form after render
   } catch (e) {
     console.error('editFavorite parse error', e)
@@ -600,7 +627,8 @@ async function saveFavorite() {
       customer: addForm.customerNumber || '',
       extension: addForm.extension || '',
       agent: Array.isArray(addForm.agent) ? addForm.agent.join(',') : (addForm.agent || ''),
-      full_name: addForm.fullName || ''
+      full_name: addForm.fullName || '',
+      duration: addForm.duration || ''
     }
     const json = await postFavoriteAction(payload)
     if (json && json.status === 'success') {

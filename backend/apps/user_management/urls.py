@@ -11,4 +11,5 @@ urlpatterns = [
     path('api/add-user/check-username/', views.ApiCheckUsername, name='ApiCheckUsername'),
     path('api/add-user/', views.ApiSaveUser, name='ApiSaveUser'),
     path('api/edit-user/<int:user_id>/', views.ApiSaveUser, name='ApiEditUser'),
+    path('api/user-management/delete-user/<int:user_id>/', views.ApiDeleteUser, name='ApiDeleteUser'),
 ]

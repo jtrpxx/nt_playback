@@ -34,6 +34,8 @@ export default {
     if (instance && instance.config && Array.isArray(instance.config.onChange)) {
       // Track whether the current value has been explicitly applied by the user
       let applied = !!(el && el.value)
+      // Keep last applied value so we can restore it if flatpickr writes a default (00:00:00) on close
+      let lastAppliedValue = (el && el.value) ? el.value : ''
 
       // create a small action bar appended to flatpickr's calendar container
       try {
@@ -124,6 +126,15 @@ export default {
                     instance.config.onChange.forEach(fn => fn(instance.selectedDates, instance.input.value))
                   }
                 })
+                // When the user focuses/clicks a num input we should mark the selection as pending
+                // so the action button reflects that an explicit change may be applied.
+                input.addEventListener('focus', () => {
+                  try {
+                    applied = false
+                    actionBtn.textContent = 'Apply'
+                    actionBtn.dataset.state = 'apply'
+                  } catch (e) {}
+                })
               })
             }
             setupClonedInput(toTimeContainer)
@@ -150,18 +161,26 @@ export default {
         const doApply = () => {
           let finalStr = ''
           if (isDurationRange) {
-            // Get From
-            const fromStr = instance.formatDate(instance.latestSelectedDateObj || new Date().setHours(0,0,0,0), instance.config.dateFormat)
-            // Get To
-            let toStr = '00:00:00'
+            // Determine whether a "from" date exists
+            const fromPresent = instance && Array.isArray(instance.selectedDates) && instance.selectedDates.length > 0
+            const fromStr = fromPresent ? instance.formatDate(instance.latestSelectedDateObj, instance.config.dateFormat) : ''
+
+            // Get To (HH:MM:SS) and check if any value is non-zero
+            let toStr = ''
+            let toPresent = false
             if (el._flatpickrToContainer) {
               const inputs = el._flatpickrToContainer.querySelectorAll('input')
-              const h = (inputs[0].value || '00').padStart(2, '0')
-              const m = (inputs[1].value || '00').padStart(2, '0')
-              const s = (inputs[2] ? inputs[2].value : '00').padStart(2, '0')
+              const h = (inputs[0] && inputs[0].value) ? String(inputs[0].value).padStart(2, '0') : '00'
+              const m = (inputs[1] && inputs[1].value) ? String(inputs[1].value).padStart(2, '0') : '00'
+              const s = (inputs[2] && inputs[2].value) ? String(inputs[2].value).padStart(2, '0') : '00'
               toStr = `${h}:${m}:${s}`
+              toPresent = !(h === '00' && m === '00' && (s === '00' || s === undefined))
             }
-            finalStr = `${fromStr} - ${toStr}`
+
+            if (fromPresent && toPresent) finalStr = `${fromStr} - ${toStr}`
+            else if (fromPresent) finalStr = fromStr
+            else if (toPresent) finalStr = toStr
+            else finalStr = ''
           } else {
             finalStr = el.value || (instance && instance.selectedDates && instance.selectedDates.length ? instance.formatDate(instance.selectedDates[0], instance.config.dateFormat) : '')
           }
@@ -169,8 +188,9 @@ export default {
           if (target && key) try { target[key] = finalStr } catch(e){}
           el.value = finalStr
           applied = true
-          actionBtn.textContent = 'Clear'
-          actionBtn.dataset.state = 'clear'
+          lastAppliedValue = finalStr
+          // actionBtn.textContent = 'Clear'
+          // actionBtn.dataset.state = 'clear'
           try { instance.close() } catch(e){}
         }
 
@@ -183,6 +203,7 @@ export default {
           if (target && key) try { target[key] = '' } catch(e){}
           el.value = ''
           applied = false
+          lastAppliedValue = ''
           // Remove visual has-value state from the input wrapper (for from-to duration range)
           try {
             const parent = el && el.parentNode
@@ -203,17 +224,29 @@ export default {
         // update button state when user changes selection
         instance.config.onChange.push((selectedDates, dateStr) => {
           if (isDurationRange) {
-            // Update input value live to show "From - To"
-            const fromStr = instance.formatDate(instance.latestSelectedDateObj || new Date().setHours(0,0,0,0), instance.config.dateFormat)
-            let toStr = '00:00:00'
+            const fromPresent = Array.isArray(selectedDates) && selectedDates.length > 0
+            const fromStr = fromPresent ? instance.formatDate(instance.latestSelectedDateObj, instance.config.dateFormat) : ''
+
+            let toStr = ''
+            let toPresent = false
             if (el._flatpickrToContainer) {
               const inputs = el._flatpickrToContainer.querySelectorAll('input')
-              const h = (inputs[0].value || '00').padStart(2, '0')
-              const m = (inputs[1].value || '00').padStart(2, '0')
-              const s = (inputs[2] ? inputs[2].value : '00').padStart(2, '0')
+              const h = (inputs[0] && inputs[0].value) ? String(inputs[0].value).padStart(2, '0') : '00'
+              const m = (inputs[1] && inputs[1].value) ? String(inputs[1].value).padStart(2, '0') : '00'
+              const s = (inputs[2] && inputs[2].value) ? String(inputs[2].value).padStart(2, '0') : '00'
               toStr = `${h}:${m}:${s}`
+              toPresent = !(h === '00' && m === '00' && (s === '00' || s === undefined))
             }
-            el.value = `${fromStr} - ${toStr}`
+
+            if (fromPresent && toPresent) {
+              el.value = `${fromStr} - ${toStr}`
+            } else if (fromPresent) {
+              el.value = fromStr
+            } else if (toPresent) {
+              el.value = toStr
+            } else {
+              // Preserve existing input value until the user explicitly Apply/Clear
+            }
           }
 
           try {
@@ -225,8 +258,8 @@ export default {
             }
           } catch (e) {}
 
-          // when a new selection is made it becomes pending (needs Apply)
-          if (selectedDates && selectedDates.length) {
+          // when a new selection or time edit is made it becomes pending (needs Apply)
+            if (selectedDates && selectedDates.length) {
             applied = false
             actionBtn.textContent = 'Apply'
             actionBtn.dataset.state = 'apply'
@@ -242,32 +275,46 @@ export default {
         try {
           instance.config.onClose = Array.isArray(instance.config.onClose) ? instance.config.onClose : []
           instance.config.onClose.push((selectedDates, dateStr) => {
-            if (el && el.value) {
-              // Sync "To" picker if value exists
-              if (isDurationRange && el.value.includes(' - ') && el._flatpickrToContainer) {
-                const parts = el.value.split(' - ')
-                if (parts[1]) {
-                  const [h, m, s] = parts[1].split(':')
-                  const inputs = el._flatpickrToContainer.querySelectorAll('input')
-                  if (inputs[0]) inputs[0].value = h || '00'
-                  if (inputs[1]) inputs[1].value = m || '00'
-                  if (inputs[2]) inputs[2].value = s || '00'
+            try {
+              // If the user hasn't applied the pending change and flatpickr wrote a default value
+              // (e.g. "00:00:00"), restore the last applied value instead of overwriting it.
+              if (!applied) {
+                const val = el && el.value
+                const isDefaultTime = val && typeof val === 'string' && /^0{1,2}(:0{2}){1,2}$/.test(val)
+                if (!val || isDefaultTime) {
+                  if (el) el.value = lastAppliedValue || ''
                 }
               }
-              applied = true
-              actionBtn.textContent = 'Clear'
-              actionBtn.dataset.state = 'clear'
-            } else {
-              applied = false
-              actionBtn.textContent = 'Apply'
-              actionBtn.dataset.state = 'apply'
-            }
+
+              // Sync "To" picker if value exists
+              if (el && el.value) {
+                if (isDurationRange && el.value.includes(' - ') && el._flatpickrToContainer) {
+                  const parts = el.value.split(' - ')
+                  if (parts[1]) {
+                    const [h, m, s] = parts[1].split(':')
+                    const inputs = el._flatpickrToContainer.querySelectorAll('input')
+                    if (inputs[0]) inputs[0].value = h || '00'
+                    if (inputs[1]) inputs[1].value = m || '00'
+                    if (inputs[2]) inputs[2].value = s || '00'
+                  }
+                }
+                applied = true
+                actionBtn.textContent = 'Clear'
+                actionBtn.dataset.state = 'clear'
+              } else {
+                applied = false
+                actionBtn.textContent = 'Apply'
+                actionBtn.dataset.state = 'apply'
+              }
+            } catch (e) {}
           })
         } catch (e) {}
 
         const onBlur = () => {
+          console.log('flatpickr input blur detected')
           try {
             if (el && el.value) {
+              console.log('value present on blur', el.value)
               applied = true
               actionBtn.textContent = 'Clear'
               actionBtn.dataset.state = 'clear'
@@ -282,7 +329,7 @@ export default {
 
         // store references for cleanup
         el._flatpickrActionCleanup = () => {
-          try { actionBtn.removeEventListener('click', onActionClick) } catch(e){}
+          try { actionBtn.removeEventListener('click', onActionClick )  } catch(e){}
           try { el.removeEventListener('blur', onBlur) } catch(e){}
           try { actions.remove() } catch(e){}
         }

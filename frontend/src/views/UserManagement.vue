@@ -142,7 +142,7 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import { registerRequest } from '../utils/pageLoad'
 import { API_GET_USER, API_USER_MANAGEMENT_CHANGE_STATUS } from '../api/paths'
-import { showToast, getCookie } from '../assets/js/function-all'
+import { showToast } from '../assets/js/function-all'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 const searchQuery = ref('')
@@ -449,7 +449,8 @@ async function toggleUserStatus(userId, row) {
         const current = !!rec.user.is_active
         // optimistic
         rec.user.is_active = !current
-            try {
+        try {
+            // include CSRF token for Django POST
             await ensureCsrf()
             const csrfToken = getCsrfToken()
             const res = await fetch(API_USER_MANAGEMENT_CHANGE_STATUS(userId), {

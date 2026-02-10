@@ -1,8 +1,11 @@
 services:
   backend:
     build: ./backend
-    command: >
-      sh -c "echo 'Starting Daphne ASGI server' && python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    #PROD ONLY
+    # command: >
+    #   sh -c "echo 'Starting Daphne ASGI server' && python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    #DEV ONLY
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
     env_file:

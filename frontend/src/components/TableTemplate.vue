@@ -1,6 +1,6 @@
 <template>
   <div class="table-container">
-    <div class="table-responsive table-scroll">
+    <div class="table-responsive table-scroll" ref="tableScroll">
       <table class="table table-sm table-striped">
         <thead class="table-primary">
           <tr>
@@ -82,7 +82,7 @@
             <span class="selected">{{ props.perPage }}</span>
             <i class="fa-solid fa-caret-down "></i>
           </button>
-          <ul v-if="perDropdownOpen" class="custom-select-menu">
+          <ul v-if="perDropdownOpen" class="custom-select-menu" @click="perDropdownOpen = false">
             <li v-for="opt in props.perPageOptions" :key="opt" :class="{ active: opt === props.perPage }"
               @click="setPerPage(opt)">{{ opt }}</li>
           </ul>
@@ -151,6 +151,8 @@ const copiedIndex = ref(null)
 const perWrap = ref(null)
 const perDropdownOpen = ref(false)
 const perDropdownUp = ref(false)
+// ref to the scrollable table container so we can reset scroll when changing pages
+const tableScroll = ref(null)
 
 const togglePerDropdown = () => {
   perDropdownOpen.value = !perDropdownOpen.value
@@ -220,10 +222,14 @@ const changePage = (p) => {
   if (p < 1) p = 1
   if (p > totalPages.value) p = totalPages.value
   emit('page-change', p)
+  // scroll the table container to top after page change
+  nextTick(() => { try { if (tableScroll.value) tableScroll.value.scrollTop = 0 } catch (e) { /* ignore */ } })
 }
 
 const setPerPage = (opt) => {
   emit('per-change', opt)
+  // ensure we reset to first page and request fresh data from parent
+  emit('page-change', 1)
   perDropdownOpen.value = false
 }
 

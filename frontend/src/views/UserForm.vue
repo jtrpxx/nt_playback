@@ -1,7 +1,7 @@
 <template>
     <MainLayout>
         <div class="main-wrapper container-fluid-home py-3">
-            <Breadcrumbs :items="[{ text: 'Home', to: '/' }, { text: 'User Management', to: '/user-management' }, { text: mode === 'edit' ? 'Edit User' : 'Add User' }]" />
+            <Breadcrumbs :items="[{ text: 'Home', to: '/' }, { text: 'User Management', to: '/user-management' }, { text: mode === 'edit' ? 'Save User' : 'Add User' }]" />
 
             <div class="row col-lg-12">
                 <div class="col-lg-6" style="margin-bottom: 14px;">
@@ -29,7 +29,7 @@
 
                                 <div class="permissions-grid-1">
                                     <div class="input-group" style="margin-bottom: 12.2px;" v-has-value>
-                                        <input v-model="form.username" required type="text" name="username" autocomplete="off" :class="['input', { 'form-input-modal': usernameCheck || errors.username }]" maxlength="50" >
+                                        <input v-model="form.username" required type="text" name="username" autocomplete="off" :class="['input', { 'form-input-modal': usernameCheck || errors.username }]" maxlength="30" >
                                         <label class="title-label">Username*</label>
                                         <div v-show="usernameCheck" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This username is already in the system.</div>
                                         <div v-show="errors.username && !usernameCheck" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.username === 'string' ? errors.username : 'This field is required.' }}</div>
@@ -38,7 +38,7 @@
 
                                 <div class="permissions-grid-2">
                                     <div class="input-group" v-has-value v-if="mode !== 'edit'">
-                                        <input v-model="form.password" required :type="passwordVisible ? 'text' : 'password'" name="password" autocomplete="off" :class="['input', { 'form-input-modal': errors.password }]" maxlength="50">
+                                        <input v-model="form.password" required :type="passwordVisible ? 'text' : 'password'" name="password" autocomplete="off" :class="['input', { 'form-input-modal': errors.password }]" maxlength="30">
                                         <button type="button" class="toggle-visibility" @click="passwordVisible = !passwordVisible" aria-label="Toggle password visibility">
                                             <i :class="passwordVisible ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
                                         </button>
@@ -46,7 +46,7 @@
                                         <div v-show="errors.password" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.password === 'string' ? errors.password : 'This field is required.' }}</div>
                                     </div>
                                     <div class="input-group" v-has-value v-if="mode !== 'edit'">
-                                        <input v-model="form.confirmPassword" required :type="confirmPasswordVisible ? 'text' : 'password'" name="confirmPassword" autocomplete="off" :class="['input', { 'form-input-modal': errors.confirmPassword }]" maxlength="50">
+                                        <input v-model="form.confirmPassword" required :type="confirmPasswordVisible ? 'text' : 'password'" name="confirmPassword" autocomplete="off" :class="['input', { 'form-input-modal': errors.confirmPassword }]" maxlength="30">
                                         <button type="button" class="toggle-visibility" @click="confirmPasswordVisible = !confirmPasswordVisible" aria-label="Toggle confirm password visibility">
                                             <i :class="confirmPasswordVisible ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
                                         </button>
@@ -54,17 +54,17 @@
                                         <div v-show="errors.confirmPassword" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.confirmPassword === 'string' ? errors.confirmPassword : 'This field is required.' }}</div>
                                     </div>
                                     <div class="input-group" v-has-value>
-                                        <input v-model="form.firstName" required type="text" name="firstName" autocomplete="off" :class="['input', { 'form-input-modal': errors.firstName }]" maxlength="50">
+                                        <input v-model="form.firstName" required type="text" name="firstName" autocomplete="off" :class="['input', { 'form-input-modal': errors.firstName }]" maxlength="30">
                                         <label class="title-label">First Name*</label>
                                         <div v-show="errors.firstName" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.firstName === 'string' ? errors.firstName : 'This field is required.' }}</div>
                                     </div>
                                     <div class="input-group" v-has-value>
-                                        <input v-model="form.lastName" required type="text" name="lastName" autocomplete="off" :class="['input', { 'form-input-modal': errors.lastName }]" maxlength="50">
+                                        <input v-model="form.lastName" required type="text" name="lastName" autocomplete="off" :class="['input', { 'form-input-modal': errors.lastName }]" maxlength="30">
                                         <label class="title-label">Last Name*</label>
                                         <div v-show="errors.lastName" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.lastName === 'string' ? errors.lastName : 'This field is required.' }}</div>
                                     </div>
                                     <div class="input-group" v-has-value>
-                                        <input v-model="form.email" required type="text" name="email" autocomplete="off" class="input" maxlength="50">
+                                        <input v-model="form.email" required type="text" name="email" autocomplete="off" class="input" maxlength="30">
                                         <label class="title-label">Email</label>
                                         <div v-show="errors.email" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ typeof errors.email === 'string' ? errors.email : 'Please enter a valid email address.' }}</div>
                                     </div>
@@ -228,7 +228,7 @@
                             <div class="button-group">
                                 <button class="btn btn-primary" type="button" @click="submit">
                                     <i class="fas fa-check"></i>
-                                    {{ mode === 'edit' ? 'Edit User' : 'Add User' }}
+                                    {{ mode === 'edit' ? 'Save User' : 'Add User' }}
                                 </button>
                                 <button class="btn btn-secondary" @click="cancel">
                                     <i class="fas fa-times"></i>
@@ -658,6 +658,17 @@ async function submit() {
                     const name = form.value.firstName || form.value.username || ''
                     const toast = { message: `Create ${name} successfully`, type: 'success' }
                     localStorage.setItem('pending_toast', JSON.stringify(toast))
+                } catch (e) {}
+                try {
+                    const pendingUser = {
+                        username: form.value.username || '',
+                        first_name: form.value.firstName || '',
+                        last_name: form.value.lastName || '',
+                        email: form.value.email || '',
+                        id: initialUserId || null,
+                        mode: mode && mode.value ? mode.value : 'add'
+                    }
+                    localStorage.setItem('pending_user', JSON.stringify(pendingUser))
                 } catch (e) {}
                 try { router.push('/user-management') } catch (e) { router.back() }
             } catch (e) { console.error('redirect error', e) }

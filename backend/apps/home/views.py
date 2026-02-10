@@ -457,6 +457,7 @@ def ApiSaveMyFavoriteSearch(request):
             "extension": request.POST.get("extension", ""),
             "agent": request.POST.get("agent", ""),
             "full_name": full_name,
+            "duration": request.POST.get("duration", ""),
         }
 
         if action == "create":

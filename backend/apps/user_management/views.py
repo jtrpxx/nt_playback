@@ -314,7 +314,7 @@ def ChangeUserStatus(request, user_id):
     
 @login_required
 @require_POST
-def DeleteUserPermission(request, user_id):
+def ApiDeleteUser(request, user_id):
     """
     Hard deletes a user and cleans up related data to avoid foreign key constraints.
     """
@@ -333,7 +333,7 @@ def DeleteUserPermission(request, user_id):
         
         with transaction.atomic():
             # 1. ลบ Logs ของ User นี้ก่อน (มักเป็นสาเหตุหลักของ FK Constraint แบบ PROTECT)
-            UserLog.objects.filter(user=user_to_delete).delete()
+            # UserLog.objects.filter(user=user_to_delete).delete()
             
             # 2. ลบข้อมูล Auth และ Profile (ปกติจะเป็น CASCADE แต่ลบเพื่อความชัวร์)
             UserAuth.objects.filter(user=user_to_delete).delete()
@@ -526,3 +526,4 @@ def ApiSaveUser(request, user_id=None):
     except Exception as e:
         create_user_log(user=request.user, action="Created User", detail=f"Error: {str(e)}", status="error", request=request)
         return JsonResponse({"status": "error", "message": f"Error: {str(e)}"})
+

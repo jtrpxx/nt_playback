@@ -44,6 +44,7 @@ export const API_DELETE_TEAM = (teamId) => `${getApiBase()}/api/team/delete/${te
 export const API_GET_USER = () => `${getApiBase()}/api/get/user/`
 export const API_GET_USER_ALL = () => `${getApiBase()}/api/get/user-all/`
 export const API_USER_MANAGEMENT_CHANGE_STATUS = (id) => `${getApiBase()}/api/user-management/change-status/${id}/`
+export const API_DELETE_USER = (id) => `${getApiBase()}/api/user-management/delete-user/${id}/`
 
 // หน้า log user
 export const API_GET_LOG_USER = (type) => `${getApiBase()}/api/log-user/get-log/${type}/`

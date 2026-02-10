@@ -141,7 +141,7 @@ import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import { registerRequest } from '../utils/pageLoad'
-import { API_GET_USER, API_USER_MANAGEMENT_CHANGE_STATUS } from '../api/paths'
+import { API_GET_USER, API_USER_MANAGEMENT_CHANGE_STATUS, API_DELETE_USER } from '../api/paths'
 import { showToast } from '../assets/js/function-all'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
@@ -163,6 +163,20 @@ onMounted(() => {
                 if (t && t.message) showToast(t.message, t.type || 'success')
             } catch (e) { console.error('invalid pending_toast', e) }
             try { localStorage.removeItem('pending_toast') } catch (e) {}
+        }
+    } catch (e) { }
+
+    // if a new/edited user was just created, we'll try to promote it to the top
+    try {
+        const rawUser = localStorage.getItem('pending_user')
+        if (rawUser) {
+            try {
+                // stash into a temp ref so fetchData can apply it after loading
+                const pu = JSON.parse(rawUser)
+                // attach to window for short-lived transfer (simpler than introducing new reactive ref)
+                try { window.__pending_user_for_user_management = pu } catch (e) { /* ignore */ }
+            } catch (e) { console.error('invalid pending_user', e) }
+            try { localStorage.removeItem('pending_user') } catch (e) {}
         }
     } catch (e) { }
     document.addEventListener('click', onDocClick)
@@ -218,7 +232,65 @@ const onRowEdit = (row, actionId) => {
     router.push(`/user-management/edit/${id}`)
 }
 
-const onRowDelete = (row, actionId) => { console.log('delete row', row, actionId) }
+const onRowDelete = async (row, actionId) => {
+    try {
+        const userId = actionId ?? (row && row.user && row.user.id)
+        if (!userId) {
+            console.warn('onRowDelete: no user id available for row', row)
+            return
+        }
+
+        const swalLib = (typeof Swal !== 'undefined' && Swal) || (typeof window !== 'undefined' && (window.Swal || window.Sweetalert2 || window.SweetAlert || window.sweetAlert))
+        let confirmed = false
+        if (swalLib && typeof swalLib.fire === 'function') {
+            const res = await swalLib.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete'
+            })
+            confirmed = !!(res && res.isConfirmed)
+        } else {
+            confirmed = window.confirm('Are you sure? This action cannot be undone.')
+        }
+        if (!confirmed) return
+
+        await ensureCsrf()
+        const csrfToken = getCsrfToken()
+        const url = API_DELETE_USER(userId)
+        const res = await fetch(url, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken || ''
+            },
+            body: JSON.stringify({ user_id: userId })
+        })
+        const j = res.ok ? await res.json() : null
+        if (res.ok && j && (j.status === 'success' || j.status === 'ok')) {
+            showToast(j.message || 'Deleted successfully', 'success')
+            try {
+                const idx = (records.value || []).findIndex(r => {
+                    const id = r && r.user && r.user.id
+                    return String(id) === String(userId) || String(r.id) === String(userId)
+                })
+                if (idx !== -1) records.value.splice(idx, 1)
+                // adjust totalItems
+                if (typeof totalItems.value === 'number' && totalItems.value > 0) totalItems.value = Math.max(0, totalItems.value - 1)
+            } catch (e) { console.warn('failed to remove deleted row from list', e) }
+        } else {
+            showToast((j && j.message) || 'Failed to delete user', 'error')
+            console.error('delete user failed', j)
+        }
+    } catch (e) {
+        console.error('onRowDelete error', e)
+        showToast('Failed to delete user', 'error')
+    }
+}
 
 const expanded = ref(new Set())
 
@@ -513,6 +585,50 @@ const fetchData = async () => {
         const json = await res.json()
         records.value = json.data || json.user_management || []
         totalItems.value = json.recordsFiltered ?? json.recordsTotal ?? (Array.isArray(records.value) ? records.value.length : 0)
+        // If there's a pending user transferred from create/edit, promote or insert it
+        try {
+            const pu = (typeof window !== 'undefined' && window.__pending_user_for_user_management) || null
+            if (pu) {
+                try {
+                    // try to find by id first, then username
+                    const findIdx = (records.value || []).findIndex(r => {
+                        const rid = r && r.user && r.user.id
+                        const rname = r && (r.user ? r.user.username : r.username)
+                        if (pu.id && rid) return String(rid) === String(pu.id)
+                        return String(rname || '').toLowerCase() === String(pu.username || '').toLowerCase()
+                    })
+                    let entry = null
+                    if (findIdx !== -1) {
+                        entry = records.value.splice(findIdx, 1)[0]
+                    } else {
+                        // create a minimal record shape similar to API response
+                        entry = {
+                            id: pu.id || null,
+                            user: {
+                                id: pu.id || null,
+                                username: pu.username || '',
+                                first_name: pu.first_name || '',
+                                last_name: pu.last_name || '',
+                                email: pu.email || ''
+                            },
+                            team: null,
+                            user_code: '',
+                            phone: '',
+                            create_at: null,
+                            update_at: null,
+                            is_active: true,
+                            permission: pu.permission || '-',
+                            database_servers: pu.database_servers || []
+                        }
+                        // increment totalItems if this looks like a newly added user
+                        if (pu.mode === 'add' && typeof totalItems.value === 'number') totalItems.value = totalItems.value + 1
+                    }
+                    // add to top
+                    records.value = [entry].concat(records.value || [])
+                } catch (e) { console.error('apply pending user error', e) }
+                try { delete window.__pending_user_for_user_management } catch (e) {}
+            }
+        } catch (e) { console.error('pending user apply top-level error', e) }
     } catch (e) {
         console.error('fetchData error', e)
     } finally {

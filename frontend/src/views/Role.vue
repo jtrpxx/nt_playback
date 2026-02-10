@@ -114,6 +114,7 @@ import { registerRequest } from '../utils/pageLoad'
 import ModalConfiguration from '../components/ModalConfiguration.vue'
 import { API_INDEX_ROLE, API_DELETE_ROLE } from '../api/paths'
 import { getCookie, showToast } from '../assets/js/function-all'
+import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 const userPermissionOther = ref([])
 const loading = ref(true)
@@ -195,7 +196,8 @@ async function deleteCustomRole(id) {
       if (!ok) return
     }
 
-    const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+    await ensureCsrf()
+    const csrfToken = getCsrfToken()
     const url = API_DELETE_ROLE(id)
     const res = await fetch(url, {
       method: 'POST',

@@ -253,12 +253,12 @@ import CustomSelect from '../components/CustomSelect.vue'
 import { registerRequest } from '../utils/pageLoad'
 import { getCookie, showToast } from '../assets/js/function-all'
 import { API_GROUP_INDEX, API_GET_DATABASE, API_GET_ALL_ROLES_PERMISSIONS, API_CHECK_USERNAME, API_CREATE_USER, API_UPDATE_USER } from '../api/paths'
+import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 const loading = ref(false)
 const selectedGroupId = ref(null)
 const usernameCheck = ref(false)
-// CSRF token for POST requests
-const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+// CSRF handled by centralized helper
 
 const route = useRoute()
 const router = useRouter()
@@ -644,6 +644,8 @@ async function submit() {
 
     try {
         loading.value = true
+        try { await ensureCsrf() } catch (e) {}
+        const csrfToken = getCsrfToken()
         const res = await fetch(url, { method, credentials: 'include', body: fd, headers: { 'X-CSRFToken': csrfToken || '' } })
         const j = res.ok ? await res.json() : null
         if (!res.ok) {

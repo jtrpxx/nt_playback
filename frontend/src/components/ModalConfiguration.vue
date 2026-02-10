@@ -197,6 +197,7 @@ import CustomSelect from './CustomSelect.vue'
 import '../assets/css/components.css'
 import { API_GET_DETAILS_ROLE, API_INDEX_ROLE, API_CHECK_ROLE_NAME, API_CREATE_ROLE, API_UPDATE_ROLE } from '../api/paths'
 import { getCookie, showToast } from '../assets/js/function-all'
+import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 const props = defineProps({
     modelValue: { type: Boolean, default: false },
@@ -212,7 +213,7 @@ const onReset = () => {
     if (window && typeof window.resetBaseRole === 'function') window.resetBaseRole()
 }
 
-const csrfToken = typeof getCookie === 'function' ? getCookie('csrftoken') : null
+// CSRF handled centrally
 
 const onSave = async () => {
     // clear previous errors
@@ -248,6 +249,8 @@ const onSave = async () => {
 
     try {
         loading.value = true
+        await ensureCsrf()
+        const csrfToken = getCsrfToken()
         const res = await fetch(url, {
             method: 'POST',
             credentials: 'include',

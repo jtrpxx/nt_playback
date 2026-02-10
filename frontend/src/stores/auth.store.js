@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API_LOGIN } from '../api/paths'
+import { ensureCsrf } from '../api/csrf'
 
 export const useAuthStore = defineStore('auth', () => {
 	// Initialize state from localStorage to enable persistence
@@ -54,6 +55,8 @@ export const useAuthStore = defineStore('auth', () => {
 			const data = await response.json()
 			setToken(data.access)
 			setUser({ username: data.username })
+			// Ensure CSRF token is fetched and cached after successful login
+			try { await ensureCsrf() } catch (e) {}
 			return true
 		} catch (error) {
 			console.error('Login error:', error)

@@ -291,6 +291,7 @@ import { API_GET_DATABASE, API_CHECK_GROUP_NAME, API_CHECK_TEAM_NAME, API_SAVE_G
 import { getCookie, showToast } from '../assets/js/function-all'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
+
 import '../assets/css/components.css'
 
 const props = defineProps({
@@ -502,6 +503,7 @@ async function onSave() {
         return
     }
 
+    try {
         try { await ensureCsrf() } catch (e) {}
         const csrfToken = getCsrfToken()
         let url = ''

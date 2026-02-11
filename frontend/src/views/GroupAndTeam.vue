@@ -392,7 +392,9 @@ function onGroupSaved(payload) {
     if (mode === 'editGroup') {
         const idx = groups.value.findIndex(g => g.id == data.id)
         if (idx !== -1) {
-            groups.value[idx] = { ...groups.value[idx], group_name: data.group_name, description: data.description }
+            const updatedGroup = { ...groups.value[idx], group_name: data.group_name, description: data.description }
+            groups.value.splice(idx, 1)
+            groups.value.unshift(updatedGroup)
             // อัปเดต key ใน groupTeamsMap หากมีการเปลี่ยนชื่อ (สำหรับแสดง badge ของทีม)
         }
     } else if (mode === 'createGroup') {
@@ -416,7 +418,9 @@ function onGroupSaved(payload) {
             const newGid = data.user_group_id || data.user_group
 
             // อัปเดตข้อมูลใน list หลัก
-            teams.value[idx] = { ...oldTeam, ...data }
+            const updatedTeam = { ...oldTeam, ...data }
+            teams.value.splice(idx, 1)
+            teams.value.unshift(updatedTeam)
 
             // อัปเดตข้อมูลใน map (สำหรับจัดกลุ่ม)
             if (oldGid != newGid) {
@@ -432,7 +436,8 @@ function onGroupSaved(payload) {
                 if (groupTeamsMap.value[oldGid]) {
                     const tIdx = groupTeamsMap.value[oldGid].findIndex(t => t.id == data.id)
                     if (tIdx !== -1) {
-                        groupTeamsMap.value[oldGid][tIdx] = teams.value[idx]
+                        groupTeamsMap.value[oldGid].splice(tIdx, 1)
+                        groupTeamsMap.value[oldGid].unshift(updatedTeam)
                     }
                 }
             }

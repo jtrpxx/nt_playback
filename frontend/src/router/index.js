@@ -15,7 +15,7 @@ const routes = [
 	{ path: '/profile', name: 'Profile', component: () => import('../views/Profile.vue') },
 	{ path: '/logs/system', name: 'SystemLogs', component: () => import('../views/UserLog.vue') },
 	{ path: '/logs/audit', name: 'AuditLogs', component: () => import('../views/UserLog.vue') },
-
+	{ path: '/setting/column/audio-record', name: 'SettingColumnAudioRecord', component: () => import('../views/SetColumnAudioRecord.vue') },
 
 	{ path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('../views/NotFound.vue') },
 

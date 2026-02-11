@@ -158,7 +158,6 @@ onMounted(() => {
 })
 
 function openEditRole(id, mode = 'base') {
-  console.log('openEditRole', id, mode)
   selectedBaseRoleId.value = id
   selectedModalMode.value = mode
   if (id === 1) selectedBaseRoleName.value = 'Edit Administrator'
@@ -224,7 +223,11 @@ function onRoleUpdated(role) {
     if (!role || !role.id) return
     const idx = (userPermissionOther.value || []).findIndex(r => String(r.id) === String(role.id))
     if (idx !== -1) {
-      userPermissionOther.value[idx].name = role.name
+      const newList = [...userPermissionOther.value]
+      const [item] = newList.splice(idx, 1)
+      item.name = role.name
+      newList.unshift(item)
+      userPermissionOther.value = newList
     } else {
       // if not present, add to the start
       userPermissionOther.value = [{ id: role.id, name: role.name, type: role.type || 'role_other' }].concat(userPermissionOther.value || [])

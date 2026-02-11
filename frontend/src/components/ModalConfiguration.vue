@@ -210,7 +210,7 @@ const emit = defineEmits(['update:modelValue'])
 const close = () => emit('update:modelValue', false)
 
 const onReset = () => {
-    if (window && typeof window.resetBaseRole === 'function') window.resetBaseRole()
+    rolePermissions.value = [...defaultPermissions.value]
 }
 
 // CSRF handled centrally
@@ -321,6 +321,7 @@ const roleNameCheck = ref(false)
 const roleNameError = ref(false)
 const allPermissions = ref([])
 const rolePermissions = ref([])
+const defaultPermissions = ref([])
 const isAdministrator = ref(false)
 const checkDisabled = computed(() => String(props.roleId) === '1')
 
@@ -362,6 +363,7 @@ watch(() => filters.value.roleAll, async (val) => {
     if (!props.modelValue || props.mode !== 'create') return
     if (!val) {
         rolePermissions.value = []
+        defaultPermissions.value = []
         return
     }
     const sel = String(val)
@@ -373,6 +375,7 @@ watch(() => filters.value.roleAll, async (val) => {
             const data = await res.json()
             const rp = Array.isArray(data.role_permissions) ? data.role_permissions : []
             rolePermissions.value = rp.slice()
+            defaultPermissions.value = Array.isArray(data.default_permissions) ? data.default_permissions : []
         } catch (e) {
             console.error('Error copying base role permissions', e)
         }
@@ -384,6 +387,7 @@ watch(() => filters.value.roleAll, async (val) => {
             const data = await res.json()
             const rp = Array.isArray(data.role_permissions) ? data.role_permissions : []
             rolePermissions.value = rp.slice()
+            defaultPermissions.value = Array.isArray(data.default_permissions) ? data.default_permissions : []
         } catch (e) {
             console.error('Error copying custom role permissions', e)
         }
@@ -430,18 +434,25 @@ async function fetchRoleDetails(roleId, template = false) {
             if (!template) {
                 roleNameInput.value = data.role_name || ''
                 rolePermissions.value = Array.isArray(data.role_permissions) ? data.role_permissions : []
+                defaultPermissions.value = Array.isArray(data.default_permissions) ? data.default_permissions : []
             }
 
             // fallback for administrator detection
             isAdministrator.value = Boolean(data.is_administrator) || String(roleId) === '1' || (data.role_name && String(data.role_name).toLowerCase() === 'administrator')
         } else {
             allPermissions.value = []
-            if (!template) rolePermissions.value = []
+            if (!template) {
+                rolePermissions.value = []
+                defaultPermissions.value = []
+            }
         }
     } catch (e) {
         console.error('Error fetching role details:', e)
         allPermissions.value = []
-        if (!template) rolePermissions.value = []
+        if (!template) {
+            rolePermissions.value = []
+            defaultPermissions.value = []
+        }
     } finally {
         // ensure loading indicator is visible at least 1s for UX
         const elapsed = Date.now() - startTime
@@ -483,6 +494,7 @@ watch(() => props.modelValue, async (val) => {
     // reset modal state on open so inputs/selects start fresh
     roleNameInput.value = ''
     rolePermissions.value = []
+    defaultPermissions.value = []
     roleNameError.value = false
     roleNameCheck.value = false
     filters.value.roleAll = ''

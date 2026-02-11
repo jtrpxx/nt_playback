@@ -416,7 +416,7 @@ def ApiSaveGroup(request):
             return JsonResponse({'status': 'error', 'message': 'Group not found.'})
 
     except IntegrityError as e:
-        create_user_log(user=request.user, action='ApiSaveGroup', detail=f'Database error : {str(e)}', status='error', request=request)
+        create_user_log(user=request.user, action='ApiSaveำGroup', detail=f'Database error : {str(e)}', status='error', request=request)
         return JsonResponse({'status': 'error', 'message': 'An error occurred with the database.'})
     except Exception as e:
         create_user_log(user=request.user, action='ApiSaveGroup', detail=f'Unexpected error: {str(e)}', status='error', request=request)

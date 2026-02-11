@@ -57,5 +57,7 @@ export const API_UPDATE_USER = (id) => `${getApiBase()}/api/edit-user/${id}/`
 // หน้า Settings
 export const API_SETTINGS_INDEX = () => `${getApiBase()}/api/settings/index/`
 export const API_UPDATE_SETTINGS = () => `${getApiBase()}/api/settings/update/`
+export const API_GET_COLUMN_AUDIO_RECORD = () => `${getApiBase()}/api/setting/get/column-audio-record/`
+export const API_SAVE_COLUMN_AUDIO_RECORD = () => `${getApiBase()}/api/setting/save/column-audio-record/`
 
 

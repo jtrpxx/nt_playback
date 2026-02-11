@@ -38,16 +38,20 @@ class ViewAudio(models.Model):
         ordering = ['-start_time']
         db_table = 'view_audio'
         
-class tbSetColumn(models.Model):
+class SetColumnAudioRecord(models.Model):
     raw_data = models.TextField( verbose_name='raw_data',null=False,blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='User')
     status = models.IntegerField(verbose_name='status', default=1)  
+    name = models.CharField( max_length=30,verbose_name='name',null=False,blank=False)
+    description = models.CharField( max_length=100,verbose_name='description',null=True,blank=True)
+    use = models.BooleanField( verbose_name='use',default=False)
     create_at = models.DateTimeField(auto_now_add=True) 
     update_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        db_table = 'tb_set_column'
-        verbose_name = 'Set Column'
+        ordering = ['name']
+        db_table = 'tb_set_column_audio_record'
+        verbose_name = 'Set Column Audio Record'
 
 class ConfigKey(models.Model):
     type = models.CharField( max_length=255,verbose_name='type',null=False,blank=False)

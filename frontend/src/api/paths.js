@@ -37,8 +37,6 @@ export const API_CHECK_GROUP_NAME = () => `${getApiBase()}/api/group/check/group
 export const API_CHECK_TEAM_NAME = () => `${getApiBase()}/api/team/check/team-name/`
 export const API_SAVE_GROUP = () => `${getApiBase()}/api/group/save/`
 export const API_SAVE_TEAM = () => `${getApiBase()}/api/team/save/`
-export const API_DELETE_GROUP = (groupId) => `${getApiBase()}/api/group/delete/${groupId}/`
-export const API_DELETE_TEAM = (teamId) => `${getApiBase()}/api/team/delete/${teamId}/`
 
 // หน้า  User Management
 export const API_GET_USER = () => `${getApiBase()}/api/get/user/`

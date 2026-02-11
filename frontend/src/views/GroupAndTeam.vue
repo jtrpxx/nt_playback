@@ -179,7 +179,9 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import ModalGroup from '../components/ModalGroup.vue'
 import { ref, onMounted, computed } from 'vue'
 import { registerRequest } from '../utils/pageLoad'
-import { API_GROUP_INDEX, API_TEAM_INDEX, API_GET_TEAM_BY_GROUP } from '../api/paths'
+import { API_GROUP_INDEX, API_TEAM_INDEX, API_GET_TEAM_BY_GROUP, API_SAVE_GROUP, API_SAVE_TEAM } from '../api/paths'
+import { ensureCsrf, getCsrfToken } from '../api/csrf'
+import { showToast, confirmDelete } from '../assets/js/function-all'
 
 const searchQuery = ref('')
 const teamSearchQuery = ref('')
@@ -294,8 +296,32 @@ function openEditGroup(id) {
     showGroupModal.value = true
 }
 
-function deleteGroup(id) {
-    console.log('deleteGroup', id)
+async function deleteGroup(id) {
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
+    try {
+        await ensureCsrf()
+        const res = await fetch(API_SAVE_GROUP(), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ action: 'delete', group_id: id })
+        })
+        const json = await res.json()
+        if (json.status === 'success') {
+            showToast('Group deleted successfully', 'success')
+            groups.value = groups.value.filter(g => g.id !== id)
+            delete groupTeamsMap.value[id]
+            if (selectedGroupId.value === id) selectedGroupId.value = null
+        } else {
+            showToast(json.message || 'Failed to delete group', 'error')
+        }
+    } catch (e) {
+        console.error(e)
+        showToast('An error occurred', 'error')
+    }
 }
 
 function onTypingTeam() {
@@ -328,25 +354,89 @@ function openEditTeam(id) {
     showGroupModal.value = true
 }
 
-function deleteTeam(id) {
-    console.log('deleteTeam', id)
+async function deleteTeam(id) {
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
+
+    try {
+        await ensureCsrf()
+        const res = await fetch(API_SAVE_TEAM(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify({ action: 'delete', team_id: id })
+        })
+        const json = await res.json()
+        if (json.status === 'success') {
+            showToast('Team deleted successfully', 'success')
+            teams.value = teams.value.filter(t => t.id !== id)
+            // Update map
+            for (const gid in groupTeamsMap.value) {
+                groupTeamsMap.value[gid] = groupTeamsMap.value[gid].filter(t => t.id !== id)
+            }
+        } else {
+            showToast(json.message || 'Failed to delete team', 'error')
+        }
+    } catch (e) {
+        console.error(e)
+        showToast('An error occurred', 'error')
+    }
 }
 
 function onGroupSaved(payload) {
-    // payload: { mode, data }
+    // ฟังก์ชัน Callback ที่ทำงานหลังจากบันทึกข้อมูล (Create/Update) สำเร็จจาก Modal
+    // ทำหน้าที่อัปเดตข้อมูลในตาราง (List) และ Map ให้เป็นปัจจุบันโดยไม่ต้องรีเฟรชหน้าจอ
+
+    // รับค่า payload: { mode (โหมดการทำงาน), data (ข้อมูลที่บันทึก) }
     if (!payload || !payload.data) return
     const { mode, data } = payload
     if (mode === 'editGroup') {
         const idx = groups.value.findIndex(g => g.id == data.id)
         if (idx !== -1) {
             groups.value[idx] = { ...groups.value[idx], group_name: data.group_name, description: data.description }
-            // update groupTeamsMap key if name changed (team badges)
+            // อัปเดต key ใน groupTeamsMap หากมีการเปลี่ยนชื่อ (สำหรับแสดง badge ของทีม)
         }
     } else if (mode === 'createGroup') {
-        // naive local insert; real app should use backend response
+        // เพิ่มข้อมูลลงใน list ฝั่ง client ทันที (จำลอง ID ถ้าไม่มีจาก backend)
         const newId = data.id || Date.now()
         groups.value.unshift({ id: newId, group_name: data.group_name, description: data.description, status: 1 })
         groupTeamsMap.value = { ...groupTeamsMap.value, [newId]: [] }
+    } else if (mode === 'createTeam') {
+        const newTeam = { ...data, status: 1 }
+        teams.value.push(newTeam)
+        const gid = newTeam.user_group_id || newTeam.user_group
+        if (gid) {
+            if (!groupTeamsMap.value[gid]) groupTeamsMap.value[gid] = []
+            groupTeamsMap.value[gid].push(newTeam)
+        }
+    } else if (mode === 'editTeam') {
+        const idx = teams.value.findIndex(t => t.id == data.id)
+        if (idx !== -1) {
+            const oldTeam = teams.value[idx]
+            const oldGid = oldTeam.user_group_id || oldTeam.user_group
+            const newGid = data.user_group_id || data.user_group
+
+            // อัปเดตข้อมูลใน list หลัก
+            teams.value[idx] = { ...oldTeam, ...data }
+
+            // อัปเดตข้อมูลใน map (สำหรับจัดกลุ่ม)
+            if (oldGid != newGid) {
+                // ลบออกจากกลุ่มเดิม
+                if (groupTeamsMap.value[oldGid]) {
+                    groupTeamsMap.value[oldGid] = groupTeamsMap.value[oldGid].filter(t => t.id != data.id)
+                }
+                // เพิ่มเข้ากลุ่มใหม่
+                if (!groupTeamsMap.value[newGid]) groupTeamsMap.value[newGid] = []
+                groupTeamsMap.value[newGid].push(teams.value[idx])
+            } else {
+                // อัปเดตข้อมูลในที่เดิม (กรณีอยู่กลุ่มเดิม)
+                if (groupTeamsMap.value[oldGid]) {
+                    const tIdx = groupTeamsMap.value[oldGid].findIndex(t => t.id == data.id)
+                    if (tIdx !== -1) {
+                        groupTeamsMap.value[oldGid][tIdx] = teams.value[idx]
+                    }
+                }
+            }
+        }
     }
 }
 </script>

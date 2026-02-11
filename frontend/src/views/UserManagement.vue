@@ -142,7 +142,7 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import { registerRequest } from '../utils/pageLoad'
 import { API_GET_USER, API_USER_MANAGEMENT_CHANGE_STATUS, API_DELETE_USER } from '../api/paths'
-import { showToast } from '../assets/js/function-all'
+import { showToast, confirmDelete } from '../assets/js/function-all'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 const searchQuery = ref('')
@@ -240,22 +240,7 @@ const onRowDelete = async (row, actionId) => {
             return
         }
 
-        const swalLib = (typeof Swal !== 'undefined' && Swal) || (typeof window !== 'undefined' && (window.Swal || window.Sweetalert2 || window.SweetAlert || window.sweetAlert))
-        let confirmed = false
-        if (swalLib && typeof swalLib.fire === 'function') {
-            const res = await swalLib.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete'
-            })
-            confirmed = !!(res && res.isConfirmed)
-        } else {
-            confirmed = window.confirm('Are you sure? This action cannot be undone.')
-        }
+        const confirmed = await confirmDelete('Are you sure?', "You won't be able to revert this!", 'Yes, delete')
         if (!confirmed) return
 
         await ensureCsrf()

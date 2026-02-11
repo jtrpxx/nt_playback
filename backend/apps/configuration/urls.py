@@ -15,4 +15,5 @@ urlpatterns = [
     path("api/group/check/group-name/", views.ApiCheckGroupName, name="ApiCheckGroupName"),
     path("api/team/check/team-name/", views.ApiCheckTeamName, name="ApiCheckTeamName"),
     path("api/group/save/", views.ApiSaveGroup, name="ApiSaveGroup"),
+    path("api/team/save/", views.ApiSaveTeam, name="ApiSaveTeam"),
 ]

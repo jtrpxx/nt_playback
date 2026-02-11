@@ -625,7 +625,7 @@ const groupedPermissions = computed(() => {
 
 /* make modal body scrollable if content tall */
 .modal-body {
-    max-height: calc(62vh - 130px);
+    max-height: 454px;
     overflow: auto
 }
 .form-input-modal {

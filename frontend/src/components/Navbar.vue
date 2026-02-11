@@ -143,10 +143,23 @@
         </li>
 
         <li class="menu-item">
-          <router-link to="/settings" class="menu-link">
+          <a class="menu-link d-flex align-items-center" :class="{ collapsed: !isSetColumnOpen }"
+            @click.prevent="isSetColumnOpen = !isSetColumnOpen" role="button" aria-expanded="false">
             <i class="fa-solid fa-gear"></i>
             <span>Settings</span>
-          </router-link>
+            <i
+              class="fa-solid fa-chevron-down ms-auto"
+              :style="{ transform: isSetColumnOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }"
+              style="font-size: 12px; margin-left: auto"></i>
+          </a>
+          <div v-show="isSetColumnOpen" id="collapseConfig">
+            <ul class="menu-list" style="padding-left: 12px; margin-top: 4px">
+              <li class="menu-item">
+                <router-link to="/setting/column/audio-record" class="menu-link"><i class="fa-solid fa-circle-dot"
+                    style="font-size: 8px"></i> Setting Column Audio Records</router-link>
+              </li>
+            </ul>
+          </div>
         </li>
       </ul>
 
@@ -211,6 +224,7 @@ onBeforeUnmount(() => {
 
 const isLogsOpen = ref(false);
 const isConfigOpen = ref(false);
+const isSetColumnOpen = ref(false);
 
 const displayName = computed(() => store.fullName() ?? "Guest User");
 const initials = computed(() => {

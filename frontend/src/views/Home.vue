@@ -187,7 +187,7 @@
       </div>
     </div>
   </MainLayout>
-    <ModalHome v-model="showFavoriteModal" :favorites="favoriteSearchAll" :mainDbOptions="mainDbOptions" :agentOptions="agentOptions" @apply="applyFavorite" @edit="editFavorite" @delete="deleteFavorite" />
+  <ModalHome v-model="showFavoriteModal" :favorites="favoriteSearchAll" :mainDbOptions="mainDbOptions" :agentOptions="agentOptions" @apply="applyFavorite" @edit="editFavorite" @delete="deleteFavorite" />
 </template>
 
 <script setup>
@@ -202,7 +202,7 @@ import { registerRequest } from '../utils/pageLoad'
 
 import { onBeforeUnmount } from 'vue'
 import { nextTick } from 'vue'
-import { API_AUDIO_LIST, API_HOME_INDEX, API_LOG_PLAY_AUDIO, API_GET_CREDENTIALS, API_LOG_SAVE_FILE } from '../api/paths'
+import { API_AUDIO_LIST, API_HOME_INDEX, API_LOG_PLAY_AUDIO, API_GET_CREDENTIALS, API_LOG_SAVE_FILE, API_GET_COLUMN_AUDIO_RECORD } from '../api/paths'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 import '../assets/js/jspdf.umd.min.js'
@@ -508,6 +508,7 @@ const toggleExport = () => {
 onMounted(() => {
   // fetchIndexHome registers itself with pageLoad; ensure the initial data fetch is registered too
   fetchIndexHome()
+  fetchActiveColumns()
   registerRequest(fetchData())
   loadRecentFromStorage()
   document.addEventListener('click', onDocClick)
@@ -945,7 +946,7 @@ const callDirectionClass = (dir) => {
   return 'bg-secondary'
 }
 
-const columns = [
+const defaultColumns = [
   { key: 'index', label: '#', isIndex: true },
   { key: 'main_db', label: 'Database Server' },
   { key: 'start_datetime', label: 'Start Date & Time' },
@@ -960,6 +961,48 @@ const columns = [
   { key: 'custom_field_1', label: 'Custom Field' }
 ]
 
+const columns = ref([...defaultColumns])
+
+const fetchActiveColumns = async () => {
+  try {
+    const res = await fetch(API_GET_COLUMN_AUDIO_RECORD() + '?active=true', { credentials: 'include' })
+    if (!res.ok) return
+    const json = await res.json()
+    if (json.data && json.data.length > 0) {
+      const activeConfig = json.data[0]
+      let raw = activeConfig.raw_data
+      let keys = []
+
+      // Parse raw_data (Postgres array string "{...}" or JSON "[...]")
+      if (typeof raw === 'string') {
+        if (raw.startsWith('{') && raw.endsWith('}')) {
+          // Handle Postgres array format: {"col1","col2"}
+          const content = raw.substring(1, raw.length - 1)
+          if (content) {
+            keys = content.split(',').map(s => s.trim().replace(/^"|"$/g, ''))
+          }
+        } else {
+          try { keys = JSON.parse(raw) } catch (e) { console.warn('Parse raw_data failed', e) }
+        }
+      } else if (Array.isArray(raw)) {
+        keys = raw
+      }
+
+      if (keys.length > 0) {
+        const newCols = []
+        // Always add index first
+        newCols.push(defaultColumns.find(c => c.key === 'index'))
+        keys.forEach(k => {
+          const def = defaultColumns.find(c => c.key === k)
+          if (def) newCols.push(def)
+        })
+        columns.value = newCols
+      }
+    }
+  } catch (e) {
+    console.error('fetchActiveColumns error', e)
+  }
+}
 
 const onRowDblClick = async (row) => {
   if (!row) return

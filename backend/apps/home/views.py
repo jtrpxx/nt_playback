@@ -1,19 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import  redirect
 from functools import wraps
 from django.contrib.auth.decorators import login_required
-# from utils.function import BaseListAPIView,PageNumberPagination
 from django.db.models import Q
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import json
-import os
-import subprocess
+
 from datetime import datetime
 import base64
 import socket
 from datetime import datetime, timedelta
-from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 from django.middleware.csrf import get_token
@@ -23,7 +19,7 @@ from apps.core.utils.function import create_user_log, get_user_os_browser_archit
 # models
 from apps.core.model.authorize.models import UserAuth,MainDatabase,SetAudio,UserLog,UserProfile,Agent
 from apps.core.model.audio.models import AudioInfo
-from .models import FavoriteSearch, ViewAudio,tbSetColumn, PlaybackLog,ConfigKey
+from .models import FavoriteSearch, SetColumnAudioRecord, ConfigKey
 from .serializers import FavoriteSearchSerializer
 
 #serializer
@@ -74,7 +70,7 @@ def ApiIndexHome(request):
     user_profile = UserProfile.objects.filter(user=request.user).first()
     favorite_search = FavoriteSearch.objects.filter(user=request.user).first()
     favorite_search_all = FavoriteSearch.objects.filter(user=request.user).all()
-    audio_column = tbSetColumn.objects.filter(user=request.user).first()
+    audio_column = SetColumnAudioRecord.objects.filter(user=request.user).first()
     agent = Agent.objects.all()
     raw_data = favorite_search.raw_data if favorite_search else {}
 

@@ -59,6 +59,8 @@ CORS_ALLOWED_ORIGINS = [
     
     "https://192.168.1.210:8001",
     "https://192.168.1.210",
+    "https://ecmnichetelcomm.ddns.net",
+    "https://ecmnichetelcomm.ddns.net:8001",
 ]
 SESSION_COOKIE_DOMAIN = None  # ให้ Django ใช้ host จาก request
 
@@ -85,6 +87,8 @@ INSTALLED_APPS = [
     'apps.configuration',
     'apps.user_management',
     'apps.log_user',
+    'apps.setting',
+    
 ]
 
 MIDDLEWARE = [
@@ -195,4 +199,6 @@ CSRF_TRUSTED_ORIGINS = [
     # frontend LAN host
     "https://192.168.1.210:8001",
     "https://192.168.1.210",
+    "https://ecmnichetelcomm.ddns.net",
+    "https://ecmnichetelcomm.ddns.net:8001",
 ]

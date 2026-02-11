@@ -257,7 +257,7 @@
 <script setup>
 import { defineProps, defineEmits, ref, computed, reactive, onMounted, watch, nextTick } from 'vue'
 import { API_ADD_MY_FAVORITE_SEARCH, API_CHECK_MY_FAVORITE_NAME } from '../api/paths'
-import { getCookie, showToast } from '../assets/js/function-all'
+import { showToast , confirmDelete } from '../assets/js/function-all'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 import CustomSelect from './CustomSelect.vue'
 
@@ -269,12 +269,7 @@ const emit = defineEmits(['update:modelValue', 'apply', 'edit', 'delete'])
 const activeTab = ref('list')
 const searchTerm = ref('')
 
-// local filter state for the add form (so CustomSelect v-model has a target)
 const filters = reactive({ databaseServer: '' })
-
-// Modal receives `mainDbOptions` and `agentOptions` as props from parent `Home.vue`.
-// It uses those props directly in the template. No fallback fetch here to avoid
-// duplicate network calls when parent already loaded the data.
 
 const filteredFavorites = computed(() => {
   const q = String(searchTerm.value || '').trim().toLowerCase()
@@ -435,24 +430,8 @@ function editFavorite(f) {
 async function deleteFavorite(id) {
   try {
     if (!id) return
-    // Prefer Swal if available, otherwise try global Sweetalert2 name, else fallback to native confirm
-    const swalLib = (typeof Swal !== 'undefined' && Swal) || (typeof window !== 'undefined' && (window.Swal || window.Sweetalert2 || window.SweetAlert || window.sweetAlert))
-    let result
-    if (swalLib && typeof swalLib.fire === 'function') {
-      result = await swalLib.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!'
-      })
-      if (!result || !result.isConfirmed) return
-    } else {
-      const ok = window.confirm("Are you sure? This action cannot be undone.")
-      if (!ok) return
-    }
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
 
     const payload = { action: 'delete', favorite_id: id }
     const json = await postFavoriteAction(payload)

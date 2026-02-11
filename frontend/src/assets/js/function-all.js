@@ -345,3 +345,22 @@ export async function exportTableToFormat(format, type = 'audio', opts = {}) {
     console.error('exportTableToFormat error', err)
   }
 }
+
+export async function confirmDelete(title = 'Are you sure?', text = "You won't be able to revert this!", confirmButtonText = 'Yes, delete it!') {
+    const swalLib = (typeof Swal !== 'undefined' && Swal) || (typeof window !== 'undefined' && (window.Swal || window.Sweetalert2 || window.SweetAlert || window.sweetAlert))
+
+    if (swalLib && typeof swalLib.fire === 'function') {
+        const result = await swalLib.fire({
+            title: title,
+            text: text,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: confirmButtonText
+        })
+        return !!(result && result.isConfirmed)
+    } else {
+        return window.confirm(`${title} ${text}`)
+    }
+}

@@ -421,3 +421,150 @@ def ApiSaveGroup(request):
     except Exception as e:
         create_user_log(user=request.user, action='ApiSaveGroup', detail=f'Unexpected error: {str(e)}', status='error', request=request)
         return JsonResponse({'status': 'error', 'message': str(e)})
+    
+@require_POST
+@login_required(login_url='/login')
+def ApiSaveTeam(request):
+    """
+    Single endpoint to Create / Update / Delete a UserTeam.
+     JSON body should include `action` = 'create'|'update'|'delete'.
+    - create: requires `user_group_id => ex. [33177]`, `name` `maindatabase => ex. ["2","3"]`.
+    - update: requires `team_id`, `user_group_id => ex. [33177]`, `name` `maindatabase => ex. ["2","3"]`.
+    - delete: requires `team_id`.
+    Supports form POST as fallback for non-JSON requests.
+    """
+    try:
+        data = {}
+        if request.content_type and 'application/json' in request.content_type:
+            try:
+                data = json.loads(request.body) if request.body else {}
+            except Exception:
+                data = {}
+        else:
+            data = request.POST.dict()
+
+        action = (data.get('action') or '').lower()
+        if action not in ('create', 'update', 'delete'):
+            return JsonResponse({'status': 'error', 'message': 'Invalid action. Use create, update, or delete.'}, status=400)
+
+        # CREATE
+        if action == 'create':
+            name = (data.get('name') or '').strip()
+            user_group_id_raw = data.get('user_group_id')
+            maindatabase_raw = data.get('maindatabase')
+
+            if not name:
+                return JsonResponse({'status': 'error', 'message': 'Team name is required.'})
+            
+            # Handle user_group_id (can be list or single value)
+            user_group_id = None
+            if isinstance(user_group_id_raw, list) and len(user_group_id_raw) > 0:
+                user_group_id = user_group_id_raw[0]
+            else:
+                user_group_id = user_group_id_raw
+            
+            if not user_group_id:
+                return JsonResponse({'status': 'error', 'message': 'User Group is required.'})
+
+            # Handle maindatabase (convert list to JSON string if needed)
+            maindatabase_str = '[]'
+            if maindatabase_raw:
+                if isinstance(maindatabase_raw, list):
+                    maindatabase_str = json.dumps(maindatabase_raw)
+                else:
+                    maindatabase_str = str(maindatabase_raw)
+
+            if UserTeam.objects.filter(name__iexact=name).exists():
+                create_user_log(user=request.user, action='Create Config Team', detail=f'Duplicate team : {name}', status='error', request=request)
+                return JsonResponse({'status': 'error', 'message': 'This team name is already in the system.'})
+
+            try:
+                with transaction.atomic():
+                    group = UserGroup.objects.filter(id=user_group_id).first()
+                    if not group:
+                        return JsonResponse({'status': 'error', 'message': 'User Group not found.'})
+
+                    new_team = UserTeam.objects.create(
+                        name=name,
+                        user_group=group,
+                        maindatabase=maindatabase_str,
+                        status=1
+                    )
+                    create_user_log(user=request.user, action='Create Config Team', detail=f'Created team : {name}', status='success', request=request)
+
+                return JsonResponse({'status': 'success', 'team': {'id': new_team.id, 'name': new_team.name, 'user_group_id': new_team.user_group_id}})
+            except IntegrityError as e:
+                create_user_log(user=request.user, action='Create Config Team', detail=f'Database error : {str(e)}', status='error', request=request)
+                return JsonResponse({'status': 'error', 'message': 'เกิดข้อผิดพลาดกับฐานข้อมูล'})
+
+        # UPDATE
+        if action == 'update':
+            team_id = data.get('team_id')
+            name = (data.get('name') or '').strip()
+            user_group_id_raw = data.get('user_group_id')
+            maindatabase_raw = data.get('maindatabase')
+
+            if not team_id or not name:
+                return JsonResponse({'status': 'error', 'message': 'Team ID and Name are required.'})
+
+            team = UserTeam.objects.filter(id=team_id).first()
+            if not team:
+                return JsonResponse({'status': 'error', 'message': 'Team not found.'})
+
+            if UserTeam.objects.filter(name__iexact=name).exclude(id=team_id).exists():
+                create_user_log(user=request.user, action='Update Config Team', detail=f'Duplicate team : {name}', status='error', request=request)
+                return JsonResponse({'status': 'error', 'message': 'This team name is already in the system.'})
+
+            # Handle user_group_id
+            user_group_id = None
+            if isinstance(user_group_id_raw, list) and len(user_group_id_raw) > 0:
+                user_group_id = user_group_id_raw[0]
+            else:
+                user_group_id = user_group_id_raw
+
+            # Handle maindatabase
+            maindatabase_str = team.maindatabase
+            if maindatabase_raw is not None:
+                if isinstance(maindatabase_raw, list):
+                    maindatabase_str = json.dumps(maindatabase_raw)
+                else:
+                    maindatabase_str = str(maindatabase_raw)
+
+            try:
+                with transaction.atomic():
+                    if user_group_id:
+                        group = UserGroup.objects.filter(id=user_group_id).first()
+                        if group:
+                            team.user_group = group
+                    
+                    team.name = name
+                    team.maindatabase = maindatabase_str
+                    team.save()
+                    create_user_log(user=request.user, action='Update Config Team', detail=f'Updated team : {name}', status='success', request=request)
+
+                return JsonResponse({'status': 'success', 'team': {'id': team.id, 'name': team.name}})
+            except Exception as e:
+                create_user_log(user=request.user, action='Update Config Team', detail=f'Error: {str(e)}', status='error', request=request)
+                return JsonResponse({'status': 'error', 'message': str(e)})
+
+        # DELETE
+        if action == 'delete':
+            team_id = data.get('team_id')
+            if not team_id:
+                return JsonResponse({'status': 'error', 'message': 'Team ID is required.'})
+
+            team = UserTeam.objects.filter(id=team_id).first()
+            if team:
+                team_name = team.name
+                team.delete()
+                create_user_log(user=request.user, action='Delete Config Team', detail=f'Deleted team: {team_name}', status='success', request=request)
+                return JsonResponse({'status': 'success', 'message': 'Team deleted successfully.'})
+
+            return JsonResponse({'status': 'error', 'message': 'Team not found.'})
+
+    except IntegrityError as e:
+        create_user_log(user=request.user, action='ApiSaveTeam', detail=f'Database error : {str(e)}', status='error', request=request)
+        return JsonResponse({'status': 'error', 'message': 'An error occurred with the database.'})
+    except Exception as e:
+        create_user_log(user=request.user, action='ApiSaveTeam', detail=f'Unexpected error: {str(e)}', status='error', request=request)
+        return JsonResponse({'status': 'error', 'message': str(e)})

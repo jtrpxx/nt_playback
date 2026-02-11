@@ -113,7 +113,7 @@ import { registerRequest } from '../utils/pageLoad'
 
 import ModalConfiguration from '../components/ModalConfiguration.vue'
 import { API_INDEX_ROLE, API_DELETE_ROLE } from '../api/paths'
-import { getCookie, showToast } from '../assets/js/function-all'
+import { getCookie, showToast, confirmDelete } from '../assets/js/function-all'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 const userPermissionOther = ref([])
@@ -178,23 +178,8 @@ function openCreateRole() {
 async function deleteCustomRole(id) {
   try {
     if (!id) return
-    const swalLib = (typeof Swal !== 'undefined' && Swal) || (typeof window !== 'undefined' && (window.Swal || window.Sweetalert2 || window.SweetAlert || window.sweetAlert))
-    let result
-    if (swalLib && typeof swalLib.fire === 'function') {
-      result = await swalLib.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!'
-      })
-      if (!result || !result.isConfirmed) return
-    } else {
-      const ok = window.confirm("Are you sure? This action cannot be undone.")
-      if (!ok) return
-    }
+    const confirmed = await confirmDelete()
+    if (!confirmed) return
 
     await ensureCsrf()
     const csrfToken = getCsrfToken()

@@ -16,20 +16,18 @@
               <div class="d-flex align-items-center">
                  <div style="width:260px;">
                     <SearchInput ref="searchInputRef" v-model="searchQuery" :placeholder="'Search...'"
-                      @typing="onTyping" @enter="onSearch" @clear="clearSearchQuery" />
+                      @typing="onTyping" @clear="clearSearchQuery" />
                   </div>
-                <div class="ms-2 export-group">
-                  <button type="button" class="btn btn-primary btn-sm export-icon" data-bs-toggle="dropdown"
-                    aria-expanded="false">
-                    <i class="fa-solid fa-download" style="color: #fff;"></i>
-                  </button>
-                  <ul class="dropdown-menu dropdown-menu-end">
-                    <li><button class="dropdown-item" type="button" @click="onExportFormat('pdf')">PDF</button></li>
-                    <li><button class="dropdown-item" type="button" @click="onExportFormat('excel')">Excel</button>
-                    </li>
-                    <li><button class="dropdown-item" type="button" @click="onExportFormat('csv')">CSV</button></li>
-                  </ul>
-                </div>
+                <div class="ms-2 export-group" ref="exportWrap">
+                    <button type="button" class="btn btn-primary btn-sm export-icon" @click.stop="toggleExport" :aria-expanded="exportOpen">
+                      <i class="fa-solid fa-download" style="color: #fff;"></i>
+                    </button>
+                    <ul v-show="exportOpen" class="export-dropdown">
+                      <li><button class="dropdown-item" type="button" @click="onExportFormat('pdf')">PDF</button></li>
+                      <li><button class="dropdown-item" type="button" @click="onExportFormat('excel')">Excel</button></li>
+                      <li><button class="dropdown-item" type="button" @click="onExportFormat('csv')">CSV</button></li>
+                    </ul>
+                  </div>
               </div>
             </div>
 
@@ -51,20 +49,14 @@
 
 
                 <div :class="['input-group', { 'has-value': !!filters.start_date }]">
-                  <input ref="startInput" v-flatpickr="{ target: filters, key: 'start_date' }" required type="text"
-                    name="start_date"
-                    autocomplete="off" class="input">
+                  <input ref="startInput" v-flatpickr="{ target: filters, key: 'start_date' }" required type="text" name="start_date" autocomplete="off" class="input">
                   <label class="floating-label">From</label>
-                  <span class="calendar-icon" @click="startInput && startInput.focus()"><i
-                      class="fa-regular fa-calendar"></i></span>
+                  <span class="calendar-icon" @click="startInput && startInput.focus()"><i class="fa-regular fa-calendar"></i></span>
                 </div>
                 <div :class="['input-group', { 'has-value': !!filters.end_date }]">
-                  <input ref="endInput" v-flatpickr="{ target: filters, key: 'end_date' }" required type="text"
-                    name="end_date"
-                    autocomplete="off" class="input">
+                  <input ref="endInput" v-flatpickr="{ target: filters, key: 'end_date' }" required type="text" name="end_date" autocomplete="off" class="input">
                   <label class="floating-label">To</label>
-                  <span class="calendar-icon" @click="endInput && endInput.focus()"><i
-                      class="fa-regular fa-calendar"></i></span>
+                  <span class="calendar-icon" @click="endInput && endInput.focus()"><i class="fa-regular fa-calendar"></i></span>
                 </div>
 
                 <div class="input-group" style="flex: 0 0 auto;">
@@ -120,10 +112,13 @@ import CustomSelect from '../components/CustomSelect.vue'
 import SearchInput from '../components/SearchInput.vue'
 import { registerRequest } from '../utils/pageLoad'
 import { API_GET_USER, API_GET_USER_ALL, API_GET_LOG_USER } from '../api/paths'
+import { exportTableToFormat } from '../assets/js/function-all'
 
 const searchQuery = ref('')
 let searchTimeout = null
 let userFilterTimeout = null
+
+const exportOpen = ref(false)
 
 onMounted(() => {
   registerRequest(fetchData())
@@ -145,6 +140,7 @@ const cardTitle = computed(() => {
   if (p === '/logs/audit') return 'Audit log'
   return 'User Logs'
 })
+
 
 const onTyping = () => {
   currentPage.value = 1
@@ -211,10 +207,10 @@ const changePage = async (p) => {
   currentPage.value = p
   await fetchData()
 }
-
+const exportWrap = ref(null)
 const onDocClick = (e) => {
-  if (!perWrap.value) return
-  if (!perWrap.value.contains(e.target)) perDropdownOpen.value = false
+  if (perWrap.value && !perWrap.value.contains(e.target)) perDropdownOpen.value = false
+  if (exportWrap.value && !exportWrap.value.contains(e.target)) exportOpen.value = false
 }
 
 const onRowEdit = (row) => { console.log('edit row', row) }
@@ -318,10 +314,18 @@ function clearSearchQuery() {
 
 function resetFilters() {
   try {
-    filters.name = ''
-    filters.action = ''
+    filters.name = []
+    filters.action = []
     filters.start_date = ''
     filters.end_date = ''
+
+    if (startInput.value && startInput.value._flatpickrInstance) {
+      startInput.value._flatpickrInstance.clear()
+    }
+    if (endInput.value && endInput.value._flatpickrInstance) {
+      endInput.value._flatpickrInstance.clear()
+    }
+
     // reset pagination and refresh
     currentPage.value = 1
     fetchUsers()
@@ -330,7 +334,17 @@ function resetFilters() {
     console.error('resetFilters error', e)
   }
 }
-
+const toggleExport = () => {
+  exportOpen.value = !exportOpen.value
+}
+const onExportFormat = (format) => {
+  exportTableToFormat(format, cardTitle.value, {
+    rows: paginatedRecords.value || [],
+    columns: columns || [],
+    startIndex: startIndex.value || 0,
+    fileNamePrefix: cardTitle.value
+  })
+}
 </script>
 
 <style scoped>
@@ -384,9 +398,13 @@ function resetFilters() {
   color: #416fd6;
 }
 
-@media (min-width: 1200px) {
-    :deep(.card-body-datatable .table-container .table-scroll) {
-        max-height: calc(100vh - 316px) !important;
-    }
+/* Export button and dropdown */
+.export-group { position: relative; }
+.export-dropdown { position: absolute; right: 0; margin-top: 34px; min-width: 150px; z-index: 1050; background: #fff; border: 1px solid rgba(0,0,0,.15); border-radius: 6px; box-shadow: 0 .5rem 1rem rgba(0,0,0,.175); list-style: none; padding: 6px 0; }
+.export-dropdown .dropdown-item { width:100%; text-align:left; padding:8px 16px; background:transparent; border:none;font-size: 10px; }
+
+
+:deep(.card-body-datatable .table-container .table-scroll) {
+  height: calc(100vh - 315px) !important;
 }
 </style>

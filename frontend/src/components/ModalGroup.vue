@@ -461,27 +461,30 @@ function close() {
 }
 
 async function onSave() {
-    // clear previous error
+    // ฟังก์ชันหลักสำหรับบันทึกข้อมูล (Create หรือ Update)
+    // ทำหน้าที่ตรวจสอบความถูกต้องของข้อมูล (Validation) และส่ง Request ไปยัง API
+
+    // ล้างข้อความ error ก่อนหน้า
     nameError.value = false
 
-    // immediate required-field validation (do this first so Save shows errors right away)
+    // ตรวจสอบฟิลด์ที่จำเป็นทันที (ทำก่อนเพื่อให้แสดง error ทันทีเมื่อกด Save)
     const trimmed = String(name.value || '').trim()
     let hasError = false
 
-    // check Group select for team flows
+    // ตรวจสอบการเลือก Group สำหรับการจัดการ Team
     if ((props.mode === 'createTeam' || props.mode === 'editTeam') && !selectedGroupId.value) {
         selectedGroupError.value = 'This field is required.'
         hasError = true
     }
 
-    // check name required
+    // ตรวจสอบว่ากรอกชื่อหรือไม่
     if (!trimmed) {
         nameError.value = 'This field is required.'
         hasError = true
     }
 
     if (hasError) {
-        // focus first invalid field: prefer group select then name
+        // โฟกัสไปที่ฟิลด์ที่ไม่ถูกต้องฟิลด์แรก: เริ่มจาก group select แล้วค่อยไปที่ name
         try {
             if ((props.mode === 'createTeam' || props.mode === 'editTeam') && !selectedGroupId.value) {
                 const el = document.querySelector('[name="groupModal"]')
@@ -497,7 +500,7 @@ async function onSave() {
         return
     }
 
-    // after required checks, if duplicate flag already set block submit
+    // หลังจากตรวจสอบฟิลด์จำเป็นแล้ว ถ้ามี flag ชื่อซ้ำให้บล็อกการ submit
     if (nameCheck.value) {
         nameError.value = 'This name is already in the system.'
         return
@@ -518,7 +521,7 @@ async function onSave() {
             body = { action: props.mode === 'createTeam' ? 'create' : 'update', name: name.value, maindatabase: JSON.stringify(maindb), user_group_id: selectedGroupId.value }
             if (props.mode === 'editTeam' && props.group && props.group.id) body.team_id = props.group.id
         } else {
-            // fallback emit if unknown mode
+            // กรณีไม่รู้จัก mode ให้ emit กลับไปเลย
             emit('saved', { mode: props.mode, data: {}})
             emit('update:modelValue', false)
             return
@@ -536,8 +539,14 @@ async function onSave() {
 
         const j = res.ok ? await res.json() : null
         if (res.ok && j && (j.status === 'success' || j.status === 'ok')) {
-            // determine item name from response or payload
-            const returned = j.data || j.group || j.team || j.result || body
+            // หาชื่อ item จาก response หรือ payload เพื่อนำมาแสดงใน Toast
+            let returned = j.data || j.group || j.team || j.result || body
+            
+            // ตรวจสอบให้แน่ใจว่ามี user_group_id สำหรับอัปเดตหน้าจอ (รวมจาก body ถ้าไม่มีใน response)
+            if ((props.mode === 'createTeam' || props.mode === 'editTeam') && body.user_group_id) {
+                returned = { ...returned, user_group_id: body.user_group_id, maindatabase: body.maindatabase }
+            }
+
             const itemName = (returned && (returned.group_name || returned.name || returned.team_name || returned.group_name || returned.label)) || name.value || ''
             if (props.mode === 'createGroup' || props.mode === 'createTeam') {
                 showToast(`Create ${itemName} successfully`, 'success')
@@ -552,7 +561,7 @@ async function onSave() {
         } else {
             const msg = (j && (j.message || j.error)) || 'Save failed'
             showToast(msg, 'error')
-            // optionally set field error
+            // ตั้งค่า error ที่ฟิลด์ (ถ้ามี)
             nameError.value = msg
             return
         }

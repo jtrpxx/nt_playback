@@ -64,7 +64,6 @@ const form = reactive({
 })
 
 const handleLogin = async () => {
-  console.log('Login:', form)
   
   const success = await authStore.login(form.username, form.password)
   if (success) {

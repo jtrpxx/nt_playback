@@ -1,7 +1,7 @@
 <template>
     <MainLayout>
         <div class="main-wrapper container-fluid py-3">
-            <Breadcrumbs :items="[{ text: 'Home', to: '/' }, { text: 'Setting Column Audio Records' }]" />
+            <Breadcrumbs :items="[{ text: 'Home', to: '/' }, { text: 'Set Column' }]" />
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body card-body-datatable" style="position: relative;">
@@ -11,7 +11,7 @@
                                     style="width:35px;height:35px;background-color: #D9E2F6;border-radius: 10px !important;">
                                     <i class="fa-solid fa-gear" style="color:#2b6cb0;font-size:18px"></i>
                                 </div>
-                                <h5 class="card-title mb-2 mt-1">Setting Column Audio Records</h5>
+                                <h5 class="card-title mb-2 mt-1">Set Column</h5>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <div class="search-group" style="width:260px; position:relative;">
@@ -117,9 +117,9 @@ const filteredColumns = computed(() => {
     return columns.value.filter(c => (c.name || '').toLowerCase().includes(q))
 })
 
-const fetchGetColumnAudioRecord = async () => {
+const fetchGetColumnAudioRecord = async (showLoading = true) => {
     const task = (async () => {
-        loading.value = true
+        if (showLoading) loading.value = true
         try {
             const res = await fetch(API_GET_COLUMN_AUDIO_RECORD(), { credentials: 'include' })
             if (!res.ok) return
@@ -128,7 +128,7 @@ const fetchGetColumnAudioRecord = async () => {
         } catch (err) {
             console.error('fetchGetColumnAudioRecord error', err)
         } finally {
-            loading.value = false
+            if (showLoading) loading.value = false
         }
     })()
     registerRequest(task)
@@ -177,6 +177,19 @@ async function deleteColumn(id) {
 
 async function toggleSetColumnUse(userId, column) {
     const newUse = !column.use
+    
+    // Optimistic update: update UI immediately without waiting for server
+    const previousColumns = JSON.stringify(columns.value)
+    
+    if (newUse) {
+        // Enable this one, disable others
+        columns.value.forEach(c => {
+            c.use = (c.id === column.id)
+        })
+    } else {
+        column.use = false
+    }
+
     try {
         await ensureCsrf()
         const csrfToken = getCsrfToken()
@@ -199,15 +212,15 @@ async function toggleSetColumnUse(userId, column) {
         const json = await res.json()
         if (json.status === 'success') {
             showToast(json.message, 'success')
-            fetchGetColumnAudioRecord() // Refresh list to update all switches
+            // No need to fetch again, state is already updated
         } else {
             showToast(json.message || 'Failed to update status', 'error')
-            fetchGetColumnAudioRecord() // Revert state on error
+            columns.value = JSON.parse(previousColumns) // Revert
         }
     } catch (e) {
         console.error('Error toggling column', e)
         showToast('An error occurred', 'error')
-        fetchGetColumnAudioRecord()
+        columns.value = JSON.parse(previousColumns) // Revert
     }
 }
 
@@ -232,7 +245,7 @@ async function onModalSaved(data) {
         if (json.status === 'success') {
             showToast(json.message || 'Saved successfully', 'success')
             showModal.value = false
-            fetchGetColumnAudioRecord()
+            fetchGetColumnAudioRecord(false)
         } else {
             showToast(json.message || 'Failed to save', 'error')
         }
@@ -312,5 +325,9 @@ input:checked+.slider_status:after {
     left: 12px;
     right: auto;
     color: white;
+}
+
+.custom-roles-list {
+    max-height: calc(75vh - 50px);
 }
 </style>

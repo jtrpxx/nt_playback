@@ -85,7 +85,7 @@ def ApiSaveColumnAudioRecord(request):
                 status=1
             )
             create_user_log(user=user, action="Create Column Audio Record", detail=f"Created: {name}", status="success", request=request)
-            return JsonResponse({'status': 'success', 'message': 'Created successfully'})
+            return JsonResponse({'status': 'success', 'message': f'Created {name} successfully'})
 
         elif action == 'update':
             record_id = data.get('id')
@@ -103,7 +103,7 @@ def ApiSaveColumnAudioRecord(request):
             record.save()
             
             create_user_log(user=user, action="Update Column Audio Record", detail=f"Updated: {name}", status="success", request=request)
-            return JsonResponse({'status': 'success', 'message': 'Updated successfully'})
+            return JsonResponse({'status': 'success', 'message': f'Updated {name} successfully'})
         
         else:
             return JsonResponse({'status': 'error', 'message': 'Invalid action'}, status=400)

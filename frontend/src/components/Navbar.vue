@@ -156,7 +156,7 @@
             <ul class="menu-list" style="padding-left: 12px; margin-top: 4px">
               <li class="menu-item">
                 <router-link to="/setting/column/audio-record" class="menu-link"><i class="fa-solid fa-circle-dot"
-                    style="font-size: 8px"></i> Setting Column Audio Records</router-link>
+                    style="font-size: 8px"></i> Set Column</router-link>
               </li>
             </ul>
           </div>

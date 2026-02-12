@@ -223,6 +223,18 @@ def get_user_os_browser_architecture(request):
         "browser": browser_full
     }
 
+def get_client_ip(request):
+    """
+    Extract client IP from Django request considering common proxy headers.
+    Returns 'unknown' when not available.
+    """
+    if not request:
+        return "unknown"
+    xff = request.META.get('HTTP_X_FORWARDED_FOR')
+    if xff:
+        return xff.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR', 'unknown')
+
 def create_user_log(
     user=None,
     action="",
@@ -251,11 +263,11 @@ def create_user_log(
     except Exception:
         info = {"os": "-", "browser": "-"}
 
-    # ดึง IP ของ server
+    # ดึง IP ของ client (จาก request)
     try:
-        server_ip = socket.gethostbyname(socket.gethostname())
+        client_ip = get_client_ip(request)
     except Exception:
-        server_ip = "unknown"
+        client_ip = "unknown"
 
     # ถ้ามี Exception ให้แนบ traceback ด้วย
     if exception is not None:
@@ -270,7 +282,7 @@ def create_user_log(
             action=action,
             timestamp=timezone.now(),
             detail=detail,
-            ip_address=server_ip,
+            ip_address=client_ip,
             # audiofile_id=audiofile_id,
             client_type=f"{info['os']} / {info['browser']}",
             status=status,

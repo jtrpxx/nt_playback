@@ -28,7 +28,7 @@
             </div>
 
             <div class="card card-custom-role" style="border: 2px dashed #e2e8f0;">
-              <div id="customRolesList" class="custom-roles-list" style="padding: 10px;max-height: 396px !important; overflow:auto !important;">
+              <div id="customRolesList" class="custom-roles-list" style="padding: 10px;min-height: 396px !important; overflow:auto !important;">
                 <template v-if="favorites && favorites.length">
                   <div v-for="favorite in filteredFavorites" :key="favorite.id" class="custom-role-item"
                     @click="applyFavorite(favorite)" style="cursor: pointer;" :data-id="favorite.id">

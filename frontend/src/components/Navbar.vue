@@ -7,9 +7,7 @@
             <span>
               <a aria-current="page" href="/" class="router-link-active router-link-exact-active no-link"
                 style="text-decoration: none; display: inline-flex; align-items: center">
-                <img src="/src/assets/images/logo-nichtel.png" class="img-fluid rounded" alt="Nichetel-logo"
-                  style="width: 40px; height: auto; margin-right: 10px" />
-
+                <img src="/src/assets/images/logo-nichtel.png" class="img-fluid rounded" alt="Nichetel-logo" style="width: 40px; height: auto; margin-right: 10px" />
                 <div style="display: flex; flex-direction: column; line-height: 1.2; margin: 9px 0px 2px -5px">
                   <span style="font-size: 18px; color: #fff">NT Audio Search</span>
                   <span style="font-size: 12px; color: #fff">Centralized Search and Playback System</span>
@@ -95,20 +93,15 @@
             @click.prevent="isLogsOpen = !isLogsOpen" role="button" aria-expanded="false">
             <i class="fa-solid fa-clock-rotate-left"></i>
             <span data-translate="Logs">Logs</span>
-            <i
-              class="fa-solid fa-chevron-down ms-auto"
-              :style="{ transform: isLogsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }"
-              style="font-size: 12px; margin-left: auto"></i>
+            <i class="fa-solid fa-chevron-down ms-auto" :style="{ transform: isLogsOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }" style="font-size: 12px; margin-left: auto"></i>
           </a>
           <div v-show="isLogsOpen" id="collapseLogs">
             <ul class="menu-list" style="padding-left: 12px; margin-top: 4px">
               <li class="menu-item" v-if="store.hasPermission('System Logs')">
-                <router-link to="/logs/system" class="menu-link"><i class="fa-solid fa-circle-dot"
-                    style="font-size: 8px"></i> System log</router-link>
+                <router-link to="/logs/system" class="menu-link"><i class="fa-solid fa-circle-dot" style="font-size: 8px"></i> System log</router-link>
               </li>
               <li class="menu-item" v-if="store.hasPermission('Audit Logs')">
-                <router-link to="/logs/audit" class="menu-link"><i class="fa-solid fa-circle-dot"
-                    style="font-size: 8px"></i> Audit log</router-link>
+                <router-link to="/logs/audit" class="menu-link"><i class="fa-solid fa-circle-dot" style="font-size: 8px"></i> Audit log</router-link>
               </li>
             </ul>
           </div>
@@ -123,20 +116,15 @@
             @click.prevent="isConfigOpen = !isConfigOpen" role="button" aria-expanded="false">
             <i class="fa-solid fa-sliders"></i>
             <span data-translate="configuration">Configuration</span>
-            <i
-              class="fa-solid fa-chevron-down ms-auto"
-              :style="{ transform: isConfigOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }"
-              style="font-size: 12px; margin-left: auto"></i>
+            <i class="fa-solid fa-chevron-down ms-auto" :style="{ transform: isConfigOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }" style="font-size: 12px; margin-left: auto"></i>
           </a>
           <div v-show="isConfigOpen" id="collapseConfig">
             <ul class="menu-list" style="padding-left: 12px; margin-top: 4px">
               <li class="menu-item" v-if="store.hasPermission('Access Role & Permissions')">
-                <router-link to="/configuration/role" class="menu-link"><i class="fa-solid fa-circle-dot"
-                    style="font-size: 8px"></i> Role & Permissions</router-link>
+                <router-link to="/configuration/role" class="menu-link"><i class="fa-solid fa-circle-dot" style="font-size: 8px"></i> Role & Permissions</router-link>
               </li>
               <li class="menu-item" v-if="store.hasPermission('Access Group & Team')">
-                <router-link to="/configuration/group" class="menu-link"><i class="fa-solid fa-circle-dot"
-                    style="font-size: 8px"></i> Group & Team</router-link>
+                <router-link to="/configuration/group" class="menu-link"><i class="fa-solid fa-circle-dot" style="font-size: 8px"></i> Group & Team</router-link>
               </li>
             </ul>
           </div>
@@ -147,40 +135,32 @@
             @click.prevent="isSetColumnOpen = !isSetColumnOpen" role="button" aria-expanded="false">
             <i class="fa-solid fa-gear"></i>
             <span>Settings</span>
-            <i
-              class="fa-solid fa-chevron-down ms-auto"
-              :style="{ transform: isSetColumnOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }"
-              style="font-size: 12px; margin-left: auto"></i>
+            <i class="fa-solid fa-chevron-down ms-auto" :style="{ transform: isSetColumnOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }" style="font-size: 12px; margin-left: auto"></i>
           </a>
           <div v-show="isSetColumnOpen" id="collapseConfig">
             <ul class="menu-list" style="padding-left: 12px; margin-top: 4px">
               <li class="menu-item" v-if="store.hasPermission('Edit Column')">
-                <router-link to="/setting/column/audio-record" class="menu-link"><i class="fa-solid fa-circle-dot"
-                    style="font-size: 8px"></i> Set Column</router-link>
+                <router-link to="/setting/column/audio-record" class="menu-link"><i class="fa-solid fa-circle-dot" style="font-size: 8px"></i> Set Column</router-link>
               </li>
             </ul>
           </div>
         </li>
       </ul>
 
-      <div class="menu-divider"></div>
+      <div class="menu-divider" v-if="store.hasPermission('Access Role & Permissions') || store.hasPermission('Access Group & Team') || store.hasPermission('Edit Column')"></div>
 
       <button @click="handleLogout" class="logout-btn">
         <i class="fa-solid fa-right-from-bracket"></i>
         <span data-translate="logout">Logout</span>
       </button>
 
-      <button
-        id="sidebarTeamClose"
-        style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 22px; color: #888; cursor: pointer; display: none"
-        @click="menuOpen = false"></button>
+      <button id="sidebarTeamClose" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 22px; color: #888; cursor: pointer; display: none" @click="menuOpen = false"></button>
     </div>
 
     <button id="scrollTopBtn" style="display: none">
       <svg class="progress-circle" width="40" height="40">
         <circle cx="20" cy="20" r="18" stroke="#e0e0e0" stroke-width="3" fill="none" />
-        <circle id="progress-ring" cx="20" cy="20" r="18" stroke="#2872fa" stroke-width="3" fill="none"
-          stroke-linecap="round" />
+        <circle id="progress-ring" cx="20" cy="20" r="18" stroke="#2872fa" stroke-width="3" fill="none" stroke-linecap="round" />
       </svg>
       <i class="bi bi-arrow-up"></i>
     </button>
@@ -242,5 +222,4 @@ const handleLogout = () => {
   router.push("/login");
 };
 
-// Breadcrumbs are now handled by individual page components using the `Breadcrumbs` component.
 </script>

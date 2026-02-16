@@ -12,5 +12,6 @@ urlpatterns = [
 	path('api/get/credentials/', views.ApiGetCredentials, name='ApiGetCredentials'),
     path('api/log/save-file/', views.ApiLogSaveFile, name='ApiLogSaveFile'),
     path('api/get/csrf/', views.ApiGetCsrfToken, name='ApiGetCsrfToken'),
+	path('api/my-permissions/', views.ApiGetMyPermissions, name='ApiGetMyPermissions'),
 ]
 

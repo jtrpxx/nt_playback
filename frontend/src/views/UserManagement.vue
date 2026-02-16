@@ -17,7 +17,7 @@
                                 <div style="width:260px;">
                                     <SearchInput ref="searchInputRef" v-model="searchQuery" :placeholder="'Search...'" @typing="onTyping" @enter="onSearch" @clear="clearSearchQuery" />
                                 </div>
-                                <router-link to="/user-management/add">
+                                <router-link v-if="authStore.hasPermission('Add User')" to="/user-management/add">
                                 <button class="btn-role btn-primary btn-sm" id="addGroupBtn"
                                     @click.stop="openCreateGroup">
                                     <i class="fas fa-plus"></i>
@@ -136,6 +136,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth.store'
 import SearchInput from '../components/SearchInput.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
@@ -222,12 +223,17 @@ const onDocClick = (e) => {
 }
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const onRowEdit = (row, actionId) => {
     const id = actionId ?? (row && row.user && row.user.id)
     if (!id) {
         console.warn('onRowEdit: no id available for row', row)
         return
+    }
+    if (!authStore.hasPermission('Edit User')) {
+        // redirect to denied
+        return router.push({ name: 'Denied' })
     }
     router.push(`/user-management/edit/${id}`)
 }
@@ -238,6 +244,10 @@ const onRowDelete = async (row, actionId) => {
         if (!userId) {
             console.warn('onRowDelete: no user id available for row', row)
             return
+        }
+
+        if (!authStore.hasPermission('Delete User')) {
+            return showToast('Access Denied', 'error')
         }
 
         const confirmed = await confirmDelete('Are you sure?', "You won't be able to revert this!", 'Yes, delete')
@@ -499,6 +509,10 @@ function getDbList(row) {
 }
 
 async function toggleUserStatus(userId, row) {
+    if (!authStore.hasPermission('Change Status')) {
+        showToast('Access Denied', 'error')
+        return
+    }
     if (!userId) return
     try {
         const rec = records.value.find(r => (r.user && r.user.id) === userId)

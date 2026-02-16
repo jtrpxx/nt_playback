@@ -22,7 +22,7 @@
                                             class="form-control form-control-sm search-input"
                                             placeholder="Search..." @input="onTyping" @keyup.enter="onSearch" />
                                     </div>
-                                    <button class="btn-role btn-primary btn-sm" id="addGroupBtn"
+                                    <button v-if="authStore.hasPermission('Add Group')" class="btn-role btn-primary btn-sm" id="addGroupBtn"
                                         @click.stop="openCreateGroup">
                                         <i class="fas fa-plus"></i>
                                         Add New Group
@@ -65,10 +65,10 @@
                                                 </div>
 
                                                 <div class="group-card-actions">
-                                                    <button class="group-edit-btn" @click.stop="openEditGroup(group.id)">
+                                                    <button v-if="authStore.hasPermission('Edit Group')" class="group-edit-btn" @click.stop="authStore.hasPermission('Edit Group') && openEditGroup(group.id)">
                                                         Click to edit
                                                     </button>
-                                                    <button type="button" class="group-delete-btn" @click.stop="deleteGroup(group.id)">
+                                                    <button v-if="authStore.hasPermission('Delete Group')" type="button" class="group-delete-btn" @click.stop="deleteGroup(group.id)">
                                                         <i class="fas fa-trash" style="font-size: 12px;"></i>
                                                     </button>
                                                 </div>
@@ -109,7 +109,7 @@
                                             class="form-control form-control-sm search-input"
                                             placeholder="Search..." @input="onTypingTeam" @keyup.enter="onSearchTeam" />
                                     </div>
-                                    <button class="btn-role btn-primary btn-sm" id="addTeamBtn"
+                                    <button v-if="authStore.hasPermission('Add Team')" class="btn-role btn-primary btn-sm" id="addTeamBtn"
                                         @click.stop="openCreateTeam">
                                         <i class="fas fa-plus"></i>
                                         Add New Team
@@ -140,10 +140,10 @@
                                                 </div>
 
                                                 <div class="group-card-actions">
-                                                    <button class="group-edit-btn" @click.stop="openEditTeam(team.id)">
+                                                    <button v-if="authStore.hasPermission('Edit Team')" class="group-edit-btn" @click.stop="authStore.hasPermission('Edit Team') && openEditTeam(team.id)">
                                                         Click to edit
                                                     </button>
-                                                    <button type="button" class="group-delete-btn" @click.stop="deleteTeam(team.id)">
+                                                    <button v-if="authStore.hasPermission('Delete Team')" type="button" class="group-delete-btn" @click.stop="deleteTeam(team.id)">
                                                         <i class="fas fa-trash" style="font-size: 12px;"></i>
                                                     </button>
                                                 </div>
@@ -177,6 +177,7 @@
 import MainLayout from '../layouts/MainLayout.vue';
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import ModalGroup from '../components/ModalGroup.vue'
+import { useAuthStore } from '../stores/auth.store'
 import { ref, onMounted, computed } from 'vue'
 import { registerRequest } from '../utils/pageLoad'
 import { API_GROUP_INDEX, API_TEAM_INDEX, API_GET_TEAM_BY_GROUP, API_SAVE_GROUP, API_SAVE_TEAM } from '../api/paths'
@@ -184,6 +185,7 @@ import { ensureCsrf, getCsrfToken } from '../api/csrf'
 import { showToast, confirmDelete } from '../assets/js/function-all'
 
 const searchQuery = ref('')
+const authStore = useAuthStore()
 const teamSearchQuery = ref('')
 const selectedGroupId = ref(null)
 

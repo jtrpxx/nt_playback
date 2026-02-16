@@ -20,6 +20,7 @@ from django.contrib.auth.models import User
 # models
 from apps.model_center.authorize.models import UserAuth,MainDatabase
 from apps.model_center.authorize.models import UserLog,UserProfile
+from apps.core.utils.permissions import get_user_actions
 
 #serializer
 from apps.model_center.authorize.serializers import MainDatabaseSerializer
@@ -64,6 +65,11 @@ def index(request, type):
     return render(request, 'log_user/index.html', context)
 
 def get_log(request,type):
+    # permission check based on type
+    required_action = 'System Logs' if type == 'system' else ('Audit Logs' if type == 'audit' else 'User Logs')
+    user_actions = get_user_actions(request.user)
+    if required_action not in user_actions:
+        return JsonResponse({'detail': 'Access Denied'}, status=403)
     draw = int(request.GET.get("draw", 1))
     start = int(request.GET.get("start", 0))
     length = int(request.GET.get("length", 25))

@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { useAuthStore } from './stores/auth.store.js'
 import App from './App.vue'
 import router from './router'
 import { loadRuntimeConfig } from './api/runtimeConfig'
@@ -25,9 +26,18 @@ import './assets/css/datatable.css'
 ;(async () => {
 	await loadRuntimeConfig()
 	const app = createApp(App)
-	app.use(createPinia())
+	const pinia = createPinia()
+	app.use(pinia)
 	app.use(router)
 	app.directive('flatpickr', flatpickrDirective)
 	app.directive('has-value', hasValueDirective)
+	// fetch permissions on startup if user present
+	try {
+		const auth = useAuthStore()
+		if (auth.user) await auth.fetchPermissions()
+	} catch (e) {
+		console.error('Error fetching permissions on startup', e)
+	}
+
 	app.mount('#app')
 })()

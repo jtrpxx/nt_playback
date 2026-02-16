@@ -14,6 +14,7 @@ from apps.core.model.authorize.models import MainDatabase,UserAuth,UserProfile,D
 
 
 from apps.configuration.models import UserPermission,UserPermissionDetail
+from apps.core.utils.permissions import require_action, get_user_actions
 
 #serializer
 from apps.core.model.authorize.serializers import UserProfileSerializer,DepartmentSerializer,UserGroupSerializer,UserTeamSerializer
@@ -23,6 +24,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 @login_required(login_url='/login')
+@require_action('User Management')
 def ApiGetUserAll(request):
     try:
         users = User.objects.all().values('id', 'username', 'first_name', 'last_name', 'email').order_by('username')
@@ -32,6 +34,7 @@ def ApiGetUserAll(request):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 @login_required(login_url='/login')
+@require_action('User Management')
 def ApiGetUser(request):
     # prepare base query
     qs = UserProfile.objects.exclude(user=request.user).select_related('user', 'team')
@@ -178,6 +181,7 @@ def ApiGetUser(request):
 
 
 @login_required
+@require_action('Change Status')
 @require_POST
 def ApiChangeUserStatus(request, user_id):
     try:
@@ -194,6 +198,7 @@ def ApiChangeUserStatus(request, user_id):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 @login_required(login_url='/login')
+@require_action('Access Role & Permissions')
 def ApiGetAllRolesPermissions(request):
     try:
         admin_role = UserPermission.objects.filter(type='administrator').first()
@@ -239,6 +244,8 @@ def ApiGetAllRolesPermissions(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
 
+@login_required(login_url='/login')
+@require_action('Edit User')
 def ApiGetUSerProfile(request, user_id):
     try:
         user = User.objects.get(id=user_id)
@@ -290,6 +297,7 @@ def ApiGetUSerProfile(request, user_id):
         
 
 @login_required
+@require_action('Change Status')
 @require_POST
 def ChangeUserStatus(request, user_id):
     try:
@@ -313,6 +321,7 @@ def ChangeUserStatus(request, user_id):
         return JsonResponse({'status': 'error', 'message': str(e)})
     
 @login_required
+@require_action('Delete User')
 @require_POST
 def ApiDeleteUser(request, user_id):
     """
@@ -401,6 +410,15 @@ def ApiSaveUser(request, user_id=None):
             user_permission_obj = UserPermission.objects.filter(type=role_input).first()
 
     team_obj = UserTeam.objects.filter(id=team_id).first() if team_id else None
+
+    # ตรวจสิทธิ์: ถ้าเป็นอัพเดต ต้องมี 'Edit User' ถ้าสร้างต้องมี 'Add User'
+    user_actions = get_user_actions(request.user)
+    if user_id:
+        if 'Edit User' not in user_actions:
+            return JsonResponse({'status': 'error', 'message': 'Access Denied'}, status=403)
+    else:
+        if 'Add User' not in user_actions:
+            return JsonResponse({'status': 'error', 'message': 'Access Denied'}, status=403)
 
     # กรณีอัพเดตเมื่อมี user_id
     if user_id:

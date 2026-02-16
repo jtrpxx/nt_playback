@@ -8,12 +8,19 @@ from django.conf import settings
 from datetime import datetime, timedelta
 
 from apps.core.model.authorize.models import UserLog
+from apps.core.utils.permissions import get_user_actions
 
 def ApiGetUserLogs(request,type):
     try:
         type = str(type)
     except (ValueError, TypeError):
         return JsonResponse({'status': False, 'message': 'Invalid type'}, status=400)
+
+    # permission check depending on log type
+    required_action = 'System Logs' if type == 'system' else ('Audit Logs' if type == 'audit' else 'User Logs')
+    user_actions = get_user_actions(request.user)
+    if required_action not in user_actions:
+        return JsonResponse({'detail': 'Access Denied'}, status=403)
     
     draw = int(request.GET.get("draw", 1))
     start = int(request.GET.get("start", 0))

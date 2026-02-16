@@ -20,8 +20,8 @@
                                         class="form-control form-control-sm search-input"
                                         placeholder="Search..." @input="onTyping" @keyup.enter="onSearch" />
                                 </div>
-                                <button class="btn-role btn-primary btn-sm" id="addGroupBtn"
-                                    @click.stop="openCreateGroup">
+                                <button v-if="authStore.hasPermission('Edit Column')" class="btn-role btn-primary btn-sm" id="addGroupBtn"
+                                    @click.stop="authStore.hasPermission('Edit Column') && openCreateGroup()">
                                     <i class="fas fa-plus"></i>
                                     Add New Column
                                 </button>
@@ -56,10 +56,10 @@
                                             </div>
 
                                             <div class="group-card-actions">
-                                                <button class="group-edit-btn" @click.stop="openEditColumn(column.id)">
+                                                <button v-if="authStore.hasPermission('Edit Column')" class="group-edit-btn" @click.stop="authStore.hasPermission('Edit Column') && openEditColumn(column.id)">
                                                     Click to edit
                                                 </button>
-                                                <button type="button" class="group-delete-btn"
+                                                <button v-if="authStore.hasPermission('Edit Column')" type="button" class="group-delete-btn"
                                                     @click.stop="deleteColumn(column.id)">
                                                     <i class="fas fa-trash" style="font-size: 12px;"></i>
                                                 </button>
@@ -85,7 +85,7 @@
             </div>
         </div>
     </MainLayout>
-    <ModalSetColumn v-model="showModal" :mode="modalMode" :columnData="editColumnData" @saved="onModalSaved"/>
+    <ModalSetColumn v-if="authStore.hasPermission('Edit Column')" v-model="showModal" :mode="modalMode" :columnData="editColumnData" @saved="onModalSaved"/>
 </template>
 
 
@@ -96,11 +96,13 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { API_GET_COLUMN_AUDIO_RECORD } from '../api/paths'
 import { registerRequest } from '../utils/pageLoad'
 import ModalSetColumn from '../components/ModalSetColumn.vue'
+import { useAuthStore } from '../stores/auth.store'
 import { showToast, confirmDelete } from '../assets/js/function-all'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 import { API_SAVE_COLUMN_AUDIO_RECORD } from '../api/paths'
 
 const searchQuery = ref('')
+const authStore = useAuthStore()
 const columns = ref([])
 const selectedColumnId = ref(null)
 const loading = ref(false)

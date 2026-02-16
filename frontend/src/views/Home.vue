@@ -4,7 +4,7 @@
       <Breadcrumbs :items="[{ text: 'Home', to: '/' }]" />
       
       <div class="row col-lg-12">
-        <div class="col-lg-2">
+        <div v-if="authStore.hasPermission('Query Audio')" class="col-lg-2">
           <div class="card">
             <div class="card-body">
               <div class="d-flex align-items-start justify-content-between" style="margin-bottom: 6px;">
@@ -89,7 +89,7 @@
                 <div class="card">
                   <div class="card-body" style="padding: 8px;">
 
-                    <div class="d-flex justify-content-center">
+                    <div class="d-flex justify-content-center" v-if="authStore.hasPermission('My Favorite Search')">
                       <button class="btn btn-light" type="button" id="addFavorite" @click="showFavoriteModal = true"
                         style="width: 100%;text-align: left;font-size: 12px;margin-bottom: 4px;">
                         <i class="fa-regular fa-bookmark"></i> My Favorite Search
@@ -132,7 +132,7 @@
             </div>
           </div>
         </div>
-        <div class="col-lg-10">
+        <div :class="authStore.hasPermission('Query Audio') ? 'col-lg-10' : 'col-lg-12'">
           <div class="card">
             <div class="card-body card-body-datatable">
               <div class="d-flex align-items-start justify-content-between" style="margin-bottom: 6px;">
@@ -148,7 +148,7 @@
                     <SearchInput ref="searchInputRef" v-model="searchQuery" :placeholder="'Search...'"
                       @typing="onTyping" @enter="onSearch" @clear="clearSearchQuery" />
                   </div>
-                  <div class="ms-2 export-group" ref="exportWrap">
+                  <div v-if="authStore.hasPermission('Export Recordings')" class="ms-2 export-group" ref="exportWrap">
                     <button type="button" class="btn btn-primary btn-sm export-icon" @click.stop="toggleExport" :aria-expanded="exportOpen">
                       <i class="fa-solid fa-download" style="color: #fff;"></i>
                     </button>
@@ -187,7 +187,8 @@
       </div>
     </div>
   </MainLayout>
-  <ModalHome v-model="showFavoriteModal" :favorites="favoriteSearchAll" :mainDbOptions="mainDbOptions" :agentOptions="agentOptions" @apply="applyFavorite" @edit="editFavorite" @delete="deleteFavorite" />
+    <ModalHome v-if="authStore.hasPermission('My Favorite Search')" v-model="showFavoriteModal" :favorites="favoriteSearchAll" :mainDbOptions="mainDbOptions" :agentOptions="agentOptions" @apply="applyFavorite" @edit="editFavorite" @delete="deleteFavorite" />
+    <AudioPlayer v-model="showAudioModal" :src="audioSrc" :metadata="audioMetadata" />
 </template>
 
 <script setup>
@@ -197,12 +198,14 @@ import CustomSelect from '../components/CustomSelect.vue'
 import ModalHome from '../components/ModalHome.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import SearchInput from '../components/SearchInput.vue'
+import { useAuthStore } from '../stores/auth.store'
 import { reactive, ref, computed, watch, onMounted } from 'vue'
 import { registerRequest } from '../utils/pageLoad'
 
 import { onBeforeUnmount } from 'vue'
 import { nextTick } from 'vue'
-import { API_AUDIO_LIST, API_HOME_INDEX, API_LOG_PLAY_AUDIO, API_GET_CREDENTIALS, API_LOG_SAVE_FILE, API_GET_COLUMN_AUDIO_RECORD } from '../api/paths'
+import { API_AUDIO_LIST, API_HOME_INDEX, API_LOG_PLAY_AUDIO, API_GET_CREDENTIALS, API_LOG_SAVE_FILE, API_GET_COLUMN_AUDIO_RECORD, getApiBase } from '../api/paths'
+import AudioPlayer from '../components/AudioPlayer.vue'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 import '../assets/js/jspdf.umd.min.js'
@@ -210,6 +213,8 @@ import '../assets/js/jspdf.plugin.autotable.min.js'
 
 import { exportTableToFormat,getCookie, showToast } from '../assets/js/function-all'
 
+
+const authStore = useAuthStore()
 
 const filters = reactive({
   databaseServer: '',
@@ -311,6 +316,9 @@ const recentWrap = ref(null)
 const recentOpen = ref(false)
 const recentList = ref([])
 const showFavoriteModal = ref(false)
+const showAudioModal = ref(false)
+const audioSrc = ref('')
+const audioMetadata = reactive({ fileName: '', duration: '', customerNumber: '', extension: '', agent: '', callDirection: '' })
 // save-log polling state
 const processedSaveLogs = new Set()
 let saveLogsInterval = null
@@ -501,7 +509,9 @@ const applyLatestRecent = async () => {
   }
 }
 
+const canExport = computed(() => authStore.hasPermission('Export Recordings'))
 const toggleExport = () => {
+  if (!canExport.value) return
   exportOpen.value = !exportOpen.value
 }
 
@@ -929,6 +939,7 @@ onMounted(() => {
 const onExport = () => console.log('Export triggered')
 
 const onExportFormat = (format) => {
+  if (!canExport.value) return
   exportTableToFormat(format, 'audio', {
     rows: paginatedRecords.value || [],
     columns: columns || [],
@@ -1005,9 +1016,40 @@ const fetchActiveColumns = async () => {
 }
 
 const onRowDblClick = async (row) => {
+  if (!authStore.hasPermission('Playback Audio')) {
+    showToast('Access Denied', 'error')
+    return
+  }
   if (!row) return
   const fileName = row.file_name || row.fileName || ''
   if (!fileName) return
+
+  // If file is a common audio format, play in-browser using AudioPlayer
+  const ext = (fileName.split('.').pop() || '').toLowerCase()
+  if (['wav','mp3','ogg','flac'].includes(ext)) {
+    try {
+      const base = getApiBase().replace(/\/$/, '')
+      audioSrc.value = `${base}/media/audio/${encodeURIComponent(fileName)}`
+      audioMetadata.fileName = fileName
+      audioMetadata.duration = row.duration || ''
+      audioMetadata.customerNumber = row.customer_number || row.customerNumber || ''
+      audioMetadata.extension = row.extension || ''
+      audioMetadata.agent = row.agent || ''
+      audioMetadata.callDirection = row.call_direction || ''
+      showAudioModal.value = true
+      try { await ensureCsrf() } catch (e) {}
+      const csrfToken = getCsrfToken()
+      fetch(API_LOG_PLAY_AUDIO(), {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken || '' },
+        body: JSON.stringify({ status: 'initiated_browser', detail: `Play in-browser file: ${audioSrc.value}` })
+      }).catch(() => {})
+    } catch (e) {
+      console.error('Failed to initiate in-browser playback', e)
+    }
+    return
+  }
 
   const uncPath = `\\\\nichetel-niceplayer\\Users\\Administrator\\Desktop\\Music\\${fileName}`
   const url_check_local_server = 'http://127.0.0.1:54321/check'

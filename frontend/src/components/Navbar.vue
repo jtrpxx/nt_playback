@@ -108,7 +108,7 @@
         </li>
       </ul>
 
-      <div class="menu-divider"></div>
+      <div class="menu-divider" v-if="store.hasPermission('User Management') || store.hasPermission('Add User') || store.hasPermission('System Logs') || store.hasPermission('Audit Logs')"></div>
 
       <ul class="menu-list">
         <li class="menu-item" v-if="store.hasPermission('Access Role & Permissions') || store.hasPermission('Access Group & Team')">

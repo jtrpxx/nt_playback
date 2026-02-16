@@ -19,7 +19,7 @@ from django.utils import timezone
 import json
 
 from apps.core.utils.function import create_user_log, get_user_os_browser_architecture
-
+from apps.core.utils.permissions import  require_action
 
 # models
 from apps.core.model.authorize.models import UserAuth,MainDatabase,UserLog,UserGroup,UserTeam
@@ -47,6 +47,7 @@ def check_permission(view_func):
     return _wrapped_view
 
 @login_required(login_url='/login')
+@require_action('Access Role & Permissions')
 def ApiIndexRole(request):
     
     base_user_permission_qs = UserPermission.objects.filter(type__in=["administrator", "auditor", "operator"])
@@ -65,6 +66,7 @@ def ApiIndexRole(request):
     })
 
 @login_required(login_url='/login')
+@require_action('Access Role & Permissions')
 def ApiGetRoleDetails(request, role_id):
     try:
         role_id = int(role_id)
@@ -109,6 +111,8 @@ def ApiGetRoleDetails(request, role_id):
         'default_permissions': default_permissions
     })
     
+@login_required(login_url='/login')
+@require_action('Access Group & Team')    
 def ApiIndexGroup(request):
     user_group = UserGroup.objects.filter(status=1).order_by('group_name')
     user_team = UserTeam.objects.filter(status=1).order_by('name')
@@ -119,7 +123,9 @@ def ApiIndexGroup(request):
         'user_team': list(user_team.values()),
         'database': list(database.values()),
     })
-    
+
+@login_required(login_url='/login')
+@require_action('Access Group & Team')    
 def ApiGetTeamByGroup(request, group_id):
     try:
         group_id = int(group_id)
@@ -139,6 +145,7 @@ def ApiGetTeamByGroup(request, group_id):
     return JsonResponse({'status': 'success', 'teams': team_list})
 
 @login_required(login_url='/login')
+@require_action('Access Role & Permissions')   
 def ApiCheckRoleName(request):
     role_name = request.GET.get('role_name', None)
     role_id = request.GET.get('role_id', None)
@@ -156,6 +163,7 @@ def ApiCheckRoleName(request):
 
 @require_POST
 @login_required(login_url='/login')
+@require_action('Access Role & Permissions')   
 def ApiSaveRole(request, role_id=None):
     """
     Create a new role or update an existing one.
@@ -259,6 +267,7 @@ def ApiSaveRole(request, role_id=None):
 
 @require_POST
 @login_required(login_url='/login')
+@require_action('Access Role & Permissions', 'Delete Custom Role')  
 def ApiDeleteRole(request, role_id=None):
     try:
         body_role_id = None
@@ -289,6 +298,7 @@ def ApiDeleteRole(request, role_id=None):
 
 @require_GET
 @login_required(login_url='/login')
+@require_action('Access Group & Team')   
 def ApiCheckGroupName(request):
     group_name = request.GET.get('group_name', None)
     group_id = request.GET.get('group_id', None)
@@ -306,6 +316,7 @@ def ApiCheckGroupName(request):
     
 @require_GET
 @login_required(login_url='/login')
+@require_action('Access Group & Team')   
 def ApiCheckTeamName(request):
     team_name = request.GET.get('team_name', None)
     team_id = request.GET.get('team_id', None)
@@ -321,10 +332,9 @@ def ApiCheckTeamName(request):
     else:
         return JsonResponse({'status': 'success', 'is_taken': False})
     
-
-
 @require_POST
 @login_required(login_url='/login')
+@require_action('Access Group & Team')   
 def ApiSaveGroup(request):
     """
     Single endpoint to Create / Update / Delete a UserGroup.
@@ -424,6 +434,7 @@ def ApiSaveGroup(request):
     
 @require_POST
 @login_required(login_url='/login')
+@require_action('Access Group & Team')   
 def ApiSaveTeam(request):
     """
     Single endpoint to Create / Update / Delete a UserTeam.

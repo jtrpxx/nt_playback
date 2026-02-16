@@ -27,7 +27,7 @@ def get_user_actions(user):
     return actions
 
 
-def require_action(action_name):
+def require_action(*action_name):
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):

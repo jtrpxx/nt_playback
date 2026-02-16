@@ -294,7 +294,6 @@ def ApiGetUSerProfile(request, user_id):
         })
     except User.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'User not found.'})
-        
 
 @login_required
 @require_action('Change Status')
@@ -377,6 +376,7 @@ def ApiCheckUsername(request):
         return JsonResponse({'status': 'success', 'is_taken': False})
 
 @login_required(login_url='/login')
+@require_action('Add User', 'Edit User')
 @require_POST
 def ApiSaveUser(request, user_id=None):
     """สร้างหรืออัพเดตผู้ใช้

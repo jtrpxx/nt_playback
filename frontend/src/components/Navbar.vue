@@ -118,7 +118,7 @@
       <div class="menu-divider"></div>
 
       <ul class="menu-list">
-        <li class="menu-item">
+        <li class="menu-item" v-if="store.hasPermission('Access Role & Permissions') || store.hasPermission('Access Group & Team')">
           <a class="menu-link d-flex align-items-center" :class="{ collapsed: !isConfigOpen }"
             @click.prevent="isConfigOpen = !isConfigOpen" role="button" aria-expanded="false">
             <i class="fa-solid fa-sliders"></i>

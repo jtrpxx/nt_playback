@@ -534,7 +534,7 @@ const groupedPermissions = computed(() => {
         return acc
     }, {})
 
-    const order = ['access', 'audio recordings', 'user management', 'logs']
+    const order = ['access', 'audio recording', 'user management', 'logs']
     const keys = Object.keys(grouped).sort((a, b) => {
         const ia = order.indexOf(a.toLowerCase())
         const ib = order.indexOf(b.toLowerCase())

@@ -368,13 +368,13 @@ const allPermissions = ref([])
 const groupedPermissions = ref({})
 const orderedTypes = [
     'access',
-    'audio recordings',
+    'audio recording',
     'user management',
     'logs'
 ]
 const typeLabels = {
     'access': 'ACCESS',
-    'audio recordings': 'AUDIO RECORDINGS',
+    'audio recording': 'AUDIO RECORDING',
     'user management': 'USER MANAGEMENT',
     'logs': 'LOGS'
 }

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { API_LOGIN } from '../api/paths'
+import { API_LOGIN, API_HOME_INDEX } from '../api/paths'
 import { ensureCsrf } from '../api/csrf'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', () => {
 	const user = ref(JSON.parse(localStorage.getItem('user')))
 	// console.log('Initial user from localStorage:', user.value)
 	const token = ref(localStorage.getItem('token'))
+    const permissions = ref(JSON.parse(localStorage.getItem('permissions') || '[]'))
 
 	function setUser(payload) {
 		user.value = payload
@@ -54,7 +55,11 @@ export const useAuthStore = defineStore('auth', () => {
 
 			const data = await response.json()
 			setToken(data.access)
-			setUser({ username: data.username })
+			// store whatever user info the login returned (may include id)
+			if (data && data.username) setUser({ username: data.username, id: data.id || null })
+			// ensure we have profile (id) and permissions
+			// fetch permissions after login
+			try { await fetchPermissions() } catch (e) { console.error('fetchPermissions', e) }
 			// Ensure CSRF token is fetched and cached after successful login
 			try { await ensureCsrf() } catch (e) {}
 			return true
@@ -65,5 +70,46 @@ export const useAuthStore = defineStore('auth', () => {
 		}
 	}
 
-	return { user, token, setUser, setToken, clear, fullName, login }
+
+	async function fetchPermissions() {
+		try {
+			// ensure we have user id by fetching home index (contains user_profile)
+			try {
+				const profileResp = await fetch(API_HOME_INDEX(), { credentials: 'include' })
+				if (profileResp.ok) {
+					const pjson = await profileResp.json()
+					if (pjson && pjson.user_profile) {
+						const up = pjson.user_profile
+						// merge id into user state
+						if (up.id) {
+							const current = user.value || {}
+							setUser(Object.assign({}, current, { id: up.id, username: up.username }))
+						}
+					}
+				}
+			} catch (e) {
+				console.error('fetch user profile failed', e)
+			}
+
+			const resp = await fetch('/api/my-permissions/', { credentials: 'include' })
+			if (!resp.ok) return
+			const payload = await resp.json()
+			const perms = payload.permissions || []
+			permissions.value = perms
+			localStorage.setItem('permissions', JSON.stringify(perms))
+		} catch (e) {
+			console.error('Error fetching permissions', e)
+		}
+	}
+
+	function hasPermission(name) {
+		// root user bypass
+		try {
+			if (user.value && user.value.id === 1) return true
+		} catch (e) {}
+		if (!permissions.value) return false
+		return permissions.value.includes(name)
+	}
+
+	return { user, token, permissions, setUser, setToken, clear, fullName, login, fetchPermissions, hasPermission }
 })

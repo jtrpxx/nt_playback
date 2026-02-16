@@ -76,14 +76,14 @@
 
       <!-- Menu List -->
       <ul class="menu-list">
-        <li class="menu-item">
+        <li class="menu-item" v-if="store.hasPermission('User Management')">
           <router-link to="/user-management" class="menu-link">
             <i class="fa-solid fa-user-lock"></i>
             <span data-translate="set_permissions">User Management</span>
           </router-link>
         </li>
 
-        <li class="menu-item">
+        <li class="menu-item" v-if="store.hasPermission('Add User')">
           <router-link to="/user-management/add" class="menu-link">
             <i class="fa-solid fa-user-plus"></i>
             <span data-translate="add_user">Add User</span>
@@ -102,11 +102,11 @@
           </a>
           <div v-show="isLogsOpen" id="collapseLogs">
             <ul class="menu-list" style="padding-left: 12px; margin-top: 4px">
-              <li class="menu-item">
+              <li class="menu-item" v-if="store.hasPermission('System Logs')">
                 <router-link to="/logs/system" class="menu-link"><i class="fa-solid fa-circle-dot"
                     style="font-size: 8px"></i> System log</router-link>
               </li>
-              <li class="menu-item">
+              <li class="menu-item" v-if="store.hasPermission('Audit Logs')">
                 <router-link to="/logs/audit" class="menu-link"><i class="fa-solid fa-circle-dot"
                     style="font-size: 8px"></i> Audit log</router-link>
               </li>
@@ -130,11 +130,11 @@
           </a>
           <div v-show="isConfigOpen" id="collapseConfig">
             <ul class="menu-list" style="padding-left: 12px; margin-top: 4px">
-              <li class="menu-item">
+              <li class="menu-item" v-if="store.hasPermission('Access Role & Permissions')">
                 <router-link to="/configuration/role" class="menu-link"><i class="fa-solid fa-circle-dot"
                     style="font-size: 8px"></i> Role & Permissions</router-link>
               </li>
-              <li class="menu-item">
+              <li class="menu-item" v-if="store.hasPermission('Access Group & Team')">
                 <router-link to="/configuration/group" class="menu-link"><i class="fa-solid fa-circle-dot"
                     style="font-size: 8px"></i> Group & Team</router-link>
               </li>
@@ -154,7 +154,7 @@
           </a>
           <div v-show="isSetColumnOpen" id="collapseConfig">
             <ul class="menu-list" style="padding-left: 12px; margin-top: 4px">
-              <li class="menu-item">
+              <li class="menu-item" v-if="store.hasPermission('Edit Column')">
                 <router-link to="/setting/column/audio-record" class="menu-link"><i class="fa-solid fa-circle-dot"
                     style="font-size: 8px"></i> Set Column</router-link>
               </li>

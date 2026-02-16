@@ -16,6 +16,7 @@ from django.middleware.csrf import get_token
 from django.conf import settings
 from apps.core.utils.function import create_user_log, get_user_os_browser_architecture
 
+from apps.core.utils.permissions import get_user_actions, require_action
 # models
 from apps.core.model.authorize.models import UserAuth,MainDatabase,SetAudio,UserLog,UserProfile,Agent
 from apps.core.model.audio.models import AudioInfo
@@ -418,6 +419,14 @@ def ApiGetAudioList(request):
         "data": data
     })
 
+@login_required(login_url='/login')
+def ApiGetMyPermissions(request):
+    try:
+        perms = list(get_user_actions(request.user))
+        return JsonResponse({'status': 'success', 'permissions': perms})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
 def ApiSaveMyFavoriteSearch(request):
     if request.method == "POST":
         action = request.POST.get("action")
@@ -580,6 +589,7 @@ def ApiGetCredentials(request):
     
 @login_required
 @require_POST
+@require_action('Play audio')
 def ApiLogPlayAudio(request):
     """
     API endpoint สำหรับรับ Log การเล่นไฟล์เสียงจาก Frontend
@@ -612,6 +622,7 @@ def ApiLogPlayAudio(request):
 
 @login_required
 @require_POST
+@require_action('Save file')
 def ApiLogSaveFile(request):
     try:
         data = json.loads(request.body)

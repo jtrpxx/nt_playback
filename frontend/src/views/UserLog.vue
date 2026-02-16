@@ -18,7 +18,7 @@
                     <SearchInput ref="searchInputRef" v-model="searchQuery" :placeholder="'Search...'"
                       @typing="onTyping" @clear="clearSearchQuery" />
                   </div>
-                <div class="ms-2 export-group" ref="exportWrap">
+                <div v-if="canView" class="ms-2 export-group" ref="exportWrap">
                     <button type="button" class="btn btn-primary btn-sm export-icon" @click.stop="toggleExport" :aria-expanded="exportOpen">
                       <i class="fa-solid fa-download" style="color: #fff;"></i>
                     </button>
@@ -32,7 +32,7 @@
             </div>
 
             <div>
-              <form id="filterForm" class="filter-row">
+              <form v-if="canView" id="filterForm" class="filter-row">
 
                 <div class="input-group" >
                   <CustomSelect class="select-search select-checkbox" v-model="filters.name"
@@ -104,6 +104,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '../stores/auth.store.js'
 
 import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
@@ -140,6 +141,16 @@ const cardTitle = computed(() => {
   if (p === '/logs/audit') return 'Audit log'
   return 'User Logs'
 })
+
+// permission for viewing this log page
+const authStore = useAuthStore()
+const requiredPermission = computed(() => {
+  const p = route.path || ''
+  if (p === '/logs/system') return 'System Logs'
+  if (p === '/logs/audit') return 'Audit Logs'
+  return 'User Logs'
+})
+const canView = computed(() => authStore.hasPermission(requiredPermission.value))
 
 
 const onTyping = () => {
@@ -237,6 +248,12 @@ const loading = ref(false)
 const fetchData = async () => {
   loading.value = true
   try {
+    if (!canView.value) {
+      loading.value = false
+      records.value = []
+      totalItems.value = 0
+      return
+    }
     const start = (currentPage.value - 1) * perPage.value
     const params = new URLSearchParams()
     params.set('draw', 1)
@@ -261,6 +278,7 @@ const fetchData = async () => {
 }
 
 const fetchUsers = async () => {
+  if (!canView.value) return
   try {
     const params = new URLSearchParams()
     params.set('draw', 1)
@@ -338,6 +356,7 @@ const toggleExport = () => {
   exportOpen.value = !exportOpen.value
 }
 const onExportFormat = (format) => {
+  if (!canView.value) return
   exportTableToFormat(format, cardTitle.value, {
     rows: paginatedRecords.value || [],
     columns: columns || [],

@@ -90,7 +90,7 @@
           </router-link>
         </li>
 
-        <li class="menu-item">
+        <li class="menu-item" v-if="store.hasPermission('System Logs') || store.hasPermission('Audit Logs')">
           <a class="menu-link d-flex align-items-center" :class="{ collapsed: !isLogsOpen }"
             @click.prevent="isLogsOpen = !isLogsOpen" role="button" aria-expanded="false">
             <i class="fa-solid fa-clock-rotate-left"></i>
@@ -117,7 +117,7 @@
 
       <div class="menu-divider"></div>
 
-      <ul class="menu-list">
+      <ul class="menu-list">Audio Recording
         <li class="menu-item" v-if="store.hasPermission('Access Role & Permissions') || store.hasPermission('Access Group & Team')">
           <a class="menu-link d-flex align-items-center" :class="{ collapsed: !isConfigOpen }"
             @click.prevent="isConfigOpen = !isConfigOpen" role="button" aria-expanded="false">
@@ -142,7 +142,7 @@
           </div>
         </li>
 
-        <li class="menu-item">
+        <li class="menu-item" v-if="store.hasPermission('Edit Column')">
           <a class="menu-link d-flex align-items-center" :class="{ collapsed: !isSetColumnOpen }"
             @click.prevent="isSetColumnOpen = !isSetColumnOpen" role="button" aria-expanded="false">
             <i class="fa-solid fa-gear"></i>

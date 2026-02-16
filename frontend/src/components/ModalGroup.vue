@@ -575,7 +575,7 @@ async function onSave() {
 
 <style scoped>
 .modal-body {
-    min-height: 60vh;
+    min-height: 350px;
     overflow: auto
 }
 .form-input-modal {

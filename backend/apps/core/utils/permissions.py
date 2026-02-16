@@ -31,16 +31,21 @@ def require_action(action_name):
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped(request, *args, **kwargs):
+            # Require authentication first
             if not request.user.is_authenticated:
                 return JsonResponse({'detail': 'Authentication required'}, status=401)
-                # root user bypass
-                try:
-                    if getattr(request.user, 'id', None) == 1:
-                        return view_func(request, *args, **kwargs)
-                except Exception:
-                    pass
-                if action_name not in get_user_actions(request.user):
-                    return JsonResponse({'detail': 'Access Denied'}, status=403)
+
+            # root user bypass
+            try:
+                if getattr(request.user, 'id', None) == 1:
+                    return view_func(request, *args, **kwargs)
+            except Exception:
+                pass
+
+            # Check action permission
+            if action_name not in get_user_actions(request.user):
+                return JsonResponse({'detail': 'Access Denied'}, status=403)
+
             return view_func(request, *args, **kwargs)
         return _wrapped
     return decorator

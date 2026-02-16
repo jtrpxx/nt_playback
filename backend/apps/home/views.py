@@ -58,6 +58,7 @@ def ApiGetCsrfToken(request):
     return resp
 
 @login_required(login_url='/login')
+@require_action('Audio Recording')
 def ApiIndexHome(request):
     show_toast = request.session.get('show_toast', False)
     if show_toast:
@@ -92,6 +93,7 @@ def ApiIndexHome(request):
     })
     
 @login_required(login_url='/login')
+@require_action('Audio Recording')
 def ApiGetAudioList(request):
     draw = int(request.GET.get("draw", 1))
     start = int(request.GET.get("start", 0))
@@ -427,6 +429,8 @@ def ApiGetMyPermissions(request):
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
 
+@login_required(login_url='/login')
+@require_action('My Favorite Search')
 def ApiSaveMyFavoriteSearch(request):
     if request.method == "POST":
         action = request.POST.get("action")
@@ -524,7 +528,8 @@ def ApiSaveMyFavoriteSearch(request):
 
     return JsonResponse({"status": "error", "message": "Invalid request"})
 
-
+@login_required(login_url='/login')
+@require_action('My Favorite Search')
 def ApiCheckMyFavoriteName(request):
     favorite_name = request.GET.get('favoriteName', '').strip()
     favorite_id = request.GET.get('favoriteId', None)

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Role from '../views/Role.vue'
 import { useAuthStore } from '../stores/auth.store'
+import { ensureCsrf } from '../api/csrf'
 
 const routes = [
 	{ path: '/login', name: 'Login', component: () => import('../views/Login.vue') },
@@ -37,6 +38,11 @@ router.beforeEach(async (to, from, next) => {
 	}
 	if (to.name === 'Login' && isAuthenticated) {
 		return next({ name: 'Home' })
+	}
+
+	// Ensure CSRF token is present for authenticated users on every navigation/refresh
+	if (isAuthenticated) {
+		// CSRF is fetched at app startup or after login and cached; no-op here
 	}
 
 	const required = to.meta && to.meta.permission

@@ -116,6 +116,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { useAuthStore } from '../stores/auth.store'
 
 const props = defineProps({
   columns: { type: Array, required: true },
@@ -135,6 +136,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['edit', 'delete', 'page-change', 'per-change', 'row-dblclick', 'row-click'])
+
+// Pinia auth store instance (used for permission checks in template)
+const store = useAuthStore()
 
 const activeTooltip = ref(null)
 // selected row index for visual highlight

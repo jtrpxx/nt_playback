@@ -20,8 +20,7 @@ from django.contrib.auth.models import User
 # models
 from apps.model_center.authorize.models import UserAuth,MainDatabase
 from apps.model_center.authorize.models import UserLog,UserProfile
-from apps.core.utils.permissions import get_user_actions
-
+from apps.core.utils.permissions import get_user_actions, require_action
 #serializer
 from apps.model_center.authorize.serializers import MainDatabaseSerializer
 
@@ -43,9 +42,10 @@ def check_permission(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
+
 @login_required(login_url='/login')
+@require_action('System Logs', 'Audit Logs', 'Export Logs')
 def index(request, type):
-    print("log type:", type)
     template = 'default/layout-leftbar.html'
     title = ''
 
@@ -64,6 +64,8 @@ def index(request, type):
     }
     return render(request, 'log_user/index.html', context)
 
+@login_required(login_url='/login')
+@require_action('System Logs', 'Audit Logs', 'Export Logs')
 def get_log(request,type):
     # permission check based on type
     required_action = 'System Logs' if type == 'system' else ('Audit Logs' if type == 'audit' else 'User Logs')

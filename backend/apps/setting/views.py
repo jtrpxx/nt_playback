@@ -4,11 +4,13 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET, require_POST
 from apps.core.utils.function import create_user_log, get_user_os_browser_architecture
+from apps.core.utils.permissions import  require_action
 
 from apps.home.models import SetColumnAudioRecord
 
 @login_required
 @require_GET
+@require_action('Edit Column')
 def ApiGetColumnAudioRecord(request):
     try:
         user = request.user
@@ -28,6 +30,7 @@ def ApiGetColumnAudioRecord(request):
         
 @login_required
 @require_POST
+@require_action('Edit Column')
 def ApiSaveColumnAudioRecord(request):
     try:
         data = json.loads(request.body)

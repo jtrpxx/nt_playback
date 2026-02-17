@@ -4,6 +4,7 @@ import { useAuthStore } from './stores/auth.store.js'
 import App from './App.vue'
 import router from './router'
 import { loadRuntimeConfig } from './api/runtimeConfig'
+import { ensureCsrf } from './api/csrf'
 
 //JS
 import './assets/js/flatpickr.min.js'
@@ -37,6 +38,13 @@ import './assets/css/datatable.css'
 		if (auth.user) await auth.fetchPermissions()
 	} catch (e) {
 		console.error('Error fetching permissions on startup', e)
+	}
+
+	// ensure CSRF token is available for subsequent POST requests
+	try {
+		await ensureCsrf()
+	} catch (e) {
+		console.warn('ensureCsrf failed on startup', e)
 	}
 
 	app.mount('#app')

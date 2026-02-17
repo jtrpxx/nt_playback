@@ -4,6 +4,8 @@ from django.contrib.auth import login
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.forms import AuthenticationForm
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.middleware.csrf import get_token
+from django.conf import settings
 
 # ปรับ Import ให้ตรงกับโครงสร้างไฟล์ใหม่ (apps/core/utils/function.py)
 from apps.core.utils.function import create_user_log
@@ -54,13 +56,23 @@ def index(request):
 
             # สร้าง JWT Token ส่งกลับไปให้ Frontend
             refresh = RefreshToken.for_user(user)
-            
-            return JsonResponse({
+
+            # Also generate and send CSRF token and set CSRF cookie on the response
+            csrf_token = get_token(request)
+            resp = JsonResponse({
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
                 'username': user.username,
+                'csrfToken': csrf_token,
                 'message': 'Login successful'
             })
+            try:
+                secure = getattr(settings, 'CSRF_COOKIE_SECURE', False)
+                samesite = getattr(settings, 'CSRF_COOKIE_SAMESITE', 'Lax')
+                resp.set_cookie(getattr(settings, 'CSRF_COOKIE_NAME', 'csrftoken'), csrf_token, secure=secure, samesite=samesite)
+            except Exception:
+                pass
+            return resp
 
         else:
             # ❌ Login ล้มเหลว -> บันทึก Log Error

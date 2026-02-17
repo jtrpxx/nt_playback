@@ -643,9 +643,9 @@ async function submit() {
     }
 
     try {
-        loading.value = true
-        try { await ensureCsrf() } catch (e) {}
-        const csrfToken = getCsrfToken()
+    loading.value = true
+    // CSRF token cached at login/startup; use cached token
+    const csrfToken = getCsrfToken()
         const res = await fetch(url, { method, credentials: 'include', body: fd, headers: { 'X-CSRFToken': csrfToken || '' } })
         const j = res.ok ? await res.json() : null
         if (!res.ok) {

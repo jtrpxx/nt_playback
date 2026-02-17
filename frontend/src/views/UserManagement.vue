@@ -253,7 +253,7 @@ const onRowDelete = async (row, actionId) => {
         const confirmed = await confirmDelete('Are you sure?', "You won't be able to revert this!", 'Yes, delete')
         if (!confirmed) return
 
-        await ensureCsrf()
+        // CSRF token cached at login/startup; use cached token
         const csrfToken = getCsrfToken()
         const url = API_DELETE_USER(userId)
         const res = await fetch(url, {
@@ -520,9 +520,8 @@ async function toggleUserStatus(userId, row) {
         const current = !!rec.user.is_active
         // optimistic
         rec.user.is_active = !current
-        try {
-            // include CSRF token for Django POST
-            await ensureCsrf()
+            try {
+            // include CSRF token for Django POST (cached at login/startup)
             const csrfToken = getCsrfToken()
             const res = await fetch(API_USER_MANAGEMENT_CHANGE_STATUS(userId), {
                 method: 'POST',

@@ -248,9 +248,9 @@ const onSave = async () => {
     }
 
     try {
-        loading.value = true
-        await ensureCsrf()
-        const csrfToken = getCsrfToken()
+    loading.value = true
+    // CSRF token cached at login/startup; use cached token
+    const csrfToken = getCsrfToken()
         const res = await fetch(url, {
             method: 'POST',
             credentials: 'include',

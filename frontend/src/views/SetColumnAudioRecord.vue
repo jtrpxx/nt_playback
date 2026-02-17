@@ -193,7 +193,7 @@ async function toggleSetColumnUse(userId, column) {
     }
 
     try {
-        await ensureCsrf()
+        // CSRF token cached at login/startup; use cached token
         const csrfToken = getCsrfToken()
         
         const payload = {
@@ -228,7 +228,7 @@ async function toggleSetColumnUse(userId, column) {
 
 async function onModalSaved(data) {
     try {
-        await ensureCsrf()
+        // CSRF token cached at login/startup; use cached token
         const csrfToken = getCsrfToken()
         
         // Prepare payload

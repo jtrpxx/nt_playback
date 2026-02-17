@@ -182,7 +182,7 @@ async function deleteCustomRole(id) {
     const confirmed = await confirmDelete()
     if (!confirmed) return
 
-    await ensureCsrf()
+    // CSRF token cached at login/startup; use cached token
     const csrfToken = getCsrfToken()
     const url = API_DELETE_ROLE(id)
     const res = await fetch(url, {

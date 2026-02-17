@@ -1037,7 +1037,7 @@ const onRowDblClick = async (row) => {
       audioMetadata.agent = row.agent || ''
       audioMetadata.callDirection = row.call_direction || ''
       showAudioModal.value = true
-      try { await ensureCsrf() } catch (e) {}
+      // CSRF token cached at login/startup; use cached token
       const csrfToken = getCsrfToken()
       fetch(API_LOG_PLAY_AUDIO(), {
         method: 'POST',
@@ -1057,7 +1057,7 @@ const onRowDblClick = async (row) => {
   const url_log_playback = API_LOG_PLAY_AUDIO()
 
   const sendLog = async (status, detail) => {
-    try { await ensureCsrf() } catch (e) {}
+    // CSRF token cached at login/startup; use cached token
     const csrfToken = getCsrfToken()
     fetch(url_log_playback, {
       method: 'POST',
@@ -1139,7 +1139,7 @@ const onRowDblClick = async (row) => {
 async function pollSaveLogs() {
   const localUrl = 'http://127.0.0.1:54321/get_save_logs'
   const url_log_save_file = API_LOG_SAVE_FILE()
-  try { await ensureCsrf() } catch (e) {}
+  // CSRF token cached at login/startup; use cached token
   try {
     const res = await fetch(localUrl)
     if (!res.ok) return

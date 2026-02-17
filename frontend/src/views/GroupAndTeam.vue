@@ -302,7 +302,7 @@ async function deleteGroup(id) {
     const confirmed = await confirmDelete()
     if (!confirmed) return
     try {
-        await ensureCsrf()
+        // CSRF token cached at login/startup; use cached token
         const res = await fetch(API_SAVE_GROUP(), {
             method: 'POST',
             headers: {
@@ -361,7 +361,7 @@ async function deleteTeam(id) {
     if (!confirmed) return
 
     try {
-        await ensureCsrf()
+        // CSRF token cached at login/startup; use cached token
         const res = await fetch(API_SAVE_TEAM(), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },

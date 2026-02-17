@@ -578,7 +578,7 @@ async function postFavoriteAction(formObj) {
       else if (v === null || v === undefined) fd.append(k, '')
       else fd.append(k, String(v))
     }
-    try { await ensureCsrf() } catch (e) {}
+    // CSRF token is fetched at login/startup and cached; use cached token
     const csrfToken = getCsrfToken()
     const res = await fetch(API_ADD_MY_FAVORITE_SEARCH(), { method: 'POST', body: fd, credentials: 'include', headers: { 'X-CSRFToken': csrfToken || '' } })
     if (!res.ok) throw new Error('Network response not ok')

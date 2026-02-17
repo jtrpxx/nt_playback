@@ -507,7 +507,7 @@ async function onSave() {
     }
 
     try {
-        try { await ensureCsrf() } catch (e) {}
+        // CSRF token is fetched at login/startup and cached; use cached token
         const csrfToken = getCsrfToken()
         let url = ''
         let body = {}

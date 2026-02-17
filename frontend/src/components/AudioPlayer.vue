@@ -405,6 +405,26 @@ watch(volume, (v) => {
   a.volume = Math.max(0, Math.min(1, v))
 })
 
+// Auto-play when the modal is opened (useful for double-click from table)
+watch(modelValue, (v) => {
+  const a = audioRef.value
+  if (!a) return
+  if (v) {
+    // ensure volume applied
+    a.volume = Math.max(0, Math.min(1, volume.value))
+    const tryPlay = () => {
+      a.play().then(() => { playing.value = true; requestAnimationFrame(draw) }).catch(() => {})
+    }
+    if (a.readyState >= 2) tryPlay()
+    else {
+      a.addEventListener('canplay', tryPlay, { once: true })
+      setTimeout(tryPlay, 300)
+    }
+  } else {
+    try { a.pause(); playing.value = false } catch (e) {}
+  }
+})
+
 watch(() => src.value, (n) => {
   const a = audioRef.value
   if (!a) return
@@ -457,7 +477,7 @@ onBeforeUnmount(() => {
 
 /* Waveform แบบแท่งจำลอง */
 .wave-area-styled { padding: 10px 24px 0; }
-.wave-canvas { width: 100%; height: 120px; display: block; cursor: pointer;background-color: #f9fafb;border-radius: 12px;padding: 6px; border: 1px solid #f3f4f6; }
+.wave-canvas { width: 100%; height: 120px; display: block; cursor: pointer;background-color: #deefff;border-radius: 12px;padding: 6px; border: 1px solid #f3f4f6; }
 
 /* Progress Bar หนาๆ */
 .progress-section { padding: 10px 24px 20px; }

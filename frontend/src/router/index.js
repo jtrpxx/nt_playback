@@ -18,8 +18,9 @@ const routes = [
 	{ path: '/logs/system', name: 'SystemLogs', component: () => import('../views/UserLog.vue'), meta: { permission: 'System Logs' } },
 	{ path: '/logs/audit', name: 'AuditLogs', component: () => import('../views/UserLog.vue'), meta: { permission: 'Audit Logs' } },
 	{ path: '/setting/column/audio-record', name: 'SettingColumnAudioRecord', component: () => import('../views/SetColumnAudioRecord.vue') },
-    { path: '/denied', name: 'Denied', component: () => import('../views/Denied.vue') },
+	{ path: '/profile', name: 'Profile', component: () => import('../views/Profile.vue') },
 
+    { path: '/denied', name: 'Denied', component: () => import('../views/Denied.vue') },
 	{ path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('../views/NotFound.vue') },
 
 ]

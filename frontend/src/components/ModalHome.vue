@@ -7,12 +7,17 @@
       </div>
       <div class="modal-body">
         <div class="tabs-header">
-          <div class="tab-buttons">
-            <button :class="['tab-btn', { active: activeTab === 'list' }]" @click.prevent="activeTab = 'list'">List My Favorite</button>
-            <button :class="['tab-btn', { active: activeTab === 'add' }]" id="tab-btn-add"
-              @click.prevent="activeTab = 'add'">Create My Favorite</button>
-            <button :class="['tab-btn', { active: activeTab === 'edit' }]" @click.prevent="activeTab = 'edit'">Edit My Favorite</button>
-          </div>
+          <ul class="nav nav-tabs" style="border-bottom: none;">
+            <li class="nav-item">
+              <a class="nav-link" :class="{ active: activeTab === 'list' }" href="#" @click.prevent="activeTab = 'list'">List My Favorite</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" :class="{ active: activeTab === 'add' }" id="tab-btn-add" href="#" @click.prevent="activeTab = 'add'">Create My Favorite</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" :class="{ active: activeTab === 'edit' }" href="#" @click.prevent="activeTab = 'edit'">Edit My Favorite</a>
+            </li>
+          </ul>
           <div v-if="activeTab === 'list'" class="search-group" style="width: 260px; position: relative;">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
             <input type="text" v-model="searchTerm" class="form-control form-control-sm search-input"
@@ -28,7 +33,7 @@
             </div>
 
             <div class="card card-custom-role" style="border: 2px dashed #e2e8f0;">
-              <div id="customRolesList" class="custom-roles-list" style="padding: 10px;min-height: 396px !important; overflow:auto !important;">
+              <div id="customRolesList" class="custom-roles-list" style="padding: 10px;height: 396px !important; overflow:auto !important;">
                 <template v-if="favorites && favorites.length">
                   <div v-for="favorite in filteredFavorites" :key="favorite.id" class="custom-role-item"
                     @click="applyFavorite(favorite)" style="cursor: pointer;" :data-id="favorite.id">
@@ -776,41 +781,19 @@ async function saveFavorite() {
   gap: 24px;
 }
 
-#myFavoriteSearchModal .tab-buttons {
-  display: flex;
-  gap: 24px;
+.nav-tabs .nav-link {
+    /* cursor: pointer; */
+    padding: 8px 12px;
 }
-
-#myFavoriteSearchModal .tab-btn {
-  background: none;
-  border: none;
-  padding: 12px 4px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #64748b;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s ease;
+.nav-tabs .nav-link:hover {
+    border-color: transparent;
+    color: #416fd6;
 }
-
-#myFavoriteSearchModal .tab-btn:hover {
-  color: #416fd6;
-}
-
-#myFavoriteSearchModal .tab-btn.active {
-  color: #416fd6;
-  font-weight: 600;
-}
-
-#myFavoriteSearchModal .tab-btn.active::after {
-  content: "";
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: #416fd6;
-  border-radius: 2px 2px 0 0;
+.nav-tabs .nav-link.active {
+    color: #416fd6;
+    font-weight: 600;
+    border-bottom: 2px solid #416fd6;
+    background: transparent;
 }
 
 #myFavoriteSearchModal .tabs-content {

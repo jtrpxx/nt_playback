@@ -79,15 +79,15 @@
         Show
         <div class="custom-select-wrap" ref="perWrap" :class="{ up: perDropdownUp, open: perDropdownOpen }">
           <button type="button" class="custom-select-toggle" @click="togglePerDropdown">
-            <span class="selected">{{ props.perPage }}</span>
+            <span class="selected">{{ formatNumber(props.perPage) }}</span>
             <i class="fa-solid fa-caret-down "></i>
           </button>
           <ul v-if="perDropdownOpen" class="custom-select-menu" @click="perDropdownOpen = false">
             <li v-for="opt in props.perPageOptions" :key="opt" :class="{ active: opt === props.perPage }"
-              @click="setPerPage(opt)">{{ opt }}</li>
+              @click="setPerPage(opt)">{{ formatNumber(opt) }}</li>
           </ul>
         </div>
-        entries per page, Showing {{ startItem }} to {{ endItem }} of {{ props.totalItems }} entries
+        entries per page, Showing {{ formatNumber(startItem) }} to {{ formatNumber(endItem) }} of {{ formatNumber(props.totalItems) }} entries
       </div>
     </div>
     <nav>
@@ -96,7 +96,7 @@
             @click="changePage(props.currentPage - 1)">Previous</button></li>
         <li class="page-item" v-for="p in pagesToShow" :key="String(p)"
           :class="[{ active: p === props.currentPage }, { disabled: p === '...' }]">
-          <button v-if="p !== '...'" class="page-link" @click="changePage(p)">{{ p }}</button>
+          <button v-if="p !== '...'" class="page-link" @click="changePage(p)">{{ formatNumber(p) }}</button>
           <span v-else class="page-link">…</span>
         </li>
         <li class="page-item" :class="{ disabled: props.currentPage === totalPages }"><button class="page-link"
@@ -335,6 +335,16 @@ function getActionId(row) {
   } catch (e) {
     return undefined
   }
+}
+
+function formatNumber(v) {
+  if (v === null || v === undefined) return v
+  // avoid formatting non-numeric placeholders
+  if (v === '...') return v
+  const str = String(v).replace(/,/g, '')
+  const n = Number(str)
+  if (Number.isNaN(n)) return v
+  return n.toLocaleString('en-US')
 }
 </script>
 

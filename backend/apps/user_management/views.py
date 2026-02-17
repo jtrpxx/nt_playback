@@ -37,7 +37,7 @@ def ApiGetUserAll(request):
 @require_action('User Management')
 def ApiGetUser(request):
     # prepare base query
-    qs = UserProfile.objects.exclude(user=request.user).select_related('user', 'team')
+    qs = UserProfile.objects.exclude(user=request.user).exclude(user__id=1).select_related('user', 'team')
 
     user_auths = UserAuth.objects.filter(
         allow=True,

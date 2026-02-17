@@ -1076,7 +1076,7 @@ const onRowDblClick = async (row) => {
 
     if (!checkData.installed) {
       try {
-        Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', html: `ไม่สามารถเล่นไฟล์เสียงได้ กรุณาติดตั้งโปรแกรม <a href="set-audio-launcher://" style="color:#3085d6; text-decoration: underline;">Nice Player</a>`, confirmButtonText: 'OK' })
+        showToast('The audio file cannot be played. Please contact support to install the software.', 'warning')
       } catch (e) {}
       sendLog('error', `FAIL_NOT_INSTALLED | NICE Player executable not found. File: ${uncPath}`)
       showAudioLoading(false)
@@ -1109,7 +1109,7 @@ const onRowDblClick = async (row) => {
             if (data.running) sendLog('success', `Playback file: ${uncPath}`)
             else {
               sendLog('warning', `Playback initiated but process not detected: ${uncPath}`)
-              try { Swal.fire('แจ้งเตือน', 'ไม่สามารถเปิด NICE Player ได้ อาจเกิดข้อผิดพลาดบางอย่าง', 'warning') } catch (e) {}
+              try { showToast('NICE Player cannot be opened. Some kind of error may have occurred.', 'warning') } catch (e) {}
             }
           }
         } catch (err) {
@@ -1121,7 +1121,7 @@ const onRowDblClick = async (row) => {
       }, 500)
     } catch (e) {
       console.error('Error launching protocol:', e)
-      try { Swal.fire('แจ้งเตือน', 'ไม่สามารถเปิด NICE Player ได้ อาจเกิดข้อผิดพลาดบางอย่าง', 'warning') } catch (er) {}
+      try { showToast('NICE Player cannot be opened. Some kind of error may have occurred.', 'warning') } catch (er) {}
       sendLog('error', `FAIL_PLAYER_ERROR | Error launching protocol for file: ${uncPath}. Error: ${e.message}`)
             loading.value = false
     }
@@ -1129,7 +1129,7 @@ const onRowDblClick = async (row) => {
   } catch (error) {
     console.error('Playback process failed:', error)
     try {
-      Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', html: `ไม่สามารถเล่นไฟล์เสียงได้ กรุณาติดตั้งโปรแกรม<br><a href="/set-audio-launcher" style="color:#3085d6; text-decoration: underline;"> NT Player Connect</a> หรือ ตรวจสอบว่าโปรแกรมกำลังทำงานอยู่<br> โดยไปที่ Task Manager > Details ><br> ค้นหา NT Player Connect.exe`, confirmButtonText: 'OK' })
+      showToast('The audio file cannot be played. Please contact support to install the software.', 'warning')
     } catch (e) {}
     sendLog('error', `FAIL_NT_Player_Connect_RUNNING | Could not connect to local NT Player Connect or another error occurred: ${error.message}. File: ${uncPath}`)
     loading.value = false

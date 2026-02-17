@@ -535,6 +535,8 @@ async function toggleUserStatus(userId, row) {
             if (!res.ok || json.status === 'error') {
                 rec.user.is_active = current
                 console.error('change status failed', json)
+            }else {
+                showToast(json.message, 'success')
             }
         } catch (e) {
             rec.user.is_active = current

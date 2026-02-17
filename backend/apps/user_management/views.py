@@ -245,12 +245,11 @@ def ApiGetAllRolesPermissions(request):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 @login_required(login_url='/login')
-@require_action('Edit User')
 def ApiGetUSerProfile(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-        if user == request.user:
-            return JsonResponse({'status': 'error', 'message': 'Cannot change your own status.'})
+        # if user == request.user:
+        #     return JsonResponse({'status': 'error', 'message': 'Cannot access your own profile here.'})
 
         user_to_edit = user
         user_profile = UserProfile.objects.filter(user=user_to_edit).first()
@@ -291,6 +290,7 @@ def ApiGetUSerProfile(request, user_id):
             'all_db_selected': all_db_selected,
             'selected_role_id': selected_role_id,
             'selected_role_type': selected_role_type,
+            'selected_db_name': profile_data['team']['maindatabase']['database_name'] if profile_data and profile_data.get('team') and profile_data['team'].get('database') else None
         })
     except User.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'User not found.'})
@@ -545,3 +545,25 @@ def ApiSaveUser(request, user_id=None):
         create_user_log(user=request.user, action="Created User", detail=f"Error: {str(e)}", status="error", request=request)
         return JsonResponse({"status": "error", "message": f"Error: {str(e)}"})
 
+
+@login_required
+@require_action('Reset Password')
+@require_POST
+def ApiResetPassword(request, user_id):
+    """
+    Resets a user's password.
+    """
+    print('user_id',user_id)
+    try:
+        user = User.objects.get(id=user_id)
+        user.set_password(user.username)
+        user.save()
+        
+        create_user_log(user=request.user, action="Reset Password", detail=f"Successfully reset password for user: {user.username} (ID: {user_id})", status="success", request=request)
+        return JsonResponse({'status': 'success', 'message': f'Password reset successful.'+'<br>'+ f'Password is: <b>{user.username}</b> (username)' })
+    except User.DoesNotExist:
+        create_user_log(user=request.user, action="Reset Password", detail=f"Attempted to reset password for non-existent user with ID: {user_id}", status="error", request=request)
+        return JsonResponse({'status': 'error', 'message': 'User not found.'})
+    except Exception as e:
+        create_user_log(user=request.user, action="Reset Password", detail=f"Failed to reset password for user with ID: {user_id}", status="error", request=request, exception=e)
+        return JsonResponse({'status': 'error', 'message': f'An error occurred: {str(e)}'})

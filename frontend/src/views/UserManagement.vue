@@ -38,6 +38,7 @@
                             :total-items="totalItems"
                             @edit="onRowEdit"
                             @delete="onRowDelete"
+                            @reset="onRowReset"
                             @page-change="changePage"
                             @per-change="setPerPage">
 
@@ -142,8 +143,8 @@ import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import { registerRequest } from '../utils/pageLoad'
-import { API_GET_USER, API_USER_MANAGEMENT_CHANGE_STATUS, API_DELETE_USER } from '../api/paths'
-import { showToast, confirmDelete } from '../assets/js/function-all'
+import { API_GET_USER, API_USER_MANAGEMENT_CHANGE_STATUS, API_DELETE_USER, API_RESET_PASSWORD } from '../api/paths'
+import { showToast, confirmDelete, notify } from '../assets/js/function-all'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 const searchQuery = ref('')
@@ -151,6 +152,8 @@ const searchInputRef = ref(null)
 let searchTimeout = null
 
 // dropdown state used by the table per-page control
+const perWrap = ref(null)
+const perDropdownOpen = ref(false)
 
 
 onMounted(() => {
@@ -286,6 +289,47 @@ const onRowDelete = async (row, actionId) => {
         showToast('Failed to delete user', 'error')
     }
 }
+
+const onRowReset = async (row, actionId) => {
+    try {
+        const userId = actionId ?? (row && row.user && row.user.id)
+        if (!userId) {
+            console.warn('onRowDelete: no user id available for row', row)
+            return
+        }
+
+        if (!authStore.hasPermission('Delete User')) {
+            return showToast('Access Denied', 'error')
+        }
+
+        const confirmed = await confirmDelete('Are you sure?', "You won't be able to revert this!", 'Yes, reset')
+        if (!confirmed) return
+
+        // CSRF token cached at login/startup; use cached token
+        const csrfToken = getCsrfToken()
+        const url = API_RESET_PASSWORD(userId)
+        const res = await fetch(url, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken || ''
+            },
+            body: JSON.stringify({ user_id: userId })
+        })
+        const j = res.ok ? await res.json() : null
+        if (res.ok && j && (j.status === 'success' || j.status === 'ok')) {
+           notify('Success!', j.message)
+        } else {
+            showToast((j && j.message) || 'Failed to reset user', 'error')
+            console.error('reset user failed', j)
+        }
+    } catch (e) {
+        console.error('onRowReset error', e)
+        showToast('Failed to reset user', 'error')
+    }
+}
+
 
 const expanded = ref(new Set())
 

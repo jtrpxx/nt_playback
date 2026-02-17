@@ -12,4 +12,5 @@ urlpatterns = [
     path('api/add-user/', views.ApiSaveUser, name='ApiSaveUser'),
     path('api/edit-user/<int:user_id>/', views.ApiSaveUser, name='ApiEditUser'),
     path('api/user-management/delete-user/<int:user_id>/', views.ApiDeleteUser, name='ApiDeleteUser'),
+    path('api/user-management/reset-password/<int:user_id>/', views.ApiResetPassword, name='ApiResetPassword'),
 ]

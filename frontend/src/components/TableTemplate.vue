@@ -44,6 +44,13 @@
                       @click.stop="$emit('delete', r, getActionId(r))">
                       <i class="fas fa-trash" style="font-size: 12px;"></i>
                     </button>
+                    <button
+                      :id="`group-reset-btn-${getActionId(r) ?? r.id ?? idx}`"
+                      type="button"
+                      class="group-reset-btn"
+                      @click.stop="$emit('reset', r, getActionId(r))">
+                      <i class="fa-solid fa-key" style="font-size: 12px;"></i>
+                    </button>
                   </div>
                 </template>
                 <template v-else>{{ r[col.key] }}</template>

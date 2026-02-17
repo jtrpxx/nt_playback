@@ -1,6 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from django.contrib.auth.models import User
+import json
 from .models import MainDatabase,UserAuth,UserLog,SetAudio,Department,UserProfile,UserGroup,UserTeam
 
 class MainDatabaseSerializer(serializers.ModelSerializer):
@@ -21,10 +22,29 @@ class UserGroupSerializer(serializers.ModelSerializer):
 
 class UserTeamSerializer(serializers.ModelSerializer):
     user_group = UserGroupSerializer(read_only=True)
+    maindatabase = serializers.CharField(read_only=True)
+    maindatabase_name = serializers.SerializerMethodField()
     
     class Meta:
         model = UserTeam
         fields = '__all__'
+
+    def get_maindatabase_name(self, obj):
+        raw = getattr(obj, 'maindatabase', None)
+        if not raw:
+            return []
+        try:
+            ids = json.loads(raw)
+        except Exception:
+            # fallback: if it's a single id string
+            ids = [raw]
+        try:
+            ids = [int(i) for i in ids]
+        except Exception:
+            pass
+        qs = MainDatabase.objects.filter(id__in=ids)
+        names = [m.database_name for m in qs]
+        return names
 
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:

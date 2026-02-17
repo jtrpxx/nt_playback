@@ -191,7 +191,7 @@ def ApiChangeUserStatus(request, user_id):
         user.is_active = not user.is_active
         user.save()
         status_msg = 'Active' if user.is_active else 'Inactive'
-        return JsonResponse({'status': 'success', 'message': f'User is now {status_msg}.'})
+        return JsonResponse({'status': 'success', 'message': f'User {user.username} is now {status_msg}.'})
     except User.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'User not found.'})
     except Exception as e:

@@ -594,7 +594,7 @@ def ApiGetCredentials(request):
     
 @login_required
 @require_POST
-@require_action('Play audio')
+@require_action("Playback Audio")
 def ApiLogPlayAudio(request):
     """
     API endpoint สำหรับรับ Log การเล่นไฟล์เสียงจาก Frontend
@@ -605,7 +605,7 @@ def ApiLogPlayAudio(request):
 
         UserLog.objects.create(
             user=request.user,
-            action="Play audio",
+            action="Playback Audio",
             detail=data.get('detail', ''),
             status=data.get('status', ''),
             client_type=f"{info['os']} / {info['browser']}",
@@ -616,7 +616,7 @@ def ApiLogPlayAudio(request):
     except Exception as e:
         UserLog.objects.create(
             user=request.user,
-            action="Play audio",
+            action="Playback Audio",
             detail={"error": str(e)},
             status="error",
             client_type=f"{info['os']} / {info['browser']}",

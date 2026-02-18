@@ -57,16 +57,12 @@
                                 </span>
                             </template>
 
-                            <template #cell-group_team="{ row }">
-                                <template v-if="getGroupTeamList(row).length === 0">
-                                    -
-                                </template>
-                                <template v-else>
-                                    <span class="group-summary" @mouseenter="showGroupTooltip($event, row)"
-                                        @mouseleave="hideGroupTooltip">
-                                        {{ getGroupTeamSummary(row) }}
-                                    </span>
-                                </template>
+                            <template #cell-group="{ row }">
+                                {{ extractGroup(row) || '-' }}
+                            </template>
+
+                            <template #cell-team="{ row }">
+                                {{ extractTeam(row) || '-' }}
                             </template>
 
                             <template #cell-database_servers="{ row }">
@@ -96,21 +92,6 @@
                         </TableTemplate>
 
                         <teleport to="body">
-                            <div v-if="groupTooltip.visible" ref="groupTooltipEl"
-                                class="file-name-tooltip tooltip bs-tooltip-top show"
-                                :class="groupTooltipPlacement === 'top' ? 'tooltip-top' : 'tooltip-bottom'"
-                                :style="groupTooltip.style"
-                                @mouseenter="cancelHideGroup" @mouseleave="hideGroupTooltip">
-                                <div class="tooltip-arrow"></div>
-                                <div class="tooltip-inner d-flex flex-column">
-                                    <div class="tooltip-after">Team</div>
-                                    <ul class="tooltip-after-list">
-                                        <li v-for="(g, gi) in groupTooltip.items" :key="gi" style="margin:2px 0">- {{ g
-                                        }}</li>
-                                    </ul>
-                                </div>
-                            </div>
-
                             <div v-if="dbTooltip.visible" ref="dbTooltipEl"
                                 class="file-name-tooltip tooltip bs-tooltip-top show"
                                 :class="dbTooltipPlacement === 'top' ? 'tooltip-top' : 'tooltip-bottom'"
@@ -345,13 +326,6 @@ function isExpanded(rowId, key) {
     return expanded.value.has(`${rowId}-${key}`)
 }
 
-// tooltip state for group/team
-const groupTooltip = ref({ visible: false, items: [], style: null })
-const groupTooltipEl = ref(null)
-const groupTooltipPlacement = ref('top')
-let groupHideTimer = null
-const groupActiveEl = ref(null)
-
 // tooltip state for database servers
 const dbTooltip = ref({ visible: false, items: [], style: null })
 const dbTooltipEl = ref(null)
@@ -359,73 +333,7 @@ const dbTooltipPlacement = ref('top')
 let dbHideTimer = null
 const dbActiveEl = ref(null)
 
-function showGroupTooltip(e, row) {
-    try {
-        const items = getGroupTeamList(row)
-        if (!items || items.length === 0) return
-        if (groupHideTimer) { clearTimeout(groupHideTimer); groupHideTimer = null }
-        // mark the trigger element so it can be styled while tooltip is visible
-        try {
-            const currentTarget = e.currentTarget
-            if (groupActiveEl.value && groupActiveEl.value !== currentTarget) {
-                groupActiveEl.value.classList.remove('is-active-tooltip')
-            }
-            groupActiveEl.value = currentTarget
-            if (groupActiveEl.value && groupActiveEl.value.classList) groupActiveEl.value.classList.add('is-active-tooltip')
-        } catch (err) { /* ignore if element unavailable */ }
-        groupTooltip.value.items = items
-        groupTooltip.value.visible = true
-        const rect = e.currentTarget.getBoundingClientRect()
-        nextTick(() => {
-            try {
-                const el = groupTooltipEl.value
-                if (!el) return
-                const tRect = el.getBoundingClientRect()
-                const spaceAbove = rect.top
-                const left = rect.left + rect.width / 2
-                let top
-                let transform
-                if (spaceAbove > tRect.height + 8) {
-                    top = rect.top - 8
-                    transform = 'translate(-50%, -100%)'
-                    groupTooltipPlacement.value = 'top'
-                } else {
-                    top = rect.bottom + 8
-                    transform = 'translate(-50%, 0)'
-                    groupTooltipPlacement.value = 'bottom'
-                }
-                groupTooltip.value.style = {
-                    position: 'fixed',
-                    left: `${left}px`,
-                    top: `${top}px`,
-                    transform,
-                    zIndex: 9999,
-                    maxWidth: '420px',
-                    whiteSpace: 'normal'
-                }
-            } catch (err) { console.error('group tooltip pos err', err) }
-        })
-    } catch (e) {
-        console.error('showGroupTooltip error', e)
-    }
-}
-
-function hideGroupTooltip() {
-    if (groupHideTimer) clearTimeout(groupHideTimer)
-    groupHideTimer = setTimeout(() => {
-        groupTooltip.value.visible = false
-        groupTooltip.value.items = []
-        groupTooltip.value.style = null
-        // remove active styling from the trigger element
-        try {
-            if (groupActiveEl.value && groupActiveEl.value.classList) groupActiveEl.value.classList.remove('is-active-tooltip')
-        } catch (err) { }
-        groupActiveEl.value = null
-        groupHideTimer = null
-    }, 120)
-}
-
-function cancelHideGroup() { if (groupHideTimer) { clearTimeout(groupHideTimer); groupHideTimer = null } }
+// tooltip state & helpers for database servers remain below
 
 function showDbTooltip(e, row) {
     try {
@@ -495,49 +403,43 @@ function hideDbTooltip() {
 
 function cancelHideDb() { if (dbHideTimer) { clearTimeout(dbHideTimer); dbHideTimer = null } }
 
-function getGroupTeamPairs(row) {
-    // returns array of { group, team }
-    if (!row) return []
-    const out = []
+function extractGroup(row) {
+    if (!row) return ''
+    // array of teams -> prefer first user_group
     if (Array.isArray(row.team) && row.team.length) {
-        for (const t of row.team) {
-            const group = (t.user_group && (t.user_group.group_name || t.user_group)) || t.user_group || ''
-            const team = t.name || t.team_name || ''
-            out.push({ group: group || '', team: team || '' })
-        }
-        return out.filter(p => p.group || p.team)
+        const t = row.team[0]
+        return (t && ((t.user_group && (t.user_group.group_name || t.user_group)) || t.user_group)) || ''
     }
+    // single team object with user_group
     if (row.team && row.team.user_group) {
-        const group = row.team.user_group.group_name || row.team.user_group || ''
-        const team = row.team.name || ''
-        return [{ group: group || '', team: team || '' }].filter(p => p.group || p.team)
+        return row.team.user_group.group_name || row.team.user_group || ''
+    }
+    // legacy string format 'Group / Team' or 'Team'
+    if (row.group_team && typeof row.group_team === 'string') {
+        const first = row.group_team.split(',').map(s => s.trim()).filter(Boolean)[0] || ''
+        if (!first) return ''
+        if (first.includes(' / ')) return first.split(' / ')[0].trim()
+        return ''
+    }
+    return ''
+}
+
+function extractTeam(row) {
+    if (!row) return ''
+    if (Array.isArray(row.team) && row.team.length) {
+        const t = row.team[0]
+        return (t && (t.name || t.team_name)) || ''
+    }
+    if (row.team && (row.team.name || row.team.team_name)) {
+        return row.team.name || row.team.team_name || ''
     }
     if (row.group_team && typeof row.group_team === 'string') {
-        return row.group_team.split(',').map(s => s.trim()).filter(Boolean).map(item => {
-            if (item.includes(' / ')) {
-                const parts = item.split(' / ')
-                return { group: parts[0].trim(), team: parts[1].trim() }
-            }
-            // no explicit group; treat as team only
-            return { group: '', team: item }
-        }).filter(p => p.group || p.team)
+        const first = row.group_team.split(',').map(s => s.trim()).filter(Boolean)[0] || ''
+        if (!first) return ''
+        if (first.includes(' / ')) return first.split(' / ')[1]?.trim() || ''
+        return first
     }
-    return []
-}
-
-function getGroupTeamList(row) {
-    // backward-compatible: return team names
-    return getGroupTeamPairs(row).map(p => (p.team ? p.team : (p.group || '')))
-}
-
-function getGroupTeamSummary(row) {
-    const pairs = getGroupTeamPairs(row)
-    if (!pairs.length) return '-'
-    const groups = [...new Set(pairs.map(p => (p.group || '').trim()).filter(Boolean))]
-    const summary = groups.length ? groups[0] : (pairs[0].team || '-')
-    // if only one pair, don't show count per request
-    if (pairs.length === 1) return summary
-    return `${summary} (${pairs.length})`
+    return ''
 }
 
 function getDbList(row) {
@@ -603,7 +505,8 @@ const columns = [
     { key: 'username', label: 'Username' },
     { key: 'full_name', label: 'Full Name' },
     { key: 'role', label: 'Role' },
-    { key: 'group_team', label: 'Group/Team' },
+    { key: 'group', label: 'Group' },
+    { key: 'team', label: 'Team' },
     { key: 'database_servers', label: 'Database Server' },
     { key: 'phone', label: 'Phone' },
     { key: 'status', label: 'Status' },

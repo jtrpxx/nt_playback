@@ -548,6 +548,103 @@ const groupedPermissions = computed(() => {
     keys.forEach(k => ordered[k] = grouped[k])
     return ordered
 })
+
+// Map of permission display names -> required access-group permission names
+// When a permission (non-access) is selected, ensure these access names are checked.
+const dependencyMap = {
+    // AUDIO RECORDS 
+    'Query Audio': ['Audio Recording'],
+    'Playback Audio': ['Audio Recording'],
+    'Download Audio': ['Audio Recording'],
+    'Export Recordings': ['Audio Recording'],
+    'My Favorite Search': ['Audio Recording'],
+    // Edit Column needs Audio Recording + System Setting
+    'Edit Column': ['Audio Recording', 'System Setting'],
+
+    // USER MANAGEMENT 
+    'Add User': ['User Management'],
+    'Edit User': ['User Management'],
+    'Delete User': ['User Management'],
+    'Change Status': ['User Management'],
+    'Access Role & Permissions': ['User Management'],
+    'Edit Base Role': ['User Management'],
+    'Add Custom Role': ['User Management'],
+    'Edit Custom Role': ['User Management'],
+    'Delete Custom Role': ['User Management'],
+    'Access Group & Team': ['User Management'],
+    'Add Group': ['User Management'],
+    'Edit Group': ['User Management'],
+    'Delete Group': ['User Management'],
+    'Add Team': ['User Management'],
+    'Edit Team': ['User Management'],
+    'Delete Team': ['User Management'],
+
+    // LOGS
+    'Audit Logs': ['User Logs'],
+    'System Logs': ['User Logs'],
+    'Export Logs': ['User Logs']
+}
+
+// Helper: map permission display name -> action value (from allPermissions)
+const nameToAction = computed(() => {
+    const m = {}
+    ;(allPermissions.value || []).forEach(p => {
+        if (p && p.name) m[String(p.name).trim()] = p.action
+    })
+    return m
+})
+
+const _syncingDeps = ref(false)
+
+// Watch rolePermissions (as a shallow array copy) to add/remove access items
+watch(() => rolePermissions.value.slice(), (newArr, oldArr) => {
+    if (_syncingDeps.value) return
+    _syncingDeps.value = true
+    try {
+        const added = newArr.filter(v => !oldArr.includes(v))
+        const removed = oldArr.filter(v => !newArr.includes(v))
+
+        // Handle additions: ensure access permissions are present
+        added.forEach(actionValue => {
+            const perm = (allPermissions.value || []).find(p => p && p.action === actionValue)
+            if (!perm || !perm.name) return
+            const deps = dependencyMap[String(perm.name).trim()]
+            if (!deps || deps.length === 0) return
+            deps.forEach(accessName => {
+                const accessAction = nameToAction.value[String(accessName).trim()]
+                if (accessAction && !rolePermissions.value.includes(accessAction)) {
+                    rolePermissions.value = rolePermissions.value.concat([accessAction])
+                }
+            })
+        })
+
+        // Handle removals: remove access permission only if no other selected permission requires it
+        removed.forEach(actionValue => {
+            const perm = (allPermissions.value || []).find(p => p && p.action === actionValue)
+            if (!perm || !perm.name) return
+            const deps = dependencyMap[String(perm.name).trim()]
+            if (!deps || deps.length === 0) return
+            deps.forEach(accessName => {
+                const accessAction = nameToAction.value[String(accessName).trim()]
+                if (!accessAction) return
+                // check if any remaining selected permission requires this access
+                const stillRequired = (rolePermissions.value || []).some(selectedAction => {
+                    // skip the accessAction itself
+                    if (selectedAction === accessAction) return false
+                    const sPerm = (allPermissions.value || []).find(p => p && p.action === selectedAction)
+                    if (!sPerm || !sPerm.name) return false
+                    const sDeps = dependencyMap[String(sPerm.name).trim()] || []
+                    return sDeps.indexOf(accessName) !== -1
+                })
+                if (!stillRequired) {
+                    rolePermissions.value = (rolePermissions.value || []).filter(a => a !== accessAction)
+                }
+            })
+        })
+    } finally {
+        _syncingDeps.value = false
+    }
+}, { immediate: false })
 </script>
 
 <style scoped>

@@ -64,6 +64,20 @@ export const useAuthStore = defineStore('auth', () => {
 			setToken(data.access)
 			// store whatever user info the login returned (may include id)
 			if (data && data.username) setUser({ username: data.username, id: data.id || null })
+
+			// Quick check: calling the home index may return 403 when the user
+			// authenticates but lacks the required "Audio Recording" permission.
+			// If we detect 403 here, route the user to the Denied page instead
+			// of attempting to load Home (which would surface a 403/exception).
+			try {
+				const profileResp = await fetch(API_HOME_INDEX(), { credentials: 'include' })
+				if (profileResp && profileResp.status === 403) {
+					try { router.push({ name: 'Denied' }) } catch (e) { try { window.location.href = '/denied' } catch (ee) {} }
+					return true
+				}
+			} catch (e) {
+				// ignore network errors here; we'll continue to fetch permissions below
+			}
 			// ensure we have profile (id) and permissions
 			// fetch permissions after login
 			try { await fetchPermissions() } catch (e) { console.error('fetchPermissions', e) }

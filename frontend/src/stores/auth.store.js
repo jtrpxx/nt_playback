@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { API_LOGIN, API_HOME_INDEX } from '../api/paths'
 import { ensureCsrf, setCsrfToken } from '../api/csrf'
+import router from '../router'
 
 export const useAuthStore = defineStore('auth', () => {
 	// Initialize state from localStorage to enable persistence
@@ -32,6 +33,11 @@ export const useAuthStore = defineStore('auth', () => {
 		// Clear from both state and localStorage
 		setUser(null)
 		setToken(null)
+	}
+
+	function logout() {
+		clear()
+		try { router.push('/login') } catch (e) { try { window.location.href = '/login' } catch (ee) {} }
 	}
 
 	const fullName = () => {
@@ -118,5 +124,5 @@ export const useAuthStore = defineStore('auth', () => {
 		return permissions.value.includes(name)
 	}
 
-	return { user, token, permissions, setUser, setToken, clear, fullName, login, fetchPermissions, hasPermission }
+	return { user, token, permissions, setUser, setToken, clear, logout, fullName, login, fetchPermissions, hasPermission }
 })

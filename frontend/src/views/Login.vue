@@ -1,48 +1,49 @@
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <h2>Login</h2>
-      <form @submit.prevent="handleLogin">
-        
-        <!-- Username Input -->
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input 
-            type="text" 
-            id="username" 
-            v-model="form.username" 
-            placeholder="Username"
-            required
-          />
-        </div>
+  <div class="login-root">
+    <div class="login-header">
+      <img src="/src/assets/images/logo-nichtel.png" alt="logo" class="logo" />
+      <h1 class="app-title">NT Audio Search</h1>
+      <div class="app-sub">Centralized Search and Playback System</div>
+    </div>
 
-        <!-- Password Input -->
-        <div class="form-group">
-          <label for="password">Password</label>
-          <div class="password-wrapper">
-            <input 
-              :type="showPassword ? 'text' : 'password'" 
-              id="password" 
-              v-model="form.password" 
-              placeholder="Password"
-              required
-            />
-            <button type="button" class="toggle-password" @click="showPassword = !showPassword">
-              <!-- Icon: Eye Open (Show) -->
-              <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-              <!-- Icon: Eye Closed (Hide) -->
-              <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+    <div class="login-card">
+      <form @submit.prevent="handleLogin" class="login-form">
+        <div class="form-left">
+          <div class="input-group" style="margin-bottom: 12.2px;" v-has-value>
+            <input v-model="form.username" required type="text" name="username" autocomplete="off" class="input"
+              maxlength="30">
+            <label class="title-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>Username
+            </label>
+          </div>
+
+          <div class="input-group" v-has-value>
+            <input v-model="form.password" required :type="passwordVisible ? 'text' : 'password'" name="password"
+              autocomplete="off" class="input" maxlength="30">
+            <button type="button" class="toggle-visibility" @click="passwordVisible = !passwordVisible"
+              aria-label="Toggle password visibility">
+              <i :class="passwordVisible ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
             </button>
+            <label class="title-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>Password
+            </label>
+          </div>
+
+          <div class="checkbox-left">
+            <input type="checkbox" id="remember" v-model="form.rememberMe" />
+            <label for="remember">Remember</label>
           </div>
         </div>
 
-        <!-- Remember Me Checkbox -->
-        <div class="form-group checkbox-group">
-          <input type="checkbox" id="remember" v-model="form.rememberMe" />
-          <label for="remember">Remember</label>
+        <div class="form-bottom">
+          <button type="submit" class="btn-submit"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</button>
         </div>
-
-        <button type="submit" class="btn-submit">Login</button>
       </form>
     </div>
   </div>
@@ -52,11 +53,12 @@
 import { ref, reactive } from 'vue'
 import { useAuthStore } from '../stores/auth.store'
 import { useRouter } from 'vue-router'
+import { showToast } from '../assets/js/function-all'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const showPassword = ref(false)
+const passwordVisible = ref(false)
 const form = reactive({
   username: '',
   password: '',
@@ -64,96 +66,189 @@ const form = reactive({
 })
 
 const handleLogin = async () => {
-  
   const success = await authStore.login(form.username, form.password)
   if (success) {
+    try { showToast(`Welcome! ${authStore.user?.username || ''}`, 'success') } catch (e) {}
     router.push('/')
-
   } else {
-    alert('error')
+    try { showToast('Login failed. Please check your username and password.', 'error') } catch (e) {}
   }
 }
 </script>
 
 <style scoped>
-.login-container {
+.login-root {
+  min-height: 100vh;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  min-height: 80vh;
+  justify-content: center;
+  padding: 48px 16px;
+}
+
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 28px
+}
+
+.logo {
+  width: 90px;
+  height: auto
+}
+
+.app-title {
+  font-size: 22px;
+  margin: 0;
+  color: #0f172a
+}
+
+.app-sub {
+  font-size: 13px;
+  color: #64748b
 }
 
 .login-card {
   background: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 400px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  padding: 28px
 }
 
-.form-group {
-  margin-bottom: 1rem;
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
+.form-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%
 }
 
-.form-group input[type="text"],
-.form-group input[type="password"] {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.password-wrapper {
+.checkbox-left {
+  display: flex;
+  align-items: center;
   position: relative;
-  display: flex;
-  align-items: center;
+  margin-top: 6px
 }
 
-.toggle-password {
+.checkbox-left input[type="checkbox"] {
   position: absolute;
-  right: 10px;
-  background: none;
-  border: none;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+  margin: 0
+}
+
+.checkbox-left label{
+  position: relative;
+  padding-left: 24px;
   cursor: pointer;
-  color: #666;
-  display: flex;
-  align-items: center;
+  color: #1e293b;
+  font-weight: 500;
+  user-select: none;
+  font-size: 14px;
 }
 
-.checkbox-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.checkbox-left label::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:4px;border:1px solid #cbd5e1;background:#fff;box-shadow:inset 0 -1px 0 rgba(0,0,0,0.02);transition:all .12s ease
 }
 
-.checkbox-group input {
-  width: auto;
-}
+.checkbox-left input[type="checkbox"]:checked+label::before{background:#2563eb;border-color:#2563eb}
 
-.checkbox-group label {
-  margin-bottom: 0;
-  font-weight: normal;
+.checkbox-left label::after{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%) rotate(45deg);width:4px;height:8px;border:solid transparent;border-width:0 2px 2px 0;opacity:0;transition:opacity .12s ease}
+
+.checkbox-left input[type="checkbox"]:checked+label::after{border-color:#fff;opacity:1}
+
+.checkbox-left input[type="checkbox"]:focus+label::before{box-shadow:0 0 0 5px rgba(37,99,235,0.12)}
+
+@media (max-width:600px){
+  .checkbox-left label{font-size:13px;padding-left:22px}
+  .checkbox-left label::before{width:14px;height:14px}
+  .checkbox-left label::after{left:4px}
 }
 
 .btn-submit {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #416fd6;
-  color: white;
+  display: block;
+  margin: 0 auto;
+  padding: 14px 32px;
+  min-width: 260px;
+  max-width: 100%;
+  width: auto;
+  font-size: 16px;
+  background: #2563eb;
+  color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 10px;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 1rem;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18);
+  transition: transform .12s ease, box-shadow .12s ease;
 }
 
 .btn-submit:hover {
-  background-color: #537acf;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.22);
+}
+
+.input-group {
+  position: relative;
+  width: 300px
+}
+
+.input {
+  width: 100%;
+  padding: 12px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff
+}
+
+.title-label {
+  /* position: absolute;left: 12px;top: -10px;background: transparent;color: #475569;font-size: 12px;padding: 0 6px */
+}
+
+.title-label svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: middle;
+  color: inherit;
+}
+
+.toggle-visibility {
+  position: absolute;
+  right: 8px;
+  top: 3px;
+  color: #64748b;
+  border: none;
+  background: transparent;
+  cursor: pointer
+}
+
+@media (max-width:600px) {
+  .login-card {
+    padding: 20px
+  }
+
+  .input-group {
+    width: 100%
+  }
+
+  .btn-submit {
+    min-width: unset;
+    padding: 12px 18px;
+    width: 100%
+  }
 }
 </style>

@@ -47,5 +47,34 @@ import './assets/css/datatable.css'
 		console.warn('ensureCsrf failed on startup', e)
 	}
 
+	// Wrap global fetch to detect backend redirects to login (301/302 or /login?next=)
+	try {
+		const originalFetch = window.fetch.bind(window)
+		window.fetch = async (...args) => {
+			const response = await originalFetch(...args)
+			try {
+				const respUrl = (response && response.url) ? String(response.url) : ''
+				const location = (response && response.headers) ? (response.headers.get('Location') || response.headers.get('location') || '') : ''
+				const isRedirectStatus = response && (response.status === 301 || response.status === 302)
+				const looksLikeLogin = respUrl.includes('/login') || location.includes('/login') || respUrl.includes('/login?next=') || location.includes('/login?next=')
+				const auth = useAuthStore()
+				if (isRedirectStatus || looksLikeLogin || (response && (response.status === 401 || response.status === 403))) {
+					try {
+						// call centralized logout if available
+						if (auth && typeof auth.logout === 'function') {
+							await auth.logout()
+						} else {
+							try { auth.clear && auth.clear() } catch (e) {}
+							try { router.push('/login') } catch (e) { try { window.location.href = '/login' } catch (ee) {} }
+						}
+					} catch (e) {
+						try { window.location.href = '/login' } catch (ee) {}
+					}
+				}
+			} catch (e) { /* ignore parse errors */ }
+			return response
+		}
+	} catch (e) { console.warn('Failed to wrap fetch', e) }
+
 	app.mount('#app')
 })()

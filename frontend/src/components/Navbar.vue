@@ -218,8 +218,7 @@ const initials = computed(() => {
 });
 
 const handleLogout = () => {
-  store.clear();
-  router.push("/login");
+  try { store.logout() } catch (e) { store.clear(); router.push('/login') }
 };
 
 </script>

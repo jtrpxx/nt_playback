@@ -1,5 +1,5 @@
 <template>
-  <div v-show="modelValue" class="audio-modal-backdrop">
+  <div v-show="modelValue" class="audio-modal-backdrop" @click.self="close">
     <div class="audio-modal">
       <div class="audio-card">
         <div class="card-header">
@@ -146,6 +146,13 @@ async function loadAudio() {
     if (audioRef.value) {
       audioRef.value.src = audioUrl.value
       audioRef.value.load()
+      if (modelValue.value) {
+        audioRef.value.volume = Math.max(0, Math.min(1, volume.value))
+        audioRef.value.play().then(() => {
+          playing.value = true
+          requestAnimationFrame(draw)
+        }).catch(() => {})
+      }
     }
 
     const arrayBuffer = await blob.arrayBuffer()

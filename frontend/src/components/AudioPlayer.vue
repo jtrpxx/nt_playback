@@ -126,7 +126,6 @@ function formatTime(t) {
 }
 
 async function loadAudio() {
-  console.log('Loading audio from', src.value)
   if (!src.value) return
   audioBuffer.value = null
   peaks.value = []
@@ -214,7 +213,7 @@ function draw() {
   if (!audioBuffer.value || peaks.value.length === 0) {
     ctx.fillStyle = "#9ca3af"
     ctx.font = "12px Arial"
-    ctx.fillText("Loading waveform...", 10, height / 2)
+    ctx.fillText("Loading...", 10, height / 2)
     return
   }
 

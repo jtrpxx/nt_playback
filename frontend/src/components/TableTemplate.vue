@@ -4,7 +4,14 @@
       <table class="table table-sm table-striped">
         <thead class="table-primary">
           <tr>
-            <th v-for="col in columns" :key="col.key" :style="colWidthStyle(col)">{{ col.label }}</th>
+            <th v-for="col in columns" :key="col.key" :style="colWidthStyle(col)" 
+                @click="col.sortable !== false ? onSort(col.key) : null" 
+                :class="{ 'cursor-pointer': col.sortable !== false }">
+              <div class="d-flex justify-content-between align-items-center">
+                <span>{{ col.label }}</span>
+                <i v-if="col.sortable !== false" class="fa-solid" :class="getSortIcon(col.key)" style="margin-left: 5px; opacity: 0.5;font-size: 9px;"></i>
+              </div>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -132,10 +139,12 @@ const props = defineProps({
   perPage: { type: Number, default: 50 },
   perPageOptions: { type: Array, default: () => [50, 100, 500, 1000] },
   currentPage: { type: Number, default: 1 },
-  totalItems: { type: Number, default: 0 }
+  totalItems: { type: Number, default: 0 },
+  sortColumn: { type: String, default: '' },
+  sortDirection: { type: String, default: '' }
 })
 
-const emit = defineEmits(['edit', 'delete', 'reset', 'page-change', 'per-change', 'row-dblclick', 'row-click'])
+const emit = defineEmits(['edit', 'delete', 'page-change', 'per-change', 'row-dblclick', 'row-click', 'sort-change'])
 
 // Pinia auth store instance (used for permission checks in template)
 const store = useAuthStore()
@@ -358,6 +367,19 @@ function formatNumber(v) {
   if (Number.isNaN(n)) return v
   return n.toLocaleString('en-US')
 }
+
+const onSort = (key) => {
+  let dir = 'asc'
+  if (props.sortColumn === key) {
+    dir = props.sortDirection === 'asc' ? 'desc' : 'asc'
+  }
+  emit('sort-change', { column: key, direction: dir })
+}
+
+const getSortIcon = (key) => {
+  if (props.sortColumn !== key) return 'fa-sort'
+  return props.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down'
+}
 </script>
 
 <style scoped>
@@ -525,5 +547,9 @@ function formatNumber(v) {
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
   border-bottom: 6px solid rgba(0, 0, 0, 0.85);
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

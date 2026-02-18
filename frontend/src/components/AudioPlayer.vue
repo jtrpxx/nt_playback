@@ -18,6 +18,14 @@
             <div class="value truncate" :title="metadata.fileName || shortName">{{ metadata.fileName || shortName }}
             </div>
           </div>
+           <div class="info-row">
+            <div class="label">Start Date & Time:</div>
+            <div class="value">{{ metadata.from || '-' }}</div>
+          </div>
+           <div class="info-row">
+            <div class="label">End Date & Time:</div>
+            <div class="value">{{ metadata.to || '-' }}</div>
+          </div>
           <div class="info-row">
             <div class="label">Duration:</div>
             <div class="value">{{ formatTime(currentDuration) }}</div>
@@ -117,7 +125,6 @@ const shortName = computed(() => {
 const currentDuration = computed(() => audioDuration.value || (metadata.value && metadata.value.duration) || 0)
 
 function formatTime(t) {
-  console.log('formatTime called with', t)
   if (!t && t !== 0) return '00:00'
   const sec = Math.floor(t || 0)
   const m = Math.floor(sec / 60)
@@ -559,7 +566,7 @@ onBeforeUnmount(() => {
   padding: 20px 24px;
   background: #f9fafb;
   border-radius: 12px;
-  margin: 0 24px 20px;
+  margin: 0 24px 4px;
   display: flex;
   flex-direction: column;
   gap: 10px;

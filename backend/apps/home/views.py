@@ -377,6 +377,36 @@ def ApiGetAudioList(request):
         if q_full:
             audio_list = audio_list.filter(q_full)
 
+    # Sorting Logic
+    sort_field = request.GET.get('sort[0][field]')
+    sort_dir = request.GET.get('sort[0][dir]')
+
+    if sort_field and sort_dir:
+        sort_mapping = {
+            'main_db': 'main_db__database_name',
+            'start_datetime': 'start_datetime',
+            'end_datetime': 'end_datetime',
+            'duration': 'audiofile__duration',
+            'file_name': 'audiofile__file_name',
+            'call_direction': 'call_direction',
+            'customer_number': 'customer_number',
+            'extension': 'extension',
+            'agent': 'agent__agent_code',
+            'full_name': ['agent__first_name', 'agent__last_name'],
+            'custom_field_1': 'custom_field_1'
+        }
+        
+        if sort_field in sort_mapping:
+            fields = sort_mapping[sort_field]
+            if not isinstance(fields, list):
+                fields = [fields]
+            
+            ordering = []
+            for f in fields:
+                ordering.append(f'-{f}' if sort_dir == 'desc' else f)
+            audio_list = audio_list.order_by(*ordering)
+    else:
+        audio_list = audio_list.order_by('-start_datetime')
 
 
     # count after applying filters

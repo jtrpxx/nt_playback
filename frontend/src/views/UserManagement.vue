@@ -36,6 +36,9 @@
                             :per-page-options="perPageOptions"
                             :current-page="currentPage"
                             :total-items="totalItems"
+                            :sort-column="sortColumn"
+                            :sort-direction="sortDirection"
+                            @sort-change="onSortChange"
                             @edit="onRowEdit"
                             @delete="onRowDelete"
                             @reset="onRowReset"
@@ -188,6 +191,15 @@ const currentPage = ref(1)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / perPage.value)))
 const startIndex = computed(() => (currentPage.value - 1) * perPage.value)
 const paginatedRecords = computed(() => records.value)
+
+const sortColumn = ref('')
+const sortDirection = ref('')
+
+const onSortChange = ({ column, direction }) => {
+  sortColumn.value = column
+  sortDirection.value = direction
+  fetchData()
+}
 
 const setPerPage = (opt) => {
     perPage.value = opt
@@ -501,7 +513,7 @@ function getCookie(name) {
 }
 
 const columns = [
-    { key: 'index', label: '#', isIndex: true },
+    { key: 'index', label: '#', isIndex: true, sortable: false },
     { key: 'username', label: 'Username' },
     { key: 'full_name', label: 'Full Name' },
     { key: 'role', label: 'Role' },
@@ -526,6 +538,11 @@ const fetchData = async () => {
         params.set('start', start)
         params.set('length', perPage.value)
         params.set('search[value]', searchQuery.value || '')
+
+        if (sortColumn.value && sortDirection.value) {
+            params.set('sort[0][field]', sortColumn.value)
+            params.set('sort[0][dir]', sortDirection.value)
+        }
 
         const res = await fetch(`${API_GET_USER()}?${params.toString()}`, { credentials: 'include' })
         if (!res.ok) throw new Error('Failed to fetch')
@@ -585,6 +602,8 @@ const fetchData = async () => {
 
 function clearSearchQuery() {
     searchQuery.value = ''
+    sortColumn.value = ''
+    sortDirection.value = ''
     if (searchTimeout) { clearTimeout(searchTimeout); searchTimeout = null }
     currentPage.value = 1
     fetchData()

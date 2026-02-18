@@ -135,6 +135,35 @@ def ApiGetUser(request):
         if not applied_status_only:
             qs = qs.filter(q).distinct()
 
+    # Sorting Logic
+    sort_field = request.GET.get('sort[0][field]')
+    sort_dir = request.GET.get('sort[0][dir]')
+
+    if sort_field and sort_dir:
+        sort_mapping = {
+            'username': 'user__username',
+            'full_name': ['user__first_name', 'user__last_name'],
+            'role': 'user__userauth__user_permission__name',
+            'group': 'team__user_group__group_name',
+            'team': 'team__name',
+            'phone': 'phone',
+            'status': 'user__is_active'
+        }
+        
+        if sort_field in sort_mapping:
+            fields = sort_mapping[sort_field]
+            if not isinstance(fields, list):
+                fields = [fields]
+            
+            ordering = []
+            for f in fields:
+                ordering.append(f'-{f}' if sort_dir == 'desc' else f)
+            qs = qs.order_by(*ordering)
+            if sort_field == 'role':
+                qs = qs.distinct()
+    else:
+        qs = qs.order_by('-user__date_joined')
+
     # annotate profile instances with permission and database_servers for use in serialization
     for profile in qs:
         auths = auth_map.get(profile.user_id, [])

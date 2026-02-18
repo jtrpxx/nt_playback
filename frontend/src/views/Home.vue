@@ -172,6 +172,9 @@
                     :per-page-options="perPageOptions"
                     :current-page="currentPage"
                     :total-items="totalItems"
+                    :sort-column="sortColumn"
+                    :sort-direction="sortDirection"
+                    @sort-change="onSortChange"
                         @edit="onRowEdit"
                         @delete="onRowDelete"
                         @row-dblclick="onRowDblClick"
@@ -318,7 +321,7 @@ const recentList = ref([])
 const showFavoriteModal = ref(false)
 const showAudioModal = ref(false)
 const audioSrc = ref('')
-const audioMetadata = reactive({ fileName: '', duration: '', customerNumber: '', extension: '', agent: '', callDirection: '' })
+const audioMetadata = reactive({ fileName: '', duration: '', customerNumber: '', extension: '', agent: '', callDirection: '', from: '', to: '' })
 // save-log polling state
 const processedSaveLogs = new Set()
 let saveLogsInterval = null
@@ -539,6 +542,15 @@ const records = ref([])
 const totalItems = ref(0)
 const loading = ref(false)
 
+const sortColumn = ref('')
+const sortDirection = ref('')
+
+const onSortChange = ({ column, direction }) => {
+  sortColumn.value = column
+  sortDirection.value = direction
+  fetchData()
+}
+
 const fetchData = async () => {
   loading.value = true
   try {
@@ -548,6 +560,11 @@ const fetchData = async () => {
     params.set('start', start)
     params.set('length', perPage.value)
     params.set('search[value]', searchQuery.value || '')
+
+    if (sortColumn.value && sortDirection.value) {
+      params.set('sort[0][field]', sortColumn.value)
+      params.set('sort[0][dir]', sortDirection.value)
+    }
 
     if (Array.isArray(filters.databaseServer)) {
       const vals = filters.databaseServer.filter(v => String(v).toLowerCase() !== 'all')
@@ -718,6 +735,8 @@ const onReset = async () => {
     filters.customField = ''
     filters.extension = ''
     // clear search and pagination
+    sortColumn.value = ''
+    sortDirection.value = ''
     searchQuery.value = ''
     currentPage.value = 1
     // ensure flatpickr inputs are cleared in the DOM too
@@ -958,7 +977,7 @@ const callDirectionClass = (dir) => {
 }
 
 const defaultColumns = [
-  { key: 'index', label: '#', isIndex: true },
+  { key: 'index', label: '#', isIndex: true, sortable: false },
   { key: 'main_db', label: 'Database Server' },
   { key: 'start_datetime', label: 'Start Date & Time' },
   { key: 'end_datetime', label: 'End Date & Time' },
@@ -1036,6 +1055,8 @@ const onRowDblClick = async (row) => {
       audioMetadata.extension = row.extension || ''
       audioMetadata.agent = row.agent || ''
       audioMetadata.callDirection = row.call_direction || ''
+      audioMetadata.from = row.from || row.start_datetime || ''
+      audioMetadata.to = row.to || row.end_datetime || ''
       showAudioModal.value = true
       // CSRF token cached at login/startup; use cached token
       const csrfToken = getCsrfToken()

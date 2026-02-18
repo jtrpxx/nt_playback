@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('start_date', models.DateField()),
                 ('end_date', models.DateField()),
-                ('license', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='license.license', verbose_name='License')),
+                ('license', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='licenses.license', verbose_name='License')),
                 ('user_profile', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='authorize.userprofile', verbose_name='User Profile')),
             ],
             options={

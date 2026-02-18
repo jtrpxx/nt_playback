@@ -135,7 +135,7 @@ const props = defineProps({
   totalItems: { type: Number, default: 0 }
 })
 
-const emit = defineEmits(['edit', 'delete', 'page-change', 'per-change', 'row-dblclick', 'row-click'])
+const emit = defineEmits(['edit', 'delete', 'reset', 'page-change', 'per-change', 'row-dblclick', 'row-click'])
 
 // Pinia auth store instance (used for permission checks in template)
 const store = useAuthStore()

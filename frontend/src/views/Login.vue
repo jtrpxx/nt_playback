@@ -255,7 +255,7 @@ onMounted(() => {
   background: #2563eb;
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 25px;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18);
@@ -269,7 +269,7 @@ onMounted(() => {
 
 .input-group {
   position: relative;
-  width: 300px
+  width: 300px;
 }
 
 .input {
@@ -277,11 +277,8 @@ onMounted(() => {
   padding: 12px 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  background: #fff
-}
-
-.title-label {
-  /* position: absolute;left: 12px;top: -10px;background: transparent;color: #475569;font-size: 12px;padding: 0 6px */
+  background: #fff;
+  border-radius: 25px;
 }
 
 .title-label svg {

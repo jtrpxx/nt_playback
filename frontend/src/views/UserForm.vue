@@ -86,7 +86,7 @@
                                     </div>
                                     <div class="input-group" v-has-value>
                                         <input ref="fromInput" v-flatrangepickr="{ target: exp, key: 'expires' }"  required type="text" name="expires" autocomplete="off" class="input">
-                                        <label class="title-label">Ticket Period</label>
+                                        <label class="title-label">Ticket Period*</label>
                                         <span class="calendar-icon"><i class="fa-regular fa-calendar"></i></span>
                                     </div>
                                 </div>

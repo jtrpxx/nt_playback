@@ -1,12 +1,13 @@
 <template>
   <div class="login-root" style="background-color: #F9FAFB;">
+    <div class="login-card">
+
     <div class="login-header">
       <img src="/src/assets/images/logo-nichtel.png" alt="logo" class="logo" />
       <h1 class="app-title">NT Audio Search</h1>
       <div class="app-sub">Centralized Search and Playback System</div>
     </div>
 
-    <div class="login-card">
       <form @submit.prevent="handleLogin" class="login-form">
         <div class="form-left">
           <div class="input-group" style="margin-bottom: 12.2px;" v-has-value>
@@ -119,7 +120,7 @@ onMounted(() => {
 }
 
 .logo {
-  width: 90px;
+  width: 64px;
   height: auto
 }
 

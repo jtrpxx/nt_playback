@@ -6,7 +6,7 @@
       <div class="error-container">
         <div class="error-content">
           <div class="icon-wrapper">
-            <img src="/src/assets/images/denied.png" alt="Access Denied" style="max-width: 100%; height: auto; max-height: 300px;">
+            <img src="/src/assets/images/denied.png" alt="Access Denied" style="max-width: 100%; height: auto; max-height: 300px;margin-left: 20px;">
           </div>
           
           <p class="error-text">

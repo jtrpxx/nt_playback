@@ -16,7 +16,7 @@ from apps.core.utils.function import create_user_log
 # ปรับ Import UserProfile (คาดว่าน่าจะอยู่ที่ apps.core.models หรือ apps.users.models)
 # หากยังไม่มีไฟล์ models ให้ตรวจสอบ path นี้อีกครั้ง
 try:
-    from apps.core.model.authorize.models import UserProfile
+    from apps.core.model.authorize.models import UserProfile, UserAuth
 except ImportError:
     # Fallback หรือ Mock กรณีหาไม่เจอเพื่อป้องกัน Server Crash
     UserProfile = None
@@ -94,12 +94,15 @@ def index(request):
 
             # Also generate and send CSRF token and set CSRF cookie on the response
             csrf_token = get_token(request)
+            user_auth = UserAuth.objects.filter(user=user).select_related('user_permission').first()
+            role = user_auth.user_permission.name
             resp = JsonResponse({
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
                 'username': user.username,
                 'csrfToken': csrf_token,
-                'message': 'Login successful'
+                'message': 'Login successful',
+                'role': role,
             })
             try:
                 secure = getattr(settings, 'CSRF_COOKIE_SECURE', False)

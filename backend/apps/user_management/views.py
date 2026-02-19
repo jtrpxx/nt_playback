@@ -24,7 +24,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 @login_required(login_url='/login')
-@require_action('User Management')
+@require_action('User Management','User Logs')
 def ApiGetUserAll(request):
     try:
         users = User.objects.all().values('id', 'username', 'first_name', 'last_name', 'email').order_by('username')
@@ -34,7 +34,7 @@ def ApiGetUserAll(request):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 @login_required(login_url='/login')
-@require_action('User Management')
+@require_action('User Management','User Logs')
 def ApiGetUser(request):
     # prepare base query
     qs = UserProfile.objects.exclude(user=request.user).exclude(user__id=1).select_related('user', 'team')
@@ -207,7 +207,6 @@ def ApiGetUser(request):
         'recordsFiltered': records_total,
         'data': data
     })
-
 
 @login_required
 @require_action('Change Status')
@@ -574,7 +573,6 @@ def ApiSaveUser(request, user_id=None):
         create_user_log(user=request.user, action="Created User", detail=f"Error: {str(e)}", status="error", request=request)
         return JsonResponse({"status": "error", "message": f"Error: {str(e)}"})
 
-
 @login_required
 @require_action('Reset Password')
 @require_POST
@@ -582,7 +580,6 @@ def ApiResetPassword(request, user_id):
     """
     Resets a user's password.
     """
-    print('user_id',user_id)
     try:
         user = User.objects.get(id=user_id)
         user.set_password(user.username)
@@ -595,4 +592,37 @@ def ApiResetPassword(request, user_id):
         return JsonResponse({'status': 'error', 'message': 'User not found.'})
     except Exception as e:
         create_user_log(user=request.user, action="Reset Password", detail=f"Failed to reset password for user with ID: {user_id}", status="error", request=request, exception=e)
+        return JsonResponse({'status': 'error', 'message': f'An error occurred: {str(e)}'})
+
+@login_required(login_url='/login')
+@require_POST
+def ApiChangePassword(request):
+    user = request.user
+    old_password = request.POST.get('old_password')
+    new_password = request.POST.get('new_password')
+
+    # frontend may send JSON (application/json). Parse JSON body if present.
+    try:
+        content_type = request.META.get('CONTENT_TYPE', '') or request.content_type or ''
+    except Exception:
+        content_type = ''
+
+    if ('application/json' in content_type) and not (old_password and new_password):
+        try:
+            body = json.loads(request.body.decode('utf-8') or '{}') if request.body else {}
+            old_password = body.get('old_password') or old_password
+            new_password = body.get('new_password') or new_password
+        except Exception:
+            pass
+
+    if not user.check_password(old_password):
+        return JsonResponse({'status': 'error', 'message': 'Old password is incorrect.'})
+
+    try:
+        user.set_password(new_password)
+        user.save()
+        create_user_log(user=request.user, action="Change Password", detail=f"Successfully changed password for user: {user.username}", status="success", request=request)
+        return JsonResponse({'status': 'success', 'message': 'Password changed successfully.'})
+    except Exception as e:
+        create_user_log(user=request.user, action="Change Password", detail=f"Failed to change password for user: {user.username}", status="error", request=request, exception=e)
         return JsonResponse({'status': 'error', 'message': f'An error occurred: {str(e)}'})

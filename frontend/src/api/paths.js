@@ -61,4 +61,5 @@ export const API_UPDATE_SETTINGS = () => `${getApiBase()}/api/settings/update/`
 export const API_GET_COLUMN_AUDIO_RECORD = () => `${getApiBase()}/api/setting/get/column-audio-record/`
 export const API_SAVE_COLUMN_AUDIO_RECORD = () => `${getApiBase()}/api/setting/save/column-audio-record/`
 
-
+// หน้า Profile
+export const API_CHANGE_PASSWORD = () => `${getApiBase()}/api/change-password/`

@@ -13,7 +13,7 @@
                     style="width:35px;height:35px;background-color: #D9E2F6;border-radius: 10px !important;">
                     <i class="fa-solid fa-filter" style="color:#2b6cb0;font-size:18px"></i>
                   </div>
-                  <h5 class="card-title mb-2 mt-1">Filters</h5>
+                  <h5 class="card-title mb-2 mt-1">Query Audio</h5>
                 </div>
               </div>
               <!-- Content Filters-->

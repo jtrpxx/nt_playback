@@ -1,5 +1,5 @@
 <template>
-  <div class="login-root">
+  <div class="login-root" style="background-color: #F9FAFB;">
     <div class="login-header">
       <img src="/src/assets/images/logo-nichtel.png" alt="logo" class="logo" />
       <h1 class="app-title">NT Audio Search</h1>
@@ -13,7 +13,9 @@
             <input v-model="form.username" required type="text" name="username" autocomplete="off" class="input"
               maxlength="30">
             <label class="title-label">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                focusable="false">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>Username
@@ -28,7 +30,9 @@
               <i :class="passwordVisible ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
             </button>
             <label class="title-label">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                focusable="false">
                 <rect x="3" y="11" width="18" height="10" rx="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>Password
@@ -50,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth.store'
 import { useRouter } from 'vue-router'
 import { showToast } from '../assets/js/function-all'
@@ -68,12 +72,32 @@ const form = reactive({
 const handleLogin = async () => {
   const success = await authStore.login(form.username, form.password)
   if (success) {
-    try { showToast(`Welcome! ${authStore.user?.username || ''}`, 'success') } catch (e) {}
+    // persist or remove saved credentials based on rememberMe
+    try {
+      if (form.rememberMe) {
+        localStorage.setItem('remember_credentials', JSON.stringify({ username: form.username, password: form.password }))
+      } else {
+        localStorage.removeItem('remember_credentials')
+      }
+    } catch (e) { }
+    try { showToast(`Welcome! ${authStore.user?.username || ''}`, 'success') } catch (e) { }
     router.push('/')
   } else {
-    try { showToast('Login failed. Please check your username and password.', 'error') } catch (e) {}
+    try { showToast('Login failed. Please check your username and password.', 'error') } catch (e) { }
   }
 }
+
+onMounted(() => {
+  try {
+    const raw = localStorage.getItem('remember_credentials')
+    if (raw) {
+      const obj = JSON.parse(raw)
+      if (obj && obj.username) form.username = obj.username
+      if (obj && obj.password) form.password = obj.password
+      form.rememberMe = true
+    }
+  } catch (e) { }
+})
 </script>
 
 <style scoped>
@@ -150,32 +174,73 @@ const handleLogin = async () => {
   margin: 0
 }
 
-.checkbox-left label{
+.checkbox-left label {
   position: relative;
-  padding-left: 24px;
+  padding-left: 16px;
   cursor: pointer;
   color: #1e293b;
   font-weight: 500;
   user-select: none;
-  font-size: 14px;
+  font-size: 10px;
 }
 
-.checkbox-left label::before{
-  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:4px;border:1px solid #cbd5e1;background:#fff;box-shadow:inset 0 -1px 0 rgba(0,0,0,0.02);transition:all .12s ease
+.checkbox-left label::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+  transition: all .12s ease
 }
 
-.checkbox-left input[type="checkbox"]:checked+label::before{background:#2563eb;border-color:#2563eb}
+.checkbox-left input[type="checkbox"]:checked+label::before {
+  background: #2563eb;
+  border-color: #2563eb
+}
 
-.checkbox-left label::after{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%) rotate(45deg);width:4px;height:8px;border:solid transparent;border-width:0 2px 2px 0;opacity:0;transition:opacity .12s ease}
+.checkbox-left label::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 4px;
+  height: 8px;
+  border: solid transparent;
+  border-width: 0 2px 2px 0;
+  opacity: 0;
+  transition: opacity .12s ease
+}
 
-.checkbox-left input[type="checkbox"]:checked+label::after{border-color:#fff;opacity:1}
+.checkbox-left input[type="checkbox"]:checked+label::after {
+  border-color: #fff;
+  opacity: 1
+}
 
-.checkbox-left input[type="checkbox"]:focus+label::before{box-shadow:0 0 0 5px rgba(37,99,235,0.12)}
+.checkbox-left input[type="checkbox"]:focus+label::before {
+  box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.12)
+}
 
-@media (max-width:600px){
-  .checkbox-left label{font-size:13px;padding-left:22px}
-  .checkbox-left label::before{width:14px;height:14px}
-  .checkbox-left label::after{left:4px}
+@media (max-width:600px) {
+  .checkbox-left label {
+    font-size: 13px;
+    padding-left: 22px
+  }
+
+  .checkbox-left label::before {
+    width: 14px;
+    height: 14px
+  }
+
+  .checkbox-left label::after {
+    left: 4px
+  }
 }
 
 .btn-submit {

@@ -36,8 +36,8 @@
     <!-- Sidebar Menu -->
     <div class="sidebar-team-menu" id="sidebarTeamMenu" ref="sidebarMenu" :style="{ display: menuOpen ? 'block' : 'none' }">
       <!-- Header -->
-      <div class="menu-header">
-        <div class="user-info-group">
+        <div class="menu-header">
+        <div class="user-info-group" @click="goToProfile">
           <div class="menu-avatar">
             {{ initials }}
           </div>
@@ -221,4 +221,15 @@ const handleLogout = () => {
   try { store.logout() } catch (e) { store.clear(); router.push('/login') }
 };
 
+function goToProfile() {
+  menuOpen.value = false;
+  try { router.push('/profile') } catch (e) { console.error('Navigate to profile failed', e) }
+}
+
 </script>
+
+<style scoped>
+.user-info-group {
+  cursor: pointer;
+}
+</style>

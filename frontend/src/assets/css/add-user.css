@@ -352,6 +352,13 @@
   margin-bottom: 24px;
 }
 
+.role-cards-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
 .role-card {
   padding: 16px;
   background: #f8fafc;
@@ -407,6 +414,14 @@
 
 .role-card:nth-child(3) .role-icon i {
   color: #416fd6;
+}
+
+.role-card:nth-child(4) .role-icon {
+  background: linear-gradient(135deg, rgba(59, 95, 192, 0.2), rgb(255 2 230 / 20%));
+}
+
+.role-card:nth-child(4) .role-icon i {
+  color: #d641ce;
 }
 
 /* Disabled role cards */

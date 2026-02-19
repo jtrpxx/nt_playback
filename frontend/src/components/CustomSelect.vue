@@ -17,7 +17,7 @@
           </div>
         </li>
       <div class="options-inner">
-        <li v-for="(opt, idx) in filteredOptions" :key="idx" :class="[ opt.isGroup ? 'option-group' : 'option', { selected: !opt.isGroup && isSelected(opt.value) } ]"
+        <li v-for="(opt, idx) in displayOptions" :key="idx" :class="[ opt.isGroup ? 'option-group' : 'option', { selected: !opt.isGroup && isSelected(opt.value) } ]"
           @mouseenter="hoverIndex = idx" @mouseleave="hoverIndex = null" role="option">
           <template v-if="opt.isGroup">
             <div class="opt-group-label">{{ opt.label }}</div>
@@ -35,9 +35,13 @@
             </div>
           </template>
         </li>
-        <li v-if="filteredOptions.length === 0" class="option option-empty" role="option">
+        <li v-if="displayOptions.length === 0" class="option option-empty" role="option">
           <div class="option-row">
-            <span class="opt-label no-options">No options found</span>
+            <span class="opt-label no-options">
+              <!-- If user hasn't typed anything, prompt to search; otherwise show no results -->
+              <template v-if="!searchTerm">Search audio files in the search box</template>
+              <template v-else>No options found</template>
+            </span>
           </div>
         </li>
       </div>
@@ -55,7 +59,7 @@ const props = defineProps({
   alwaysHasValue: { type: Boolean, default: false },
   alwaysUp: { type: Boolean, default: false }
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'search'])
 
 const attrs = useAttrs()
 const open = ref(false)
@@ -66,6 +70,16 @@ const searchable = ref(false)
 const checkboxable = ref(false)
 const searchTerm = ref('')
 const searchInputRef = ref(null)
+let _searchTimer = null
+
+// emit search events when user types in the searchable input (debounced)
+watch(searchTerm, (val) => {
+  if (!searchable.value) return
+  if (_searchTimer) clearTimeout(_searchTimer)
+  _searchTimer = setTimeout(() => {
+    emit('search', String(val || '').trim())
+  }, 300)
+})
 
 // Normalize props.options into a flat list that may include group headers.
 // Supported input shapes:
@@ -87,25 +101,58 @@ const normalizedOptions = computed(() => {
 })
 
 const filteredOptions = computed(() => {
-  const q = String(searchTerm.value || '').trim().toLowerCase()
+  const raw = String(searchTerm.value || '')
+  const q = raw.trim().toLowerCase()
   if (!searchable.value || !q) return normalizedOptions.value
+  // support comma-separated multiple search terms (match any)
+  const terms = q.indexOf(',') !== -1 ? q.split(',').map(t => t.trim()).filter(Boolean) : [q]
   const items = normalizedOptions.value
   const res = []
   for (let i = 0; i < items.length; i++) {
     const it = items[i]
     if (it.isGroup) {
-      // include group header only if at least one following non-group matches
+      // include group header only if at least one following non-group matches any term
       let found = false
       for (let j = i + 1; j < items.length && !items[j].isGroup; j++) {
-        if (String(items[j].label).toLowerCase().includes(q)) { found = true; break }
+        const label = String(items[j].label).toLowerCase()
+        if (terms.some(t => label.includes(t))) { found = true; break }
       }
       if (found) res.push(it)
     } else {
-      if (String(it.label).toLowerCase().includes(q)) res.push(it)
+      const label = String(it.label).toLowerCase()
+      if (terms.some(t => label.includes(t))) res.push(it)
     }
   }
   return res
 })
+
+// If there are no filtered options, but a value is selected, show the selected value
+const displayOptions = computed(() => {
+  const fo = filteredOptions.value || []
+  if (fo.length > 0) return fo
+
+  // handle checkboxable (array) or single value
+  const mv = props.modelValue
+  if (checkboxable.value && Array.isArray(mv) && mv.length > 0) {
+    const out = []
+    for (const v of mv) {
+      const found = normalizedOptions.value.find(o => String(o.value) === String(v))
+      out.push({ label: found ? found.label : String(v), value: v })
+    }
+    return out
+  }
+  if (!checkboxable.value && mv !== '' && mv !== null && mv !== undefined && String(mv) !== '') {
+    const found = normalizedOptions.value.find(o => String(o.value) === String(mv))
+    return [{ label: found ? found.label : String(mv), value: mv }]
+  }
+
+  return []
+})
+
+function formatLabel(lbl) {
+  const s = String(lbl || '')
+  return s.length > 20 ? s.slice(0, 20) + '...' : s
+}
 
 const selectedLabel = computed(() => {
   if (checkboxable.value && Array.isArray(props.modelValue)) {
@@ -115,11 +162,11 @@ const selectedLabel = computed(() => {
       .map(o => o.label)
     const count = labels.length
     if (count === 0) return ''
-    if (count === 1) return labels[0]
+    if (count === 1) return formatLabel(labels[0])
     return `${count} Selected`
   }
   const sel = normalizedOptions.value.find(o => o.value === props.modelValue)
-  return sel ? sel.label : props.placeholder
+  return sel ? formatLabel(sel.label) : props.placeholder
 })
 
 function isSelected(v) {

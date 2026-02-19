@@ -501,6 +501,14 @@
   margin-bottom: 24px;
 }
 
+.roles-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+
 .role-box {
   background: #f8fafc;
   border: 2px solid #e2e8f0;
@@ -561,6 +569,15 @@
 
 .role-box:nth-child(3) .role-box-icon i {
   color: #416fd6;
+}
+
+/* Ticket - Blue */
+.role-box:nth-child(4) .role-box-icon,.base-role-modal-icon.ticket {
+  background: linear-gradient(135deg, rgba(59, 95, 192, 0.2), rgb(255 2 230 / 20%));
+}
+
+.role-box:nth-child(4) .role-box-icon i,.base-role-modal-icon.ticket {
+  color: #d641ce;
 }
 
 .role-box-name {

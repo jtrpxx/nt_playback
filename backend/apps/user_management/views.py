@@ -1,7 +1,7 @@
 # apps/home/views.py
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from django.http import JsonResponse
+from django.http import JsonResponse,FileResponse,Http404
 from django.db import transaction, DatabaseError,IntegrityError
 from django.db.models import Q
 import re
@@ -9,8 +9,12 @@ from django.contrib import messages
 from apps.core.utils.function import create_user_log
 import json
 
+import os
+from django.conf import settings
+
 # models
 from apps.core.model.authorize.models import MainDatabase,UserAuth,UserProfile,Department,MainDatabase,UserGroup,UserTeam,UserLog
+from apps.core.model.audio.models import AudioFile
 
 
 from apps.configuration.models import UserPermission,UserPermissionDetail
@@ -251,7 +255,7 @@ def ApiGetAllRolesPermissions(request):
                 status=True
             ).values_list('action'))
             
-            if role.type in ['administrator', 'auditor', 'operator']:
+            if role.type in ['administrator', 'auditor', 'operator','ticket']:
                 roles_permissions[role.type] = {
                     'id': role.id,
                     'permissions': active_actions
@@ -626,3 +630,42 @@ def ApiChangePassword(request):
     except Exception as e:
         create_user_log(user=request.user, action="Change Password", detail=f"Failed to change password for user: {user.username}", status="error", request=request, exception=e)
         return JsonResponse({'status': 'error', 'message': f'An error occurred: {str(e)}'})
+    
+@login_required(login_url='/login')
+def ApiGetFileAudio(request):
+    # Support optional search via `file_name` query parameter. Accept comma-separated values.
+    try:
+        qs = AudioFile.objects.all()
+
+        # support id lookup (single id or comma-separated ids)
+        idparam = (request.GET.get('id') or request.GET.get('ids') or '').strip()
+        if idparam:
+            id_terms = [t.strip() for t in idparam.split(',') if t.strip()]
+            try:
+                id_list = [int(i) for i in id_terms]
+                qs = qs.filter(id__in=id_list)
+            except Exception:
+                # fallback: ignore invalid id parsing
+                pass
+
+        # support file_name search (comma-separated OR semantics)
+        # NOTE: only match against `file_name` to avoid matching file paths or ids.
+        qparam = (request.GET.get('file_name') or '').strip()
+        if qparam:
+            if ',' in qparam:
+                terms = [t.strip() for t in qparam.split(',') if t.strip()]
+            else:
+                terms = [qparam]
+            query = Q()
+            for t in terms:
+                query |= Q(file_name__icontains=t)
+            qs = qs.filter(query).distinct()
+
+        audio_file = qs.values('id', 'file_path', 'file_name', 'file_type', 'file_size', 'duration')
+
+        return JsonResponse({
+            'status': 'success',
+            'data': list(audio_file)
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})

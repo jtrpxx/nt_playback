@@ -14,4 +14,5 @@ urlpatterns = [
     path('api/user-management/delete-user/<int:user_id>/', views.ApiDeleteUser, name='ApiDeleteUser'),
     path('api/user-management/reset-password/<int:user_id>/', views.ApiResetPassword, name='ApiResetPassword'),
     path('api/change-password/', views.ApiChangePassword, name='ApiChangePassword'),
+    path('api/get/file-audio/', views.ApiGetFileAudio, name='ApiGetFileAudio'),
 ]

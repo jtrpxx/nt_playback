@@ -26,8 +26,7 @@
                 </div>
 
                 <div class="input-group" v-has-value>
-                  <input ref="fromInput" v-flatpickr="{ target: filters, key: 'from' }" required type="text" name="from"
-                    autocomplete="off" class="input">
+                  <input ref="fromInput" v-flatpickr="{ target: filters, key: 'from' }" required type="text" name="from" autocomplete="off" class="input">
                   <label class="floating-label">From</label>
                   <span class="calendar-icon" @click="fromInput && fromInput.focus()"><i
                       class="fa-regular fa-calendar"></i></span>

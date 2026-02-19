@@ -14,7 +14,7 @@
             </div>
           </div>
 
-          <div class="roles-grid" id="baseRolesGrid">
+          <div class="roles-grid-4" id="baseRolesGrid">
             <div class="role-box" data-role="1" @click.stop="authStore.hasPermission('Edit Base Role') && openEditRole(1, 'base')">
               <div class="role-box-header">
                 <div class="role-box-icon">
@@ -44,6 +44,16 @@
               </div>
               <div class="role-box-name">Operator/Agent</div>
               <div class="role-box-desc">Standard operations</div>
+            </div>
+            <div class="role-box" data-role="4" @click.stop="authStore.hasPermission('Edit Base Role') && openEditRole(4, 'base')">
+              <div class="role-box-header">
+                <div class="role-box-icon">
+                  <i class="fa-solid fa-ticket"></i>
+                </div>
+                <span class="role-box-badge">Click to edit</span>
+              </div>
+              <div class="role-box-name">Ticket</div>
+              <div class="role-box-desc">Temporary user</div>
             </div>
           </div>
         </div>
@@ -165,6 +175,7 @@ function openEditRole(id, mode = 'base') {
   if (id === 1) selectedBaseRoleName.value = 'Edit Administrator'
   else if (id === 2) selectedBaseRoleName.value = 'Edit Auditor'
   else if (id === 3) selectedBaseRoleName.value = 'Edit Operator/Agent'
+  else if (id === 4) selectedBaseRoleName.value = 'Edit Ticket'
   else selectedBaseRoleName.value = 'Edit Role'
   showBaseRoleModal.value = true
 }

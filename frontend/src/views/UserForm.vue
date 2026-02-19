@@ -80,6 +80,15 @@
                                         <CustomSelect :class="['select-search', { 'select-toggle-error': errors.team }]" v-model="selectedTeamId" :always-up="false" :options="teamOptions" placeholder="Select Team*" name="teamModal" />
                                         <div v-show="errors.team" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This dropdown is required.</div>
                                     </div>
+                                    <div class="input-group">
+                                        <CustomSelect class="select-search select-checkbox" v-model="selectedFileId" :options="fileOptions"  placeholder="Select File Audio*" name="fileModal" @search="onFileSearch" />
+                                        <div v-show="errors.file" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This dropdown is required.</div>
+                                    </div>
+                                    <div class="input-group" v-has-value>
+                                        <input ref="fromInput" v-flatrangepickr="{ target: exp, key: 'expires' }"  required type="text" name="expires" autocomplete="off" class="input">
+                                        <label class="title-label">Ticket Period</label>
+                                        <span class="calendar-icon"><i class="fa-regular fa-calendar"></i></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -103,7 +112,7 @@
                                 </div>
 
                                 <div v-show="errors.role" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This Select Role is required.</div>
-                                <div class="role-cards" id="roleCards" :class="{ disabled: roleCardsDisabled }">
+                                <div class="role-cards-4" id="roleCards" :class="{ disabled: roleCardsDisabled }">
                                     <label class="role-card" :class="[ { selected: selectedBaseRoleKey==='administrator' }, { 'role-card-error': errors.role } ]" @click.prevent="selectBaseRole('administrator')">
                                         <input type="checkbox" name="role" value="administrator" :checked="selectedBaseRoleKey==='administrator'">
                                         <div class="role-icon"><i class="fas fa-crown"></i></div>
@@ -121,6 +130,12 @@
                                         <div class="role-icon"><i class="fas fa-headset"></i></div>
                                         <div class="role-name">Operator</div>
                                         <div class="role-desc">Standard operations</div>
+                                    </label>
+                                    <label class="role-card" :class="[ { selected: selectedBaseRoleKey==='ticket' }, { 'role-card-error': errors.role } ]" @click.prevent="selectBaseRole('ticket')">
+                                        <input type="checkbox" name="role" value="ticket" :checked="selectedBaseRoleKey==='ticket'">
+                                        <div class="role-icon"><i class="fas fa-ticket"></i></div>
+                                        <div class="role-name">Ticket</div>
+                                        <div class="role-desc">Temporary user</div>
                                     </label>
                                 </div>
 
@@ -168,12 +183,12 @@
                                         <h5 class="card-title mb-2 mt-1">Select Database Server</h5>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <button type="button" class="btn-role btn-secondary" @click="resetDatabase"
+                                        <button type="button" class="btn-role btn-secondary" @click="resetDatabase" :disabled="databaseDisabled"
                                             style="margin-right: 6px">
                                             <i class="fas fa-undo"></i>
                                             Reset to Default
                                         </button>
-                                        <button class="customize-btn" type="button" @click="clearDatabaseScope">
+                                        <button class="customize-btn" type="button" @click="clearDatabaseScope" :disabled="databaseDisabled">
                                             <i class="fas fa-eraser" style="margin-right: 6px;"></i> Clear
                                         </button>
                                     </div>
@@ -181,12 +196,12 @@
 
                                 <div class="database-grid">
                                     <label class="db-card">
-                                        <input type="checkbox" value="all" :checked="selectedAllDatabases" @change="toggleAllDatabases">
+                                        <input type="checkbox" value="all" :checked="selectedAllDatabases" @change="toggleAllDatabases" :disabled="databaseDisabled">
                                         <span class="db-checkbox"></span>
                                         <span class="db-name">All Databases</span>
                                     </label>
                                     <label class="db-card" v-for="db in databases" :key="db.id">
-                                        <input type="checkbox" :value="db.id" :checked="selectedDatabaseIds.includes(String(db.id))" @change="() => toggleDatabase(db)">
+                                        <input type="checkbox" :value="db.id" :checked="selectedDatabaseIds.includes(String(db.id))" @change="() => toggleDatabase(db)" :disabled="databaseDisabled">
                                         <span class="db-checkbox"></span>
                                         <span class="db-name">{{ db.database_name }}</span>
                                     </label>
@@ -197,7 +212,7 @@
                     </div>
 
                 </div>
-
+               
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
@@ -252,7 +267,7 @@ import Breadcrumbs from '../components/Breadcrumbs.vue'
 import CustomSelect from '../components/CustomSelect.vue'
 import { registerRequest } from '../utils/pageLoad'
 import { getCookie, showToast } from '../assets/js/function-all'
-import { API_GROUP_INDEX, API_GET_DATABASE, API_GET_ALL_ROLES_PERMISSIONS, API_CHECK_USERNAME, API_CREATE_USER, API_UPDATE_USER } from '../api/paths'
+import { API_GROUP_INDEX, API_GET_DATABASE, API_GET_ALL_ROLES_PERMISSIONS, API_CHECK_USERNAME, API_CREATE_USER, API_UPDATE_USER, API_GET_FILE_AUDIO } from '../api/paths'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 
 const loading = ref(false)
@@ -293,6 +308,10 @@ const form = ref({
     lastName: '',
     email: '',
     phone: ''
+})
+
+const exp = ref({
+    expires: '',
 })
 
 // debounce timer for username check
@@ -473,7 +492,7 @@ function populateFromInitial(data) {
     // role
     const selRoleType = data.selected_role_type || data.selected_role_type_json || data.selectedRoleType || null
     const selRoleId = data.selected_role_id || data.selected_role_id_json || data.selectedRoleId || null
-    if (selRoleType && ['administrator','auditor','operator'].includes(selRoleType)) {
+    if (selRoleType && ['administrator','auditor','operator','ticket'].includes(selRoleType)) {
         selectedBaseRoleKey.value = selRoleType
         selectedCustomRoleId.value = null
     } else if (selRoleId) {
@@ -728,12 +747,98 @@ const groupOptions = computed(() => {
 
 const selectedTeamId = ref(null)
 
+// File audio select state
+const selectedFileId = ref([])
+const fileOptions = ref([])
+let _fileSearchTimer = null
+
+function onFileSearch(term) {
+    if (_fileSearchTimer) clearTimeout(_fileSearchTimer)
+    _fileSearchTimer = setTimeout(async () => {
+        try {
+            const q = String(term || '').trim()
+            // when search is empty: show only the currently-selected items (fetch any missing)
+            if (!q) {
+                if (Array.isArray(selectedFileId.value) && selectedFileId.value.length > 0) {
+                    const selIds = selectedFileId.value.map(x => String(x))
+                    // existing selected options already present
+                    const existingSelected = (fileOptions.value || []).filter(f => selIds.includes(String(f.value)))
+                    const missing = selIds.filter(id => !existingSelected.some(e => String(e.value) === String(id)))
+                    let fetched = []
+                    if (missing.length > 0) {
+                        try {
+                            const urlSel = `${API_GET_FILE_AUDIO()}?ids=${encodeURIComponent(missing.join(','))}`
+                            const resSel = await fetch(urlSel, { credentials: 'include' })
+                            if (resSel.ok) {
+                                const js = await resSel.json()
+                                const its = Array.isArray(js.data) ? js.data : (Array.isArray(js.results) ? js.results : [])
+                                fetched = its.map(it => ({ label: it.file_name, value: it.id != null ? String(it.id) : (it.file_name || '') }))
+                            }
+                        } catch (e) {
+                            console.error('file missing fetch error', e)
+                        }
+                    }
+                    // show only selected items (existing + fetched) in the dropdown
+                    const onlySelected = [...existingSelected]
+                    for (const f of fetched) if (!onlySelected.some(x => String(x.value) === String(f.value))) onlySelected.push(f)
+                    fileOptions.value = onlySelected
+                    return
+                }
+                fileOptions.value = []
+                return
+            }
+
+            const url = `${API_GET_FILE_AUDIO()}?file_name=${encodeURIComponent(q)}`
+            const res = await fetch(url, { credentials: 'include' })
+            if (!res.ok) {
+                fileOptions.value = []
+                return
+            }
+            const j = await res.json()
+            const items = Array.isArray(j.data) ? j.data : (Array.isArray(j.results) ? j.results : (Array.isArray(j) ? j : []))
+            // map search results to options (value = id as string, label = file_name)
+            const mapped = items.map(it => ({ label: it.file_name, value: it.id != null ? String(it.id) : (it.file_name || '') }))
+
+            // Ensure any currently-selected IDs are also present (fetch missing by ids)
+            const sel = Array.isArray(selectedFileId.value) ? selectedFileId.value.map(x => String(x)) : []
+            const missing = sel.filter(id => !mapped.some(m => String(m.value) === String(id)))
+            if (missing.length > 0) {
+                try {
+                    const urlMiss = `${API_GET_FILE_AUDIO()}?ids=${encodeURIComponent(missing.join(','))}`
+                    const resMiss = await fetch(urlMiss, { credentials: 'include' })
+                    if (resMiss.ok) {
+                        const jm = await resMiss.json()
+                        const itsm = Array.isArray(jm.data) ? jm.data : (Array.isArray(jm.results) ? jm.results : [])
+                        const mappedMissing = itsm.map(it => ({ label: it.file_name, value: it.id != null ? String(it.id) : (it.file_name || '') }))
+                        // merge keeping search order first, then missing (dedupe)
+                        const merged = [...mapped]
+                        for (const mm of mappedMissing) if (!merged.some(x => String(x.value) === String(mm.value))) merged.push(mm)
+                        fileOptions.value = merged
+                    } else {
+                        fileOptions.value = mapped
+                    }
+                } catch (e) {
+                    console.error('file missing fetch error', e)
+                    fileOptions.value = mapped
+                }
+            } else {
+                fileOptions.value = mapped
+            }
+
+        } catch (e) {
+            console.error('file search error', e)
+            fileOptions.value = []
+        }
+    }, 300)
+}
+
 
 const selectedDatabaseIds = ref([])
 const selectedAllDatabases = ref(false)
 const defaultDatabaseIds = ref([])
 
 function toggleDatabase(db) {
+    if (databaseDisabled && databaseDisabled.value) return
     const idStr = String(db.id)
     const idx = selectedDatabaseIds.value.indexOf(idStr)
     if (idx === -1) selectedDatabaseIds.value.push(idStr)
@@ -776,6 +881,7 @@ function resetDatabase() {
 }
 
 function toggleAllDatabases() {
+    if (databaseDisabled && databaseDisabled.value) return
     selectedAllDatabases.value = !selectedAllDatabases.value
     if (selectedAllDatabases.value) {
         selectedDatabaseIds.value = databases.value.map(d => String(d.id))
@@ -787,6 +893,18 @@ function toggleAllDatabases() {
 const baseRoles = ref({})
 const selectedBaseRoleKey = ref(null)
 const selectedPermissions = ref({})
+
+const databaseDisabled = computed(() => String(selectedBaseRoleKey.value) === 'ticket')
+
+watch(selectedBaseRoleKey, (val) => {
+    try {
+        if (String(val) === 'ticket') {
+            // clear any selected databases and prevent changes
+            selectedDatabaseIds.value = []
+            selectedAllDatabases.value = false
+        }
+    } catch (e) {}
+})
 
 const permissionInputsEnabled = computed(() => {
     // Always enable editing of permissions in edit mode

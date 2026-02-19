@@ -50,9 +50,9 @@ def check_permission(view_func):
 @require_action('Access Role & Permissions')
 def ApiIndexRole(request):
     
-    base_user_permission_qs = UserPermission.objects.filter(type__in=["administrator", "auditor", "operator"])
-    user_permission_other_qs = UserPermission.objects.exclude(type__in=["administrator", "auditor", "operator"])
-    user_permission_detail_qs = UserPermissionDetail.objects.exclude(user_permission__in=["1", "2", "3"])
+    base_user_permission_qs = UserPermission.objects.filter(type__in=["administrator", "auditor", "operator", "ticket"])
+    user_permission_other_qs = UserPermission.objects.exclude(type__in=["administrator", "auditor", "operator", "ticket"])
+    user_permission_detail_qs = UserPermissionDetail.objects.exclude(user_permission__in=["1", "2", "3", "4"])
 
     # Convert QuerySets to plain lists/dicts so JsonResponse can serialize them
     base_user_permission = list(base_user_permission_qs.values())
@@ -579,3 +579,4 @@ def ApiSaveTeam(request):
     except Exception as e:
         create_user_log(user=request.user, action='ApiSaveTeam', detail=f'Unexpected error: {str(e)}', status='error', request=request)
         return JsonResponse({'status': 'error', 'message': str(e)})
+    

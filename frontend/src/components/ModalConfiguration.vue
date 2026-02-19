@@ -478,6 +478,7 @@ const titleIcon = computed(() => {
         case '1': return 'admin'
         case '2': return 'auditor'
         case '3': return 'operator'
+        case '4': return 'ticket'
     }
 })
 
@@ -486,6 +487,7 @@ const iconClass = computed(() => {
         case '1': return 'fas fa-crown'
         case '2': return 'fas fa-clipboard-check'
         case '3': return 'fas fa-headset'
+        case '4': return 'fas fa-ticket'
     }
 })
 

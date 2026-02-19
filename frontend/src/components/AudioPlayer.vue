@@ -4,9 +4,11 @@
       <div class="audio-card">
         <div class="card-header">
           <div class="header-title">
-            <i class="fa-solid fa-circle-play text-blue-600"></i>
-            <span>Audio Player</span>
-          </div>
+             <div class="d-flex align-items-center justify-content-center me-1" style="width:35px;height:35px;background-color: #D9E2F6;border-radius: 10px !important;">
+                  <i class="fa-solid fa-circle-play" style="color:#2b6cb0;font-size:18px"></i>
+              </div>
+              <h5 class="card-title mb-2 mt-1" style="font-size: 16px;">Audio Player</h5>
+            </div>
           <button class="btn-icon-close" @click="close">
             <i class="fa-solid fa-xmark"></i>
           </button>
@@ -538,7 +540,6 @@ onBeforeUnmount(() => {
 .header-title {
   display: flex;
   align-items: center;
-  gap: 12px;
   font-size: 1.25rem;
   font-weight: 700;
   color: #1f2937;

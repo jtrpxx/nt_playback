@@ -40,6 +40,21 @@ export const useAuthStore = defineStore('auth', () => {
 		try { router.push('/login') } catch (e) { try { window.location.href = '/login' } catch (ee) {} }
 	}
 
+	function handleRedirectOrLoginNext(response) {
+		try {
+			if (!response) return false
+			const status = response.status
+			const type = response.type
+			const url = response.url || ''
+			const redirected = !!response.redirected
+			if (type === 'opaqueredirect' || redirected || status === 301 || status === 302 || url.includes('/login/?next=')) {
+				logout()
+				return true
+			}
+		} catch (e) {}
+		return false
+	}
+
 	const fullName = () => {
 		if (!user.value) return null
 		// Adjusted to prioritize username as it's what the new backend provides
@@ -56,6 +71,10 @@ export const useAuthStore = defineStore('auth', () => {
 				body: JSON.stringify({ username, password })
 			})
 
+			if (handleRedirectOrLoginNext(response)) {
+				return false
+			}
+
 			if (!response.ok) {
 				throw new Error(`Login failed with status: ${response.status}`)
 			}
@@ -71,6 +90,7 @@ export const useAuthStore = defineStore('auth', () => {
 			// of attempting to load Home (which would surface a 403/exception).
 			try {
 				const profileResp = await fetch(API_HOME_INDEX(), { credentials: 'include' })
+					if (handleRedirectOrLoginNext(profileResp)) return false
 				if (profileResp && profileResp.status === 403) {
 					try { router.push({ name: 'Denied' }) } catch (e) { try { window.location.href = '/denied' } catch (ee) {} }
 					return true
@@ -103,6 +123,7 @@ export const useAuthStore = defineStore('auth', () => {
 			// ensure we have user id by fetching home index (contains user_profile)
 			try {
 				const profileResp = await fetch(API_HOME_INDEX(), { credentials: 'include' })
+				if (handleRedirectOrLoginNext(profileResp)) return
 				if (profileResp.ok) {
 					const pjson = await profileResp.json()
 					if (pjson && pjson.user_profile) {
@@ -119,6 +140,7 @@ export const useAuthStore = defineStore('auth', () => {
 			}
 
 			const resp = await fetch('/api/my-permissions/', { credentials: 'include' })
+			if (handleRedirectOrLoginNext(resp)) return
 			if (!resp.ok) return
 			const payload = await resp.json()
 			const perms = payload.permissions || []

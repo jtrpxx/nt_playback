@@ -58,7 +58,7 @@ def ApiGetCsrfToken(request):
     return resp
 
 @login_required(login_url='/login')
-@require_action('Audio Recording')
+@require_action('Audio Recording','User Logs')
 def ApiIndexHome(request):
     show_toast = request.session.get('show_toast', False)
     if show_toast:

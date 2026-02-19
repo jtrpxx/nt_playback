@@ -73,7 +73,7 @@
 
                                 <!-- Password -->
                                 <div v-if="activeTab === 'password'" class="tab-pane fade show active">
-                                    <form @submit.prevent="submitPasswordChange" class="col-md-6 ps-2">
+                                    <form @submit.prevent="submitPasswordChange" class="col-md-4 ps-2">
                                         <div class="input-group mb-3" v-has-value>
                                             <input :type="showOldPass ? 'text' : 'password'" v-model="passwordForm.old_password" class="input" required>
                                             <button type="button" class="toggle-visibility" @click="showOldPass = !showOldPass">
@@ -97,9 +97,9 @@
                                             <label class="title-label">Confirm New Password</label>
                                             <div v-if="passwordError" class="validate"><i class="fa-solid fa-circle-exclamation"></i> {{ passwordError }}</div>
                                         </div>
-                                        <button class="btn btn-primary" type="button" @click="submit" style="font-size: 10px;">
-                                            <i class="fas fa-save"></i>
-                                          Save Changes
+                                        <button class="btn btn-primary" type="submit" :disabled="submitting" style="font-size: 10px;">
+                                                <i class="fas fa-save"></i>
+                                            Save Changes
                                         </button>
                                     </form>
                                 </div>
@@ -117,7 +117,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { useAuthStore } from '../stores/auth.store'
-import { API_GET_USER_PROFILE } from '../api/paths'
+import { API_GET_USER_PROFILE, API_CHANGE_PASSWORD } from '../api/paths'
 import { getCsrfToken } from '../api/csrf'
 import { showToast } from '../assets/js/function-all'
 
@@ -208,40 +208,40 @@ async function fetchProfile() {
     } catch (e) { console.error('Fetch profile error', e) } finally { loading.value = false }
 }
 
-// async function submitPasswordChange() {
-//     passwordError.value = ''
-//     if (passwordForm.new_password !== passwordForm.confirm_password) {
-//         passwordError.value = 'New passwords do not match.'
-//         return
-//     }
-//     if (passwordForm.new_password.length < 8) {
-//         passwordError.value = 'Password must be at least 8 characters.'
-//         return
-//     }
-//     submitting.value = true
-//     try {
-//         const csrfToken = getCsrfToken()
-//         const res = await fetch(API_CHANGE_PASSWORD(), {
-//             method: 'POST',
-//             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken || '' },
-//             body: JSON.stringify({
-//                 old_password: passwordForm.old_password,
-//                 new_password: passwordForm.new_password,
-//                 confirm_password: passwordForm.confirm_password
-//             })
-//         })
-//         const json = await res.json()
-//         if (res.ok && json.status === 'success') {
-//             showToast('Password changed successfully', 'success')
-//             passwordForm.old_password = ''; passwordForm.new_password = ''; passwordForm.confirm_password = ''
-//         } else {
-//             showToast(json.message || 'Failed to change password', 'error')
-//         }
-//     } catch (e) {
-//         console.error('Change password error', e)
-//         showToast('An error occurred', 'error')
-//     } finally { submitting.value = false }
-// }
+async function submitPasswordChange() {
+    passwordError.value = ''
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+        passwordError.value = 'New passwords do not match.'
+        return
+    }
+    if (passwordForm.new_password.length < 8) {
+        passwordError.value = 'Password must be at least 8 characters.'
+        return
+    }
+    submitting.value = true
+    try {
+        const csrfToken = getCsrfToken()
+        const res = await fetch(API_CHANGE_PASSWORD(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken || '' },
+            body: JSON.stringify({
+                old_password: passwordForm.old_password,
+                new_password: passwordForm.new_password,
+                confirm_password: passwordForm.confirm_password
+            })
+        })
+        const json = await res.json()
+        if (res.ok && json.status === 'success') {
+            showToast('Password changed successfully', 'success')
+            passwordForm.old_password = ''; passwordForm.new_password = ''; passwordForm.confirm_password = ''
+        } else {
+            showToast(json.message || 'Failed to change password', 'error')
+        }
+    } catch (e) {
+        console.error('Change password error', e)
+        showToast('An error occurred', 'error')
+    } finally { submitting.value = false }
+}
 </script>
 
 <style scoped>

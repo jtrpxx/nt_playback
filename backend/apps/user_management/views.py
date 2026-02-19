@@ -574,7 +574,7 @@ def ApiSaveUser(request, user_id=None):
         return JsonResponse({"status": "error", "message": f"Error: {str(e)}"})
 
 @login_required
-@require_action('Reset Password')
+@require_action('Reset password')
 @require_POST
 def ApiResetPassword(request, user_id):
     """

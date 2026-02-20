@@ -24,9 +24,9 @@
                             <div v-for="(perms, type) in groupedPermissions" :key="type" class="permission-group">
                                 <div class="permission-group-header">{{ type }}</div>
                                 <div class="permission-list">
-                                    <label v-for="perm in perms" :key="perm.action" class="permission-item">
+                                    <label v-for="perm in perms" :key="perm.action" :class="['permission-item', { 'perm-disabled': isPermDisabled(perm) }]">
                                         <input type="checkbox" :value="perm.action" v-model="rolePermissions"
-                                            :disabled="checkDisabled" />
+                                            :disabled="isPermDisabled(perm)" />
                                         <span class="perm-checkbox" aria-hidden></span>
                                         <span class="perm-label">{{ perm.name }}</span>
                                     </label>
@@ -97,8 +97,8 @@
                             <div v-for="(perms, type) in groupedPermissions" :key="type" class="permission-group">
                                 <div class="permission-group-header">{{ type }}</div>
                                 <div class="permission-list">
-                                    <label v-for="perm in perms" :key="perm.action" class="permission-item">
-                                        <input type="checkbox" :value="perm.action" v-model="rolePermissions" :disabled="checkDisabled" />
+                                    <label v-for="perm in perms" :key="perm.action" :class="['permission-item', { 'perm-disabled': isPermDisabled(perm) }]">
+                                        <input type="checkbox" :value="perm.action" v-model="rolePermissions" :disabled="isPermDisabled(perm)" />
                                         <span class="perm-checkbox" aria-hidden></span>
                                         <span class="perm-label">{{ perm.name }}</span>
                                     </label>
@@ -161,9 +161,9 @@
                             <div v-for="(perms, type) in groupedPermissions" :key="type" class="permission-group">
                                 <div class="permission-group-header">{{ type }}</div>
                                 <div class="permission-list">
-                                    <label v-for="perm in perms" :key="perm.action" class="permission-item">
+                                    <label v-for="perm in perms" :key="perm.action" :class="['permission-item', { 'perm-disabled': isPermDisabled(perm) }]">
                                         <input type="checkbox" :value="perm.action" v-model="rolePermissions"
-                                            :disabled="checkDisabled" />
+                                            :disabled="isPermDisabled(perm)" />
                                         <span class="perm-checkbox" aria-hidden></span>
                                         <span class="perm-label">{{ perm.name }}</span>
                                     </label>
@@ -323,7 +323,17 @@ const allPermissions = ref([])
 const rolePermissions = ref([])
 const defaultPermissions = ref([])
 const isAdministrator = ref(false)
-const checkDisabled = computed(() => String(props.roleId) === '1')
+// For base roles: admin (id=1) remains fully locked; ticket (id=4)
+// should only allow a specific subset of permissions to be editable.
+const ticketAllowed = ['Audio Recording', 'Playback Audio', 'Download Audio']
+const isPermDisabled = (perm) => {
+    if (String(props.roleId) === '1') return true
+    if (String(props.roleId) === '4') {
+        const name = perm && perm.name ? String(perm.name).trim() : ''
+        return ticketAllowed.indexOf(name) === -1
+    }
+    return false
+}
 
 // For the "Copy from Role" select
 const roleAllOptions = ref([])
@@ -701,7 +711,7 @@ watch(() => rolePermissions.value.slice(), (newArr, oldArr) => {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 14px;
+    padding: 10px 14px;
     background: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
@@ -731,5 +741,29 @@ watch(() => rolePermissions.value.slice(), (newArr, oldArr) => {
     border-radius: 25px;
     border: 1px solid rgb(245, 163, 163) !important;
     box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
+}
+
+.permission-item.perm-disabled {
+    opacity: 0.7;
+    background-color: #F1F5F9;
+    border-color: rgba(118, 118, 118, 0.3);
+            
+}
+
+input[type="checkbox" i]:disabled {
+    border: 2px solid #cbd5e1;
+    
+}
+
+.perm-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e1;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
 }
 </style>

@@ -80,11 +80,11 @@
                                         <CustomSelect :class="['select-search', { 'select-toggle-error': errors.team }]" v-model="selectedTeamId" :always-up="false" :options="teamOptions" placeholder="Select Team*" name="teamModal" />
                                         <div v-show="errors.team" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This dropdown is required.</div>
                                     </div>
-                                    <div class="input-group">
+                                    <div v-if="selectedBaseRoleKey === 'ticket'" class="input-group">
                                         <CustomSelect class="select-search select-checkbox" v-model="selectedFileId" :options="fileOptions"  placeholder="Select File Audio*" name="fileModal" @search="onFileSearch" />
                                         <div v-show="errors.file" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This dropdown is required.</div>
                                     </div>
-                                    <div class="input-group" v-has-value>
+                                    <div v-if="selectedBaseRoleKey === 'ticket'" class="input-group" v-has-value>
                                         <input ref="fromInput" v-flatrangepickr="{ target: exp, key: 'expires' }"  required type="text" name="expires" autocomplete="off" class="input">
                                         <label class="title-label">Ticket Period*</label>
                                         <span class="calendar-icon"><i class="fa-regular fa-calendar"></i></span>
@@ -341,7 +341,8 @@ const errors = reactive({
     email: false,
     group: false,
     team: false,
-    role: false
+    role: false,
+    file: false
 })
 
 // watch username and debounce check against backend
@@ -902,6 +903,11 @@ watch(selectedBaseRoleKey, (val) => {
             // clear any selected databases and prevent changes
             selectedDatabaseIds.value = []
             selectedAllDatabases.value = false
+        } else {
+            // when role is not Ticket, hide/clear ticket-only fields
+            try { selectedFileId.value = Array.isArray(selectedFileId.value) ? [] : null } catch (e) {}
+            try { if (exp && exp.value) exp.value.expires = '' } catch (e) {}
+            errors.file = false
         }
     } catch (e) {}
 })

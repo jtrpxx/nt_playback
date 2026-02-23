@@ -112,18 +112,15 @@ def ApiGetAudioList(request):
 
     set_audio = SetAudio.objects.filter(user=request.user).first()
     main_db_id = UserAuth.objects.filter(user=request.user, allow=True).values_list("maindatabase_id", flat=True)
-    
     user_ticket = UserTicket.objects.filter(user=request.user).first() #ex. user_ticket.audiofile_id = ["3","2","31"]
-    audiofile_id = json.loads(user_ticket.audiofile_id)
-    audiofile_id = [int(i) for i in audiofile_id]
 
     if user_ticket :
+        audiofile_id = json.loads(user_ticket.audiofile_id)
+        audiofile_id = [int(i) for i in audiofile_id]
         audio_list = AudioInfo.objects.filter(id__in=audiofile_id)
     else :
         audio_list = AudioInfo.objects.select_related("audiofile", "agent", "customer").filter(main_db__in=main_db_id)
     
-    # audio_list = ViewAudio.objects.all()
-
     # ฟิลเตอร์จาก request.form หรือ request.GET
     database_name = request.POST.get("database_name") or request.GET.get("database_name")  
     start_date = request.POST.get("start_date") or request.GET.get("start_date") 
@@ -447,8 +444,6 @@ def ApiGetAudioList(request):
             "set_audio": set_audio.audio_path if set_audio else None,
             "custom_field_1": custom_field
         })
-        
-
 
     return JsonResponse({
         "draw": draw,

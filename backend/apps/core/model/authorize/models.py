@@ -160,4 +160,21 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user_code} - {self.user.first_name} {self.user.last_name}"
+
+class UserTicket(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='User')
+    audiofile_id = models.TextField( blank=True, verbose_name='Audio Files')
+    start_at = models.DateTimeField(null=True, blank=True, verbose_name='Start At')
+    expire_at = models.DateTimeField(null=True, blank=True, verbose_name='Expire At')
+    status = models.CharField(max_length=50, default='active', verbose_name='Status')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'tb_user_ticket'
+        ordering = ['-created_at']
+        verbose_name = 'user ticket'
+
+    def __str__(self):
+        return f"Ticket for {self.user.username} (expires: {self.expire_at})"
         

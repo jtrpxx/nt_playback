@@ -18,7 +18,7 @@ from apps.core.utils.function import create_user_log, get_user_os_browser_archit
 
 from apps.core.utils.permissions import get_user_actions, require_action
 # models
-from apps.core.model.authorize.models import UserAuth,MainDatabase,SetAudio,UserLog,UserProfile,Agent
+from apps.core.model.authorize.models import UserAuth,MainDatabase,SetAudio,UserLog,UserProfile,Agent,UserTicket
 from apps.core.model.audio.models import AudioInfo
 from .models import FavoriteSearch, SetColumnAudioRecord, ConfigKey
 from .serializers import FavoriteSearchSerializer
@@ -93,7 +93,7 @@ def ApiIndexHome(request):
     })
     
 @login_required(login_url='/login')
-@require_action('Query Audio')
+@require_action('Query Audio','Playback Audio')
 def ApiGetAudioList(request):
     draw = int(request.GET.get("draw", 1))
     start = int(request.GET.get("start", 0))
@@ -112,9 +112,15 @@ def ApiGetAudioList(request):
 
     set_audio = SetAudio.objects.filter(user=request.user).first()
     main_db_id = UserAuth.objects.filter(user=request.user, allow=True).values_list("maindatabase_id", flat=True)
+    
+    user_ticket = UserTicket.objects.filter(user=request.user).first() #ex. user_ticket.audiofile_id = ["3","2","31"]
+    audiofile_id = json.loads(user_ticket.audiofile_id)
+    audiofile_id = [int(i) for i in audiofile_id]
 
-    audio_list = AudioInfo.objects.select_related("audiofile", "agent", "customer") \
-        .filter(main_db__in=main_db_id)
+    if user_ticket :
+        audio_list = AudioInfo.objects.filter(id__in=audiofile_id)
+    else :
+        audio_list = AudioInfo.objects.select_related("audiofile", "agent", "customer").filter(main_db__in=main_db_id)
     
     # audio_list = ViewAudio.objects.all()
 

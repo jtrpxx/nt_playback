@@ -72,22 +72,23 @@
                                         <input v-model="form.phone" required type="text" name="phone" autocomplete="off" class="input" maxlength="10">
                                         <label class="title-label">Phone</label>
                                     </div>
-                                    <div class="input-group">
+                                    <div class="input-group" v-if="selectedBaseRoleKey !== 'ticket'">
                                         <CustomSelect :class="['select-search', { 'select-toggle-error': errors.group }]" v-model="selectedGroupId" :options="groupOptions" :always-up="false" placeholder="Select Group*" name="groupModal" />
                                         <div v-show="errors.group" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This dropdown is required.</div>
                                     </div>
-                                    <div class="input-group" :class="{ 'select-disabled': !selectedGroupId }">
+                                    <div class="input-group" :class="{ 'select-disabled': !selectedGroupId }" v-if="selectedBaseRoleKey !== 'ticket'">
                                         <CustomSelect :class="['select-search', { 'select-toggle-error': errors.team }]" v-model="selectedTeamId" :always-up="false" :options="teamOptions" placeholder="Select Team*" name="teamModal" />
                                         <div v-show="errors.team" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This dropdown is required.</div>
                                     </div>
                                     <div v-if="selectedBaseRoleKey === 'ticket'" class="input-group">
-                                        <CustomSelect class="select-search select-checkbox" v-model="selectedFileId" :options="fileOptions"  placeholder="Select File Audio*" name="fileModal" @search="onFileSearch" />
+                                        <CustomSelect :class="['select-search select-checkbox', { 'select-toggle-error': errors.file }]" v-model="selectedFileId" :options="fileOptions"  placeholder="Select File Audio*" name="fileModal" @search="onFileSearch" />
                                         <div v-show="errors.file" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This dropdown is required.</div>
                                     </div>
                                     <div v-if="selectedBaseRoleKey === 'ticket'" class="input-group" v-has-value>
-                                        <input ref="fromInput" v-flatrangepickr="{ target: exp, key: 'expires' }"  required type="text" name="expires" autocomplete="off" class="input">
+                                        <input ref="fromInput" v-flatrangepickr="{ target: exp, key: 'ticketPeriod' }"  required type="text" name="ticketPeriod" autocomplete="off" :class="['input', { 'form-input-modal': errors.ticketPeriod }]">
                                         <label class="title-label">Ticket Period*</label>
                                         <span class="calendar-icon"><i class="fa-regular fa-calendar"></i></span>
+                                        <div v-show="errors.ticketPeriod" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This field is required.</div>
                                     </div>
                                 </div>
                             </div>
@@ -311,7 +312,7 @@ const form = ref({
 })
 
 const exp = ref({
-    expires: '',
+    ticketPeriod: '',
 })
 
 // debounce timer for username check
@@ -342,7 +343,8 @@ const errors = reactive({
     group: false,
     team: false,
     role: false,
-    file: false
+    file: false,
+    ticketPeriod: false
 })
 
 // watch username and debounce check against backend
@@ -562,6 +564,8 @@ async function submit() {
     errors.phone = false
     errors.group = false
     errors.team = false
+    errors.file = false
+    errors.ticketPeriod = false
 
     let hasError = false
     if (!form.value.username || String(form.value.username).trim() === '') { errors.username = 'This field is required.'; hasError = true }
@@ -580,8 +584,13 @@ async function submit() {
     else if (!/^[\p{L}\s]+$/u.test(String(form.value.firstName).trim())) { errors.firstName = 'Special characters are not allowed in first name'; hasError = true }
     if (!form.value.lastName || String(form.value.lastName).trim() === '') { errors.lastName = 'This field is required.'; hasError = true }
     else if (!/^[\p{L}\s]+$/u.test(String(form.value.lastName).trim())) { errors.lastName = 'Special characters are not allowed in last name'; hasError = true }
-    if (!selectedGroupId.value) { errors.group = true; hasError = true }
-    if (!selectedTeamId.value) { errors.team = true; hasError = true }
+    if (selectedBaseRoleKey.value !== 'ticket') {
+        if (!selectedGroupId.value) { errors.group = true; hasError = true }
+        if (!selectedTeamId.value) { errors.team = true; hasError = true }
+    } else {
+        if (!selectedFileId.value || (Array.isArray(selectedFileId.value) && selectedFileId.value.length === 0)) { errors.file = true; hasError = true }
+        if (!exp.value.ticketPeriod) { errors.ticketPeriod = true; hasError = true }
+    }
     // email validate if provided
     if (form.value.email && String(form.value.email).trim() !== '') {
         const e = String(form.value.email).trim()
@@ -629,6 +638,11 @@ async function submit() {
 
     if (selectedTeamId.value) fd.append('team', selectedTeamId.value)
     if (selectedGroupId.value) fd.append('group', selectedGroupId.value)
+
+    if (selectedBaseRoleKey.value === 'ticket') {
+        fd.append('ticketPeriod', exp.value.ticketPeriod || '')
+        fd.append('audiofile', JSON.stringify(selectedFileId.value || []))
+    }
 
     // databases: send either db_id-all=all or db_id-{id} flags
     if (selectedAllDatabases.value) {
@@ -903,11 +917,14 @@ watch(selectedBaseRoleKey, (val) => {
             // clear any selected databases and prevent changes
             selectedDatabaseIds.value = []
             selectedAllDatabases.value = false
+            selectedGroupId.value = null
+            selectedTeamId.value = null
         } else {
             // when role is not Ticket, hide/clear ticket-only fields
             try { selectedFileId.value = Array.isArray(selectedFileId.value) ? [] : null } catch (e) {}
-            try { if (exp && exp.value) exp.value.expires = '' } catch (e) {}
+            try { if (exp && exp.value) exp.value.ticketPeriod = '' } catch (e) {}
             errors.file = false
+            errors.ticketPeriod = false
         }
     } catch (e) {}
 })

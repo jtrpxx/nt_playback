@@ -1007,4 +1007,6 @@ async function saveFavorite() {
   border: 1px solid rgb(245, 163, 163) !important;
   box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
 }
+
+
 </style>

@@ -13,7 +13,7 @@ import os
 from django.conf import settings
 
 # models
-from apps.core.model.authorize.models import MainDatabase,UserAuth,UserProfile,Department,MainDatabase,UserGroup,UserTeam,UserLog
+from apps.core.model.authorize.models import MainDatabase,UserAuth,UserProfile,Department,MainDatabase,UserGroup,UserTeam,UserLog,UserTicket
 from apps.core.model.audio.models import AudioFile
 
 
@@ -412,7 +412,6 @@ def ApiCheckUsername(request):
 @require_POST
 def ApiSaveUser(request, user_id=None):
     """สร้างหรืออัพเดตผู้ใช้
-
     ถ้าใน POST มีค่าของ `user_id` ให้ทำการอัพเดต มิฉะนั้นให้สร้างผู้ใช้ใหม่
     """
     User = get_user_model()
@@ -534,6 +533,7 @@ def ApiSaveUser(request, user_id=None):
             )
 
             if auth_user_create:
+                # กรณี User ปกติ: สร้าง UserAuth และ UserProfile
                 main_dbs = list(MainDatabase.objects.only('id').order_by('id'))
 
                 is_all_dbs = post_data.get('db_id-all') == 'all'
@@ -553,12 +553,54 @@ def ApiSaveUser(request, user_id=None):
                         user_permission=user_permission_obj
                     ))
                 UserAuth.objects.bulk_create(user_auths)
+                
+                # ตรวจสอบว่าเป็น Role Ticket หรือไม่
+                if role_input == 'ticket':
+                    # กรณี Ticket: สร้าง UserTicket เท่านั้น ไม่สร้าง UserAuth/UserProfile
+                    ticket_period = post_data.get('ticketPeriod', '')
+                    audiofile_raw = post_data.get('audiofile', '[]')
+                    
+                    start_at = None
+                    expire_at = None
+                    
+                    # Parse ticketPeriod (Format: "YYYY-MM-DD HH:MM to YYYY-MM-DD HH:MM")
+                    if ticket_period:
+                        # Support both ' to ' and ' - ' separators
+                        if ' to ' in ticket_period:
+                            parts = ticket_period.split(' to ')
+                        elif ' - ' in ticket_period:
+                            parts = ticket_period.split(' - ')
+                        else:
+                            parts = [ticket_period]
 
-                UserProfile.objects.create(
-                    user=auth_user_create,
-                    phone=phone,
-                    team=team_obj
-                )
+                        if len(parts) >= 1:
+                            start_at = parts[0].strip()
+                            if len(start_at) <= 10:
+                                start_at += " 00:00:00"
+                        if len(parts) >= 2:
+                            expire_at = parts[1].strip()
+                            if len(expire_at) <= 10:
+                                expire_at += " 23:59:59"
+                        else:
+                            expire_at = parts[0].strip()
+                            if len(expire_at) <= 10:
+                                expire_at += " 23:59:59"
+
+                    UserTicket.objects.create(
+                        user=auth_user_create,
+                        audiofile_id=audiofile_raw,
+                        start_at=start_at,
+                        expire_at=expire_at,
+                        status='t'
+                    )
+                else:
+
+
+                    UserProfile.objects.create(
+                        user=auth_user_create,
+                        phone=phone,
+                        team=team_obj
+                    )
 
             context = {
                 'status': "success",

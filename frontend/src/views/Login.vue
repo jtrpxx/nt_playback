@@ -71,8 +71,8 @@ const form = reactive({
 })
 
 const handleLogin = async () => {
-  const success = await authStore.login(form.username, form.password)
-  if (success) {
+  const result = await authStore.login(form.username, form.password)
+  if (result && result.success) {
     // persist or remove saved credentials based on rememberMe
     try {
       if (form.rememberMe) {
@@ -84,7 +84,7 @@ const handleLogin = async () => {
     try { showToast(`Welcome! ${authStore.user?.username || ''}`, 'success') } catch (e) { }
     router.push('/')
   } else {
-    try { showToast('Login failed. Please check your username and password.', 'error') } catch (e) { }
+    try { showToast(result.message || 'Login failed. Please check your username and password.', 'error') } catch (e) { }
   }
 }
 

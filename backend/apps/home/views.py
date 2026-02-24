@@ -112,7 +112,7 @@ def ApiGetAudioList(request):
 
     set_audio = SetAudio.objects.filter(user=request.user).first()
     main_db_id = UserAuth.objects.filter(user=request.user, allow=True).values_list("maindatabase_id", flat=True)
-    user_ticket = UserTicket.objects.filter(user=request.user).first() #ex. user_ticket.audiofile_id = ["3","2","31"]
+    user_ticket = UserTicket.objects.filter(user=request.user).first() 
 
     if user_ticket :
         audiofile_id = json.loads(user_ticket.audiofile_id)

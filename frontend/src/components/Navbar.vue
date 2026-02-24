@@ -76,8 +76,15 @@
       <ul class="menu-list">
         <li class="menu-item" v-if="store.hasPermission('User Management')">
           <router-link to="/user-management" class="menu-link">
-            <i class="fa-solid fa-user-lock"></i>
+            <i class="fa-solid fa-users"></i>
             <span data-translate="set_permissions">User Management</span>
+          </router-link>
+        </li>
+
+        <li class="menu-item" v-if="store.hasPermission('Add User')">
+          <router-link to="/user-ticket" class="menu-link">
+            <i class="fa-solid fa-user-clock"></i>
+            <span data-translate="set_permissions">User Ticket</span>
           </router-link>
         </li>
 

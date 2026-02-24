@@ -1,19 +1,15 @@
 # apps/home/views.py
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from django.http import JsonResponse,FileResponse,Http404
-from django.db import transaction, DatabaseError,IntegrityError
+from django.http import JsonResponse
+from django.db import transaction,IntegrityError
 from django.db.models import Q
 import re
-from django.contrib import messages
 from apps.core.utils.function import create_user_log
 import json
 
-import os
-from django.conf import settings
-
 # models
-from apps.core.model.authorize.models import MainDatabase,UserAuth,UserProfile,Department,MainDatabase,UserGroup,UserTeam,UserLog,UserTicket
+from apps.core.model.authorize.models import MainDatabase,UserAuth,UserProfile,MainDatabase,UserTeam,UserTicket
 from apps.core.model.audio.models import AudioFile
 
 
@@ -21,7 +17,7 @@ from apps.configuration.models import UserPermission,UserPermissionDetail
 from apps.core.utils.permissions import require_action, get_user_actions
 
 #serializer
-from apps.core.model.authorize.serializers import UserProfileSerializer,DepartmentSerializer,UserGroupSerializer,UserTeamSerializer
+from apps.core.model.authorize.serializers import UserProfileSerializer
 
 from django.contrib.auth import get_user_model
 

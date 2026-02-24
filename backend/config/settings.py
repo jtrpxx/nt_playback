@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     'apps.user_management',
     'apps.log_user',
     'apps.setting',
+    'apps.user_ticket'
     
 ]
 

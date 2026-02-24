@@ -9,6 +9,7 @@ from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, Bl
 from django.middleware.csrf import get_token
 from django.contrib.sessions.models import Session
 from django.conf import settings
+from django.utils import timezone
 
 # ปรับ Import ให้ตรงกับโครงสร้างไฟล์ใหม่ (apps/core/utils/function.py)
 from apps.core.utils.function import create_user_log
@@ -16,7 +17,7 @@ from apps.core.utils.function import create_user_log
 # ปรับ Import UserProfile (คาดว่าน่าจะอยู่ที่ apps.core.models หรือ apps.users.models)
 # หากยังไม่มีไฟล์ models ให้ตรวจสอบ path นี้อีกครั้ง
 try:
-    from apps.core.model.authorize.models import UserProfile, UserAuth
+    from apps.core.model.authorize.models import UserProfile, UserAuth, UserTicket
 except ImportError:
     # Fallback หรือ Mock กรณีหาไม่เจอเพื่อป้องกัน Server Crash
     UserProfile = None
@@ -35,6 +36,27 @@ def index(request):
         
         if form.is_valid():
             user = form.get_user()
+
+            # ตรวจสอบ UserTicket หมดอายุ
+            try:
+                if 'UserTicket' in globals() and UserTicket:
+                    ticket = UserTicket.objects.filter(user=user).first()
+                    if ticket and ticket.expire_at and timezone.now() > ticket.expire_at:
+                        ticket.status = 'f'
+                        ticket.save()
+                        user.is_active = False
+                        user.save()
+                        
+                        create_user_log(
+                            user=user,
+                            action="Login",
+                            detail=f"Login failed: Ticket expired for user {user.username}",
+                            status="error",
+                            request=request
+                        )
+                        return JsonResponse({'error': 'Your ticket has expired.'}, status=401)
+            except Exception as e:
+                print(f"Error checking ticket expiration: {e}")
             
             # Login เข้า Session (เผื่อกรณี Hybrid หรือ Admin)
             login(request, user)
@@ -124,7 +146,7 @@ def index(request):
             )
             
             # ส่ง Error กลับเป็น JSON
-            return JsonResponse({'error': 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'}, status=401)
+            return JsonResponse({'error': 'Login failed. Please check your username and password.'}, status=401)
 
     # Allow GET to serve the frontend SPA (redirect to root), so visiting
     # /login/ in the browser loads the Vue app which then renders the login view.

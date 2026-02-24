@@ -64,3 +64,6 @@ export const API_SAVE_COLUMN_AUDIO_RECORD = () => `${getApiBase()}/api/setting/s
 
 // หน้า Profile
 export const API_CHANGE_PASSWORD = () => `${getApiBase()}/api/change-password/`
+
+// หน้า User Ticket
+export const API_GET_USER_TICKET = () => `${getApiBase()}/api/get/user-ticket/`

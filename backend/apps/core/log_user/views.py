@@ -2,19 +2,9 @@
 from django.shortcuts import render, redirect
 from functools import wraps
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 # from apps.page_notfound.views import page_not_found
-from utils.function import BaseListAPIView,PageNumberPagination
 from django.db.models import Q
 from django.http import JsonResponse
-from django.core import serializers
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-import json
-from django.http import JsonResponse
-import os
-import subprocess
-from datetime import datetime, timedelta
 from django.contrib.auth.models import User
 
 # models
@@ -23,10 +13,6 @@ from apps.model_center.authorize.models import UserLog,UserProfile
 from apps.core.utils.permissions import get_user_actions, require_action
 #serializer
 from apps.model_center.authorize.serializers import MainDatabaseSerializer
-
-
-class NoLimitPagination(PageNumberPagination):
-    page_size = 1000  
 
 def page_not_found(request, exception=None):
     return render(request, 'page_notfound/index.html', status=404)
@@ -46,19 +32,15 @@ def check_permission(view_func):
 @login_required(login_url='/login')
 @require_action('System Logs', 'Audit Logs', 'Export Logs')
 def index(request, type):
-    template = 'default/layout-leftbar.html'
     title = ''
 
     users = User.objects.filter(userlog__isnull=False).distinct()
     if type == 'audit':
         title = "Audit log"
-        user_log = UserLog.objects.filter(status='success')
     elif type == 'system':
         title = "System log"
-    
 
     context = {
-        'template': template,
         'title': title,
         'users': users,
     }

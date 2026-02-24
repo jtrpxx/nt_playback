@@ -72,11 +72,16 @@ export const useAuthStore = defineStore('auth', () => {
 			})
 
 			if (handleRedirectOrLoginNext(response)) {
-				return false
+				return { success: false }
 			}
 
 			if (!response.ok) {
-				throw new Error(`Login failed with status: ${response.status}`)
+				let errorMsg = `Login failed with status: ${response.status}`
+				try {
+					const errData = await response.json()
+					if (errData && errData.error) errorMsg = errData.error
+				} catch (e) {}
+				throw new Error(errorMsg)
 			}
 
 			const data = await response.json()
@@ -90,10 +95,10 @@ export const useAuthStore = defineStore('auth', () => {
 			// of attempting to load Home (which would surface a 403/exception).
 			try {
 				const profileResp = await fetch(API_HOME_INDEX(), { credentials: 'include' })
-					if (handleRedirectOrLoginNext(profileResp)) return false
+					if (handleRedirectOrLoginNext(profileResp)) return { success: false }
 				if (profileResp && profileResp.status === 403) {
 					try { router.push({ name: 'Denied' }) } catch (e) { try { window.location.href = '/denied' } catch (ee) {} }
-					return true
+					return { success: true }
 				}
 			} catch (e) {
 				// ignore network errors here; we'll continue to fetch permissions below
@@ -109,11 +114,11 @@ export const useAuthStore = defineStore('auth', () => {
 				// fallback: attempt to fetch via ensureCsrf()
 				try { await ensureCsrf() } catch (e) {}
 			}
-			return true
+			return { success: true }
 		} catch (error) {
 			console.error('Login error:', error)
 			clear()
-			return false
+			return { success: false, message: error.message }
 		}
 	}
 

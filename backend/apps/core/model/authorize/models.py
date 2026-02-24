@@ -167,12 +167,13 @@ class UserTicket(models.Model):
     start_at = models.DateTimeField(null=True, blank=True, verbose_name='Start At')
     expire_at = models.DateTimeField(null=True, blank=True, verbose_name='Expire At')
     status = models.CharField(max_length=50, default='active', verbose_name='Status')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    phone = models.CharField(max_length=10, blank=True, verbose_name='Phone')
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'tb_user_ticket'
-        ordering = ['-created_at']
+        ordering = ['-create_at']
         verbose_name = 'user ticket'
 
     def __str__(self):

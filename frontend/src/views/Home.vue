@@ -144,10 +144,10 @@
                   <h5 class="card-title mb-2 mt-1">Audio Records</h5>
                 </div>
                 <div class="d-flex align-items-center">
-                  <button class="btn btn-light" id="shareBtn" style="position: relative;margin-right: 8px;font-size: 11px;color: #495669;font-weight: 600;">
-                            <i class="fa-solid fa-share-nodes"></i> File Share
-                            <span class="badge" id="shareCount">0</span>
-                        </button>
+                    <button class="btn btn-light" id="shareBtn" style="position: relative;margin-right: 8px;font-size: 11px;color: #495669;font-weight: 600;" @click="openShare">
+                        <i class="fa-solid fa-share-nodes"></i> File Share
+                        <span v-if="selectedCount > 0" class="badge badge-danger" id="shareCount">{{ selectedCount }}</span>
+                      </button>
                   <div style="width:260px;">
                     <SearchInput ref="searchInputRef" v-model="searchQuery" :placeholder="'Search...'"
                       @typing="onTyping" @enter="onSearch" @clear="clearSearchQuery" />
@@ -183,8 +183,17 @@
                     @delete="onRowDelete"
                     @row-dblclick="onRowDblClick"
                     @page-change="changePage"
-                    @per-change="setPerPage"
-                  />
+                    @per-change="setPerPage">
+
+                  <template #header-checked>
+                    <input type="checkbox" class="form-check-input" :checked="selectAllChecked" @change.stop="toggleSelectAll" />
+                  </template>
+
+                  <template #cell-checked="{ row, index }">
+                    <input type="checkbox" class="form-check-input" :checked="!!row.checked" @change.stop="toggleRowSelection(row)" />
+                  </template>
+
+                </TableTemplate>
 
               <!-- Content Audio Records-->
             </div>
@@ -195,6 +204,7 @@
     </div>
   </MainLayout>
   <ModalHome v-if="authStore.hasPermission('My Favorite Search')" v-model="showFavoriteModal" :favorites="favoriteSearchAll" :mainDbOptions="mainDbOptions" :agentOptions="agentOptions" @apply="applyFavorite" @edit="editFavorite" @delete="deleteFavorite" />
+  <ModalFileShare v-model="showShareModal" :files="selectedFiles" @share="onShare" />
   <AudioPlayer v-model="showAudioModal" :src="audioSrc" :metadata="audioMetadata" />
 </template>
 
@@ -206,7 +216,9 @@ import ModalHome from '../components/ModalHome.vue'
 import TableTemplate from '../components/TableTemplate.vue'
 import SearchInput from '../components/SearchInput.vue'
 import AudioPlayer from '../components/AudioPlayer.vue'
+import ModalFileShare from '../components/ModalFileShare.vue'
 import { useHome } from '../composables/useHome'
+import { ref } from 'vue'
 
 const {
   authStore,
@@ -267,6 +279,34 @@ const {
   onRowEdit,
   onRowDelete,
   onSortChange,
-
+  toggleRowSelection,
+  selectedFiles,
+  selectedCount,
+  selectAllChecked,
+  toggleSelectAll,
 } = useHome()
-</script><style scoped src="../assets/css/home.css"></style>
+
+const showShareModal = ref(false)
+
+function openShare() { showShareModal.value = true }
+
+function onShare(payload) { console.log('Share requested', payload) }
+</script>
+<style scoped src="../assets/css/home.css"></style>
+<style scoped>
+/* Share count badge: circular and lifted above the button */
+#shareBtn { position: relative; }
+.badge.badge-danger {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  width: 22px;
+  height: 16px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  line-height: 1;
+}
+</style>

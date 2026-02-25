@@ -65,6 +65,7 @@ export function useHome() {
   const sortDirection = ref('')
 
   const defaultColumns = [
+    { key: 'checked', label: '', sortable: false, width: '1%' },
     { key: 'index', label: '#', isIndex: true, sortable: false },
     { key: 'main_db', label: 'Database Server' },
     { key: 'start_datetime', label: 'Start Date & Time' },
@@ -80,6 +81,37 @@ export function useHome() {
   ]
 
   const columns = ref([...defaultColumns])
+
+  // selection state for file sharing (keyed map to avoid duplicates across pages)
+  const _selectedFilesMap = ref({})
+  const selectedFiles = computed(() => Object.values(_selectedFilesMap.value || {}))
+  const selectedCount = computed(() => Object.keys(_selectedFilesMap.value || {}).length)
+
+  function _makeKey(row) {
+    const fid = row.file_id ?? row.id ?? row.fileId
+    if (fid !== undefined && fid !== null && fid !== '') return String(fid)
+    // fallback composite key when no id available — include multiple fields to avoid accidental collisions
+    const parts = [row.file_name || '', (row.start_datetime ?? row.startDatetime ?? row.start) || '', row.customer_number ?? row.customerNumber ?? '', row.extension ?? '']
+    return parts.join('::')
+  }
+
+  function toggleRowSelection(row) {
+    if (!row) return
+    const key = _makeKey(row)
+    if (Object.prototype.hasOwnProperty.call(_selectedFilesMap.value, key)) {
+      try { const copy = { ..._selectedFilesMap.value }; delete copy[key]; _selectedFilesMap.value = copy } catch (e) {}
+      row.checked = false
+    } else {
+      const entry = {
+        file_id: row.file_id ?? row.id ?? row.fileId ?? '',
+        file_name: row.file_name ?? row.fileName ?? '',
+        customer_number: row.customer_number ?? row.customerNumber ?? '',
+        start_datetime: (row.start_datetime ?? row.startDatetime ?? row.start) || ''
+      }
+      _selectedFilesMap.value = { ..._selectedFilesMap.value, [key]: entry }
+      row.checked = true
+    }
+  }
 
   const onTyping = () => {
     currentPage.value = 1
@@ -386,7 +418,14 @@ export function useHome() {
       const res = await fetch(`${API_AUDIO_LIST()}?${params.toString()}`, { credentials: 'include' })
       if (!res.ok) throw new Error('Failed to fetch')
       const json = await res.json()
-      records.value = json.data || []
+      records.value = (json.data || []).map(r => {
+        try {
+          // if this row was previously selected (by key), preserve checked state
+          const k = _makeKey(r)
+          r.checked = !!(_selectedFilesMap.value && Object.prototype.hasOwnProperty.call(_selectedFilesMap.value, k))
+        } catch (e) { r.checked = !!r.checked }
+        return r
+      })
       totalItems.value = json.recordsFiltered ?? json.recordsTotal ?? records.value.length
     } catch (e) {
       console.error('fetchData error', e)
@@ -398,6 +437,60 @@ export function useHome() {
   const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / perPage.value)))
   const startIndex = computed(() => (currentPage.value - 1) * perPage.value)
   const paginatedRecords = computed(() => records.value)
+  const selectAllChecked = computed(() => {
+    const rows = paginatedRecords.value || []
+    if (!rows || rows.length === 0) return false
+    // consider a row checked if its key exists in the map
+    return rows.every(r => {
+      try {
+        const k = _makeKey(r)
+        return !!(_selectedFilesMap.value && Object.prototype.hasOwnProperty.call(_selectedFilesMap.value, k))
+      } catch (e) { return !!r.checked }
+    })
+  })
+
+  function toggleSelectAll() {
+    const rows = paginatedRecords.value || []
+    if (!rows || rows.length === 0) return
+    const allChecked = rows.every(r => {
+      try {
+        const k = _makeKey(r)
+        return !!(_selectedFilesMap.value && Object.prototype.hasOwnProperty.call(_selectedFilesMap.value, k))
+      } catch (e) { return !!r.checked }
+    })
+    if (allChecked) {
+      // uncheck visible rows and remove from map
+      for (const r of rows) {
+        try {
+          const k = _makeKey(r)
+          if (Object.prototype.hasOwnProperty.call(_selectedFilesMap.value, k)) {
+            const copy = { ..._selectedFilesMap.value }
+            delete copy[k]
+            _selectedFilesMap.value = copy
+          }
+          r.checked = false
+        } catch (e) {}
+      }
+    } else {
+      // select visible rows (add to map)
+      const copy = { ..._selectedFilesMap.value }
+      for (const r of rows) {
+        try {
+          const k = _makeKey(r)
+          if (!Object.prototype.hasOwnProperty.call(copy, k)) {
+            copy[k] = {
+              file_id: r.file_id ?? r.id ?? r.fileId ?? '',
+              file_name: r.file_name ?? r.fileName ?? '',
+              customer_number: r.customer_number ?? r.customerNumber ?? '',
+              start_datetime: (r.start_datetime ?? r.startDatetime ?? r.start) || ''
+            }
+          }
+          r.checked = true
+        } catch (e) { /* ignore per-row errors */ }
+      }
+      _selectedFilesMap.value = copy
+    }
+  }
   const startItem = computed(() => totalItems.value === 0 ? 0 : startIndex.value + 1)
   const endItem = computed(() => Math.min(totalItems.value, startIndex.value + (records.value.length || 0)))
 
@@ -744,6 +837,9 @@ export function useHome() {
 
         if (keys.length > 0) {
           const newCols = []
+          // ensure checked column is present before index
+          const checkedCol = defaultColumns.find(c => c.key === 'checked')
+          if (checkedCol) newCols.push(checkedCol)
           newCols.push(defaultColumns.find(c => c.key === 'index'))
           keys.forEach(k => {
             const def = defaultColumns.find(c => c.key === k)
@@ -971,6 +1067,10 @@ export function useHome() {
     startItem,
     endItem,
     pagesToShow
+    ,
+    selectedFiles,
+    selectedCount,
+    selectAllChecked
   }
 
   const actions = {
@@ -993,6 +1093,9 @@ export function useHome() {
     onRowEdit,
     onRowDelete,
     onSortChange
+    ,
+    toggleRowSelection,
+    toggleSelectAll
   }
 
   return {

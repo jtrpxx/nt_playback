@@ -4,11 +4,13 @@
       <table class="table table-sm table-striped">
         <thead class="table-primary">
           <tr>
-            <th v-for="col in columns" :key="col.key" :style="colWidthStyle(col)" 
+            <th v-for="col in filteredColumns" :key="col.key" :style="colWidthStyle(col)" 
                 @click="col.sortable !== false ? onSort(col.key) : null" 
                 :class="{ 'cursor-pointer': col.sortable !== false }">
               <div class="d-flex justify-content-between align-items-center">
-                <span>{{ col.label }}</span>
+                <slot :name="`header-${col.key}`" :column="col">
+                  <span>{{ col.label }}</span>
+                </slot>
                 <i v-if="col.sortable !== false" class="fa-solid" :class="getSortIcon(col.key)" style="margin-left: 5px; opacity: 0.5;font-size: 9px;"></i>
               </div>
             </th>
@@ -16,7 +18,7 @@
         </thead>
         <tbody>
           <tr v-if="((!rows || rows.length === 0) && !loading)">
-            <td :colspan="columns.length" style="--bs-table-bg-type: #fff;border-bottom-width: 0px;">
+            <td :colspan="filteredColumns.length" style="--bs-table-bg-type: #fff;border-bottom-width: 0px;">
               <div class="empty-state">
                 <i class="fa-solid fa-dove"></i>
                 <p>No matching records found.</p>
@@ -24,7 +26,7 @@
             </td>
           </tr>
           <tr v-else v-for="(r, idx) in rows" :key="r.id ?? idx" @dblclick.stop="$emit('row-dblclick', r)" @click="onRowClick(idx, r)" :class="{ 'selected-row': props.showSelection && selectedIndex === idx }">
-            <td v-for="col in columns" :key="col.key" :style="colWidthStyle(col)">
+            <td v-for="col in filteredColumns" :key="col.key" :style="colWidthStyle(col)">
               <slot :name="`cell-${col.key}`" :row="r" :index="idx">
                 <template v-if="col.isIndex">{{ startIndex + idx + 1 }}</template>
                 <template v-else-if="col.tooltip">
@@ -142,6 +144,10 @@ const props = defineProps({
   totalItems: { type: Number, default: 0 },
   sortColumn: { type: String, default: '' },
   sortDirection: { type: String, default: '' }
+})
+
+const filteredColumns = computed(() => {
+  return props.columns.filter(col => col.key !== 'selection' || props.showSelection)
 })
 
 const emit = defineEmits(['edit', 'delete', 'page-change', 'per-change', 'row-dblclick', 'row-click', 'sort-change'])

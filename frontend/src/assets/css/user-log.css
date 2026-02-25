@@ -1,0 +1,58 @@
+.filter-row {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  flex: 1 1;
+}
+
+
+.form-input-modal {
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.input-group .custom-select-container {
+  width: 100%;
+}
+
+/* make floating-label behave like CustomSelect for inputs */
+.input-group .floating-label {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  transform: translateY(-50%);
+  font-size: clamp(12px, 1.2vw, 13px);
+  color: #6c757d;
+  pointer-events: none;
+  transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  padding: 0 0.2em;
+  transform-origin: left center;
+}
+.input:focus ~ .floating-label,
+.input-group.has-value .floating-label {
+  transform: translateY(-125%) scale(0.8);
+  color: #416fd6;
+}
+
+/* Export button and dropdown */
+.export-group { position: relative; }
+.export-dropdown { position: absolute; right: 0; margin-top: 34px; min-width: 150px; z-index: 1050; background: #fff; border: 1px solid rgba(0,0,0,.15); border-radius: 6px; box-shadow: 0 .5rem 1rem rgba(0,0,0,.175); list-style: none; padding: 6px 0; }
+.export-dropdown .dropdown-item { width:100%; text-align:left; padding:8px 16px; background:transparent; border:none;font-size: 10px; }
+
+
+:deep(.card-body-datatable .table-container .table-scroll) {
+  height: calc(100vh - 315px) !important;
+}

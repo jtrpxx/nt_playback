@@ -83,7 +83,7 @@
 
         <li class="menu-item" v-if="store.hasPermission('Add User')">
           <router-link to="/user-ticket" class="menu-link">
-            <i class="fa-solid fa-user-clock"></i>
+            <i class=" "></i>
             <span data-translate="set_permissions">User Ticket</span>
           </router-link>
         </li>

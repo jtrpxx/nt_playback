@@ -1,0 +1,148 @@
+.customize-btn {
+    margin-left: auto;
+    padding: 6px 16px;
+    background: transparent;
+    border: 1px solid #416fd6;
+    border-radius: 20px;
+    color: #416fd6;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.customize-btn:hover {
+    background: #416fd6;
+    color: #fff;
+}
+
+.select-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.card-left,
+.card-right {
+    background-color: rgba(0, 0, 0, 0);
+    border: rgba(0, 0, 0, 0);
+    gap: 14px;
+
+}
+
+.main-content {
+    flex: 1 1 auto;
+    padding: 83.5px 0px 16px 0px;
+}
+
+.main-wrapper {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100vh - 140px);
+}
+
+.main-wrapper::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.main-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.main-wrapper::-webkit-scrollbar-thumb {
+    background-color: #416fd6;
+    border-radius: 4px;
+}
+
+.database-grid,
+.permissions-grid-3 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.permissions-grid-3 {
+    max-height: none;
+}
+
+.db-card,
+.permission-item {
+    box-sizing: border-box;
+    flex: 0 1 220px;
+    min-width: 180px;
+}
+
+.card {
+    overflow: visible;
+}
+
+.permission-group-header {
+    grid-column: 1 / -1;
+    font-weight: 600;
+    color: rgb(108, 117, 125);
+    margin: 16px 0px 8px;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.main-wrapper .card-body {
+    overflow: visible ;
+}
+
+.dropdown-options::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.dropdown-options::-webkit-scrollbar-track {
+  background: transparent;
+  margin-top: 6px;
+  margin-bottom: 12px;
+}
+
+.dropdown-options::-webkit-scrollbar-thumb {
+  background-color: #416fd6;
+  border-radius: 4px;
+}
+
+/* Password visibility toggle styles */
+.input-group { position: relative; }
+.input-group .input { padding-right: 40px; }
+.input-group .toggle-visibility {
+    position: absolute;
+    right: 8px;
+    top: 16.5px;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    font-size: 14px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.input-group .toggle-visibility:focus { outline: none; }
+
+/* Role card error styling */
+.role-card.role-card-error {
+    border: 1px solid rgb(245, 163, 163) !important;
+    box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
+    border-radius: 8px;
+}
+.permission-item:has(input:checked):has(input:disabled)  {
+    border-color: #416fd6;
+}
+.permission-item:has(input:checked):has(input:disabled) .perm-checkbox {
+    background: #416fd6 !important;
+    border-color: #416fd6;
+}
+
+.form-input-modal {
+    border-radius: 25px;
+    border: 1px solid rgb(245, 163, 163) !important;
+    box-shadow: rgba(220, 53, 69, 0.25) 0px 0px 0px 0.2rem !important;
+}

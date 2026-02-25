@@ -1,0 +1,26 @@
+.row-container {
+    flex: 1 1 auto;
+}
+.container-fluid-home {
+    padding-right: calc(var(--bs-gutter-x) * 0.95);
+    box-sizing: border-box;
+}
+.group-list {
+    max-height: calc(100vh - 260px);
+    margin-top: 3px;
+    padding-right: 4px;
+}
+
+.group-card-desc {
+    font-size: 10px;
+}
+
+.group-card-item.active {
+    border-color: #416fd6;
+    box-shadow: 0 10px 20px rgba(65, 111, 214, 0.1);
+    transform: translateY(-2px);
+}
+
+.custom-roles-list::-webkit-scrollbar-track {
+    margin-top: 4px;
+}

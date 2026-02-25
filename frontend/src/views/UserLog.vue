@@ -114,6 +114,7 @@ import SearchInput from '../components/SearchInput.vue'
 import { registerRequest } from '../utils/pageLoad'
 import { API_GET_USER, API_GET_USER_ALL, API_GET_LOG_USER } from '../api/paths'
 import { exportTableToFormat } from '../assets/js/function-all'
+import { useUserLog } from '../composables/useUserLog'
 
 const searchQuery = ref('')
 let searchTimeout = null
@@ -364,6 +365,46 @@ const onExportFormat = (format) => {
     fileNamePrefix: cardTitle.value
   })
 }
+const {
+  authStore,
+  searchQuery,
+  exportOpen,
+  exportWrap,
+  perPageOptions,
+  perPage,
+  currentPage,
+  filters,
+  userOptions,
+  actionOptions,
+  startInput,
+  endInput,
+  searchInputRef,
+  perWrap,
+  perDropdownOpen,
+  records,
+  totalItems,
+  loading,
+  expanded,
+  columns,
+  type,
+  cardTitle,
+  requiredPermission,
+  canView,
+  totalPages,
+  startIndex,
+  paginatedRecords,
+  onTyping,
+  setPerPage,
+  changePage,
+  onRowEdit,
+  onRowDelete,
+  clearSearchQuery,
+  resetFilters,
+  toggleExport,
+  onExportFormat,
+  fetchData,
+  fetchUsers
+} = useUserLog()
 </script>
 
 <style scoped>
@@ -427,3 +468,4 @@ const onExportFormat = (format) => {
   height: calc(100vh - 315px) !important;
 }
 </style>
+<style scoped src="../assets/css/user-log.css"></style>

@@ -467,7 +467,7 @@ def ApiGetAudioList(request):
             "agent": agent_display,
             "full_name": full_name,
             "file_path": audio.audiofile.file_path if getattr(audio, 'audiofile', None) else None,
-            "file_id": audio.audiofile.id if getattr(audio, 'audiofile', None) else None,
+            # "file_id": audio.audiofile.id if getattr(audio, 'audiofile', None) else None,
             "set_audio": set_audio.audio_path if set_audio else None,
             "custom_field_1": custom_field
         })

@@ -37,7 +37,7 @@
                     <div class="d-flex align-items-center" style="gap:12px; margin-top:6px;">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" id="shareTypeUser" value="user" v-model="selectionType">
-                            <label class="form-check-label" for="shareTypeUser">User</label>
+                            <label class="form-check-label" for="shareTypeUser">Integrate</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" id="shareTypeTicket" value="ticket" v-model="selectionType">

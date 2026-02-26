@@ -15,9 +15,11 @@
 
                 <div class="card card-custom-role" style="border: 2px dashed #e2e8f0;">
                     <div class="custom-roles-list" style="padding: 10px; max-height: 226px; overflow:auto;">
-                        <div v-for="(f, idx) in files" :key="f.file_id || f.file_name + '-' + idx" class="custom-role-item">
+                        <div v-for="(f, idx) in files" :key="f.file_id || f.file_name + '-' + idx"
+                            class="custom-role-item">
                             <div style="display:flex;align-items:center;gap:10px;">
-                                <div class="blue-icon" style="font-size: 14px;width: 25px;height: 25px;"><i class="fa-solid fa-file-audio"></i></div>
+                                <div class="blue-icon" style="font-size: 14px;width: 25px;height: 25px;"><i
+                                        class="fa-solid fa-file-audio"></i></div>
                                 <div class="group-card-main">
                                     <div class="group-card-header">
                                         <span class="group-card-title">{{ truncateFileName(f.file_name) }}</span>
@@ -42,28 +44,30 @@
                             <label class="form-check-label" for="shareTypeTicket">Ticket</label>
                         </div>
                     </div>
+                </div>
 
-                    <div v-if="selectionType === 'user'" class="input-group" style="margin-top:8px;">
+                <div class="permissions-grid-2">
+                    <div v-if="selectionType === 'user'" class="input-group">
                         <CustomSelect v-model="shareUser" :options="userOptions" :always-up="true" placeholder="User" name="shareUser" />
                     </div>
 
-                    <div v-else class="input-group" v-has-value style="margin-top:8px;">
+                    <div v-else class="input-group" v-has-value>
                         <input required type="text" name="emailTicket" autocomplete="off" class="input" v-model="emailTicket" maxlength="255">
                         <label class="title-label">Email</label>
                     </div>
-                </div>
-
-                <div class="d-flex gap-3 mt-3">
-                   <input ref="fromInput" v-flatrangepickr="{ target: exp, key: 'ticketPeriod' }"  required type="text" name="ticketPeriod" autocomplete="off" :class="['input', { 'form-input-modal': errors.ticketPeriod }]">
-<label class="title-label">Ticket Period*</label>
-<span class="calendar-icon"><i class="fa-regular fa-calendar"></i></span>
-<div v-show="errors.ticketPeriod" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This field is required.</div>
+                    <div class="input-group" v-has-value>
+                        <input ref="fromInput" v-flatrangepickr="{ target: exp, key: 'period' }" required type="text" name="period" autocomplete="off" :class="['input', { 'form-input-modal': errors.period }]">
+                        <label class="title-label">Period*</label>
+                        <span class="calendar-icon"><i class="fa-regular fa-calendar"></i></span>
+                        <div v-show="errors.period" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This field is required.</div>
+                    </div>
                 </div>
             </div>
 
             <div class="modal-footer">
                 <button class="btn-role btn-secondary" @click="close"><i class="fas fa-times"></i> Cancel</button>
-                <button class="btn-role btn-primary" :disabled="files.length === 0" @click="onCreate"><i class="fa-solid fa-plus"></i> Create</button>
+                <button class="btn-role btn-primary" :disabled="files.length === 0" @click="onCreate"><i
+                        class="fa-solid fa-plus"></i> Create</button>
             </div>
         </div>
 
@@ -102,14 +106,15 @@
                         <p style="margin:0">Ticket <strong style="color:#2563eb">{{ resultData.ticketCode }}</strong> created successfully!</p>
                     </div>
 
-                    <div class="card" style="padding:16px; border:1px solid #e6eef8;">
+                    <div class="card card-detail-to" style="padding:16px; border:1px solid #e6eef8;">
                         <p style="margin:0 0 8px 0">Dear <strong style="color:#2563eb">{{ resultData.recipient }}</strong>,</p>
                         <p style="margin:0 0 12px 0">An access ticket has been created for you to listen to specific audio records on NT Audio Search.</p>
                         <div style="border:1px dashed #e6eef8; padding:12px; margin-bottom:12px;">
                             <div class="detail-file-share"><strong class="strong-title">Ticket Code:</strong> <span style="color:#2563eb">{{ resultData.ticketCode }}</span></div>
-                            <div class="detail-file-share"><strong class="strong-title">Password:</strong> <code style="background:#f3f4f6; padding:4px 8px; border-radius:4px">{{ resultData.password }}</code></div>
+                            <div class="detail-file-share"><strong class="strong-title">Password:</strong> <code style="background:#f3f4f6; padding:4px 8px; border-radius:4px">{{ resultData.password }}</code>
+                            </div>
                             <div class="detail-file-share"><strong class="strong-title">Valid Start:</strong> {{ resultData.validStart }}</div>
-                            <div class="detail-file-share"><strong class="strong-title">Valid Expire:</strong> {{ resultData.validExpiry }}</div>
+                            <div class="detail-file-share"><strong class="strong-title">Valid Expire:</strong> {{ resultData.validExpire }}</div>
                         </div>
                         <p style="margin:0 0 8px 0">Please visit our portal to login using the credentials above.</p>
                         <div style="margin-bottom:12px;"><a href="/login">https://192.168.1.95/login</a></div>
@@ -130,7 +135,7 @@
                         <p>Files are shared so you can listen to specific audio records on <br> NT Audio Search.</p>
                         <div style="border:1px dashed #e6eef8; padding:12px; margin-bottom:12px;">
                             <div><strong>Valid Start:</strong> {{ resultData.validStart }}</div>
-                            <div><strong>Valid Expire:</strong> {{ resultData.validExpiry }}</div>
+                            <div><strong>Valid Expire:</strong> {{ resultData.validExpire }}</div>
                         </div>
                         <p>You can find it in the ticket menu.</p>
                         <div style="margin-bottom:12px;"><a href="/login">https://192.168.1.95/ticket</a></div>
@@ -143,7 +148,7 @@
             </div>
 
             <div class="modal-footer btn-file-share" style="justify-content: space-between;">
-                <button class="btn-role btn-secondary" @click="() => { navigator.clipboard && navigator.clipboard.writeText(JSON.stringify(resultData)); }"><i class="fa-regular fa-envelope" style="font-size: 12px;"></i>Send email</button>
+                <button class="btn-role btn-secondary" @click="sendResultByEmail"><i class="fa-regular fa-envelope" style="font-size: 12px;"></i>Send email</button>
                 <button class="btn-role btn-primary" @click="closeResult">OK</button>
             </div>
         </div>
@@ -152,9 +157,10 @@
 
 
 <script setup>
-import { defineProps, defineEmits, ref, onMounted } from 'vue'
+import { defineProps, defineEmits, ref, reactive, onMounted, watch, nextTick } from 'vue'
 import CustomSelect from './CustomSelect.vue'
 import { API_GET_USER_ALL } from '../api/paths'
+import { getCsrfToken } from '../api/csrf'
 import '../assets/css/modal-favorite.css'
 
 const props = defineProps({ modelValue: { type: Boolean, default: false }, files: { type: Array, default: () => [] } })
@@ -189,7 +195,14 @@ const fetchUsers = async () => {
 }
 const emailTicket = ref('')
 const start = ref('')
-const expiry = ref('')
+const expire = ref('')
+
+// target object used by v-flatrangepickr (period key will be set)
+const exp = reactive({ period: '' })
+// validation/errors
+const errors = reactive({ period: false })
+// template ref for the picker input
+const fromInput = ref(null)
 
 const showResult = ref(false)
 const resultType = ref('')
@@ -212,11 +225,12 @@ function close() { emit('update:modelValue', false) }
 function onCreate() {
     const targetValue = selectionType.value === 'user' ? shareUser.value : emailTicket.value
     // emit for parent/backend
-    emit('share', { files: props.files, targetType: selectionType.value, target: targetValue, start: start.value, expiry: expiry.value })
 
-    // prepare result modal
-    const validStart = start.value || new Date().toISOString().slice(0,16)
-    const validExpiry = expiry.value || new Date(Date.now()).toISOString().slice(0,16)
+    const validStartRaw = exp.period_start 
+    const validExpireRaw = exp.period_end 
+
+    emit('share', { files: props.files, targetType: selectionType.value, target: targetValue, start: validStartRaw, expire: validExpireRaw })
+
 
     if (selectionType.value === 'ticket') {
         resultType.value = 'ticket'
@@ -224,15 +238,15 @@ function onCreate() {
             recipient: emailTicket.value,
             ticketCode: genTicketCode(),
             password: genPassword(),
-            validStart: formatDate(validStart),
-            validExpiry: formatDate(validExpiry)
+            validStart: formatDateOnly(validStartRaw),
+            validExpire: formatDateOnly(validExpireRaw)
         }
     } else {
         resultType.value = 'user'
         resultData.value = {
             recipient: shareUser.value,
-            validStart: formatDate(validStart),
-            validExpiry: formatDate(validExpiry)
+            validStart: formatDateOnly(validStartRaw),
+            validExpire: formatDateOnly(validExpireRaw)
         }
     }
 
@@ -245,8 +259,66 @@ function closeResult() {
     showResult.value = false
 }
 
+async function sendResultByEmail() {
+    try {
+        const payload = {
+                recipient: resultData.value.recipient,
+                subject: resultType.value === 'ticket' ? `Ticket ${resultData.value.ticketCode}` : 'Files shared with you',
+                body: `Ticket: ${resultData.value.ticketCode || ''}\nPassword: ${resultData.value.password || ''}\nValid: ${resultData.value.validStart || ''} - ${resultData.value.validExpire || ''}\n\nFiles: ${(props.files || []).map(f => f.file_name || f.fileName || f.file || '').join(', ')}`
+        }
+            // prefer HTML content from the rendered card if present
+            try {
+                const card = document.querySelector('#fileShareResult .card-detail-to') || document.querySelector('.card-detail-to')
+                if (card) payload.html = card.outerHTML
+            } catch (e) {}
+
+            const res = await fetch('/api/send-share-email/', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() || '' },
+            body: JSON.stringify(payload)
+        })
+        const j = await res.json().catch(() => ({}))
+        if (res.ok && j.ok) {
+            alert('Email sent')
+        } else {
+            alert('Failed to send email: ' + (j.error || res.statusText || 'unknown'))
+        }
+    } catch (e) {
+        console.error('sendResultByEmail error', e)
+        alert('Failed to send email: ' + e.message)
+    }
+}
+
 onMounted(() => {
-    fetchUsers()
+        fetchUsers()
+})
+
+// initialize period when modal opens (component may be mounted while modal closed)
+watch(() => props.modelValue, async (open) => {
+    if (!open) return
+    const pad = (n) => String(n).padStart(2, '0')
+    const d = new Date()
+    const today = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+    exp.period = `${today} - ${today}`
+    exp.period_start = `${today} 00:00`
+    exp.period_end = `${today} 23:00`
+    errors.period = false
+
+    // wait for DOM/ directive to mount the flatpickr instance (mirrors Home.vue pattern)
+    try {
+        await nextTick()
+        if (fromInput && fromInput.value) {
+            // ensure input displays the text
+            try { fromInput.value.value = exp.period } catch (e) {}
+            // try known instance names used in project
+            const inst = fromInput.value._flatpickrRangeInstance || fromInput.value._flatpickrInstance || fromInput.value._flatpickr
+            if (inst && typeof inst.setDate === 'function') {
+                // setDate accepts display strings matching dateFormat 'Y-m-d'
+                try { inst.setDate([today, today], true) } catch (e) {}
+            }
+        }
+    } catch (e) {}
 })
 
 function formatDate(v) {
@@ -254,22 +326,43 @@ function formatDate(v) {
     const d = new Date(v)
     if (isNaN(d.getTime())) return v
     const pad = (n) => String(n).padStart(2, '0')
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function truncateFileName(s){ if(!s) return ''; return s.length>100 ? s.slice(0,57)+'...' : s }
+// Return date only (YYYY-MM-DD)
+function formatDateOnly(v) {
+    if (!v) return ''
+    if (typeof v === 'string') {
+        // if backend format 'YYYY-MM-DD HH:MM' or flatpickr 'YYYY-MM-DD'
+        const parts = v.split(' ')
+        if (parts[0] && parts[0].includes('-')) return parts[0]
+        // ISO-like
+        const t = v.split('T')[0]
+        if (t && t.includes('-')) return t
+    }
+    const d = new Date(v)
+    if (isNaN(d.getTime())) return v
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+function truncateFileName(s) { if (!s) return ''; return s.length > 100 ? s.slice(0, 57) + '...' : s }
 </script>
 <style scoped>
 .custom-role-item {
     padding: 8px 20px;
     margin-bottom: 0px;
 }
-.group-card-title,.form-label {
-font-size: 10px;
+
+.group-card-title,
+.form-label {
+    font-size: 10px;
 }
+
 .group-card-desc {
     font-size: 8px;
 }
+
 .detail-file-share {
     margin-bottom: 4px;
 }
@@ -278,23 +371,22 @@ strong {
     font-weight: 500;
 }
 
-.strong-title{
+.strong-title {
     margin-right: 4px;
     font-weight: 500;
 }
-</style>
 
-<style scoped>
-/* Make modal footer buttons sit on the same row and fill available width */
 .btn-file-share {
     display: flex !important;
     flex-direction: row !important;
     gap: 8px;
     padding: 12px 16px;
 }
+
 .btn-role {
     border-radius: 25px;
 }
+
 .btn-file-share .btn-role {
     flex: 1 1 0;
     min-width: 0;

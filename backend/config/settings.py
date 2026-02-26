@@ -22,7 +22,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # โหลด .env จาก root project
 load_dotenv(BASE_DIR / '.env')
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -206,8 +205,23 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Email (SMTP) settings - configure via environment variables
+# Example for Outlook/Office365 SMTP
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND')
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('1', 'true', 'yes')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
 
-
+print("EMAIL_BACKEND:", EMAIL_BACKEND)
+print("EMAIL_HOST:", EMAIL_HOST)    
+print("EMAIL_PORT:", EMAIL_PORT)
+print("EMAIL_USE_TLS:", EMAIL_USE_TLS)
+print("EMAIL_HOST_USER:", EMAIL_HOST_USER)
+print("EMAIL_HOST_PASSWORD:", EMAIL_HOST_PASSWORD)
+print("DEFAULT_FROM_EMAIL:", DEFAULT_FROM_EMAIL)
 # ถ้าต้องการส่ง Cookie/Token ข้าม Domain
 CORS_ALLOW_CREDENTIALS = True
 

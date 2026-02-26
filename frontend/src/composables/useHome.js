@@ -103,7 +103,7 @@ export function useHome() {
       row.checked = false
     } else {
       const entry = {
-        file_id: row.file_id ?? row.id ?? row.fileId ?? '',
+        file_id: row.file_id ?? row.id ?? row.fileId ?? key,
         file_name: row.file_name ?? row.fileName ?? '',
         customer_number: row.customer_number ?? row.customerNumber ?? '',
         start_datetime: (row.start_datetime ?? row.startDatetime ?? row.start) || ''
@@ -477,12 +477,12 @@ export function useHome() {
       for (const r of rows) {
         try {
           const k = _makeKey(r)
-          if (!Object.prototype.hasOwnProperty.call(copy, k)) {
+            if (!Object.prototype.hasOwnProperty.call(copy, k)) {
             copy[k] = {
-              file_id: r.file_id ?? r.id ?? r.fileId ?? '',
-              file_name: r.file_name ?? r.fileName ?? '',
-              customer_number: r.customer_number ?? r.customerNumber ?? '',
-              start_datetime: (r.start_datetime ?? r.startDatetime ?? r.start) || ''
+              file_id: r.file_id ,
+              file_name: r.file_name ,
+              customer_number: r.customer_number ,
+              start_datetime: (r.start_datetime ) 
             }
           }
           r.checked = true

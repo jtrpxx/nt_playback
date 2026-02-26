@@ -10,7 +10,7 @@ export default {
     const value = (raw && typeof raw === 'object') ? raw : {}
     const target = (binding.arg && raw && typeof raw === 'object') ? raw : (value.target || null)
     const key = binding.arg ? binding.arg : value.key
-    // Default: date range only (no time shown). Backend times will be synthesized as 00:00 / 23:00.
+    // Default: date range only (no time shown). Backend times will be synthesized as 00:00 / 23:59.
     const opts = Object.assign({ mode: 'range', enableTime: false, dateFormat: 'Y-m-d', time_24hr: true, defaultHour: 0, defaultMinute: 0 }, value.options || {})
     const userOnChange = (typeof raw === 'function') ? raw : value.onChange
 
@@ -30,13 +30,13 @@ export default {
           displayEnd = instance.formatDate(selectedDates[1], 'Y-m-d')
           displayOut = `${displayStart} - ${displayEnd}`
           backendStart = `${displayStart} 00:00`
-          backendEnd = `${displayEnd} 23:00`
+          backendEnd = `${displayEnd} 23:59`
         } else if (selectedDates && selectedDates.length === 1) {
           displayStart = instance.formatDate(selectedDates[0], 'Y-m-d')
           displayEnd = displayStart
           displayOut = displayStart
           backendStart = `${displayStart} 00:00`
-          backendEnd = `${displayEnd} 23:00`
+          backendEnd = `${displayEnd} 23:59`
         } else {
           displayOut = ''
         }

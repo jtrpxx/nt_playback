@@ -5,6 +5,8 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import json
+from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 
 from datetime import datetime
 import base64
@@ -56,6 +58,33 @@ def ApiGetCsrfToken(request):
     except Exception:
         pass
     return resp
+
+
+@login_required(login_url='/login')
+@require_POST
+def ApiSendShareEmail(request):
+    try:
+        body = request.body.decode('utf-8') or '{}'
+        data = json.loads(body)
+        recipient = data.get('recipient')
+        subject = data.get('subject', 'Files shared with you')
+        text_message = data.get('body', '')
+        html_message = data.get('html')
+        if not recipient:
+            return JsonResponse({'ok': False, 'error': 'recipient required'}, status=400)
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', getattr(settings, 'EMAIL_HOST_USER', None))
+
+        if html_message:
+            # send multipart email with HTML alternative
+            msg = EmailMultiAlternatives(subject, text_message or '', from_email, [recipient])
+            msg.attach_alternative(html_message, 'text/html')
+            msg.send(fail_silently=False)
+        else:
+            send_mail(subject, text_message, from_email, [recipient], fail_silently=False)
+
+        return JsonResponse({'ok': True})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=500)
 
 @login_required(login_url='/login')
 @require_action('Audio Recording','User Logs')
@@ -438,6 +467,7 @@ def ApiGetAudioList(request):
             "agent": agent_display,
             "full_name": full_name,
             "file_path": audio.audiofile.file_path if getattr(audio, 'audiofile', None) else None,
+            "file_id": audio.audiofile.id if getattr(audio, 'audiofile', None) else None,
             "set_audio": set_audio.audio_path if set_audio else None,
             "custom_field_1": custom_field
         })

@@ -54,14 +54,10 @@
                 </div>
 
                 <div class="d-flex gap-3 mt-3">
-                    <div style="flex:1">
-                        <label class="form-label">Start Date & Time</label>
-                        <input type="datetime-local" class="form-control" v-model="start" />
-                    </div>
-                    <div style="flex:1">
-                        <label class="form-label">Expiry Date & Time</label>
-                        <input type="datetime-local" class="form-control" v-model="expiry" />
-                    </div>
+                   <input ref="fromInput" v-flatrangepickr="{ target: exp, key: 'ticketPeriod' }"  required type="text" name="ticketPeriod" autocomplete="off" :class="['input', { 'form-input-modal': errors.ticketPeriod }]">
+<label class="title-label">Ticket Period*</label>
+<span class="calendar-icon"><i class="fa-regular fa-calendar"></i></span>
+<div v-show="errors.ticketPeriod" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This field is required.</div>
                 </div>
             </div>
 

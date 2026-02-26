@@ -1,4 +1,5 @@
 <template>
+    <!-- Modal Share -->
     <div v-if="modelValue" class="modal-backdrop" @click.self="close" id="fileShareModal">
         <div v-if="files && files.length" class="modal-box" style="max-width: 640px;">
             <div class="modal-header">
@@ -43,7 +44,7 @@
                     </div>
 
                     <div v-if="selectionType === 'user'" class="input-group" style="margin-top:8px;">
-                        <CustomSelect class="select-checkbox" v-model="shareUser" :options="userOptions" :always-up="true" placeholder="User" name="shareUser" />
+                        <CustomSelect v-model="shareUser" :options="userOptions" :always-up="true" placeholder="User" name="shareUser" />
                     </div>
 
                     <div v-else class="input-group" v-has-value style="margin-top:8px;">
@@ -66,7 +67,7 @@
 
             <div class="modal-footer">
                 <button class="btn-role btn-secondary" @click="close"><i class="fas fa-times"></i> Cancel</button>
-                <button class="btn-role btn-primary" :disabled="files.length === 0" @click="onShare"><i class="fas fa-share"></i> Share</button>
+                <button class="btn-role btn-primary" :disabled="files.length === 0" @click="onCreate"><i class="fa-solid fa-plus"></i> Create</button>
             </div>
         </div>
 
@@ -81,6 +82,73 @@
             </div>
             <div class="modal-footer" style="justify-content: center;">
                 <button class="btn-role btn-primary" @click="close">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Share complete -->
+
+    <div v-if="showResult" class="modal-backdrop" @click.self="closeResult" id="fileShareResult">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 8px">
+                    <div class="green-icon"><i class="fa-solid fa-share-nodes"></i></div>
+                    <h3 class="modal-title ad" v-if="resultType === 'ticket'">Ticket Created Successfully</h3>
+                    <h3 class="modal-title ad" v-else>File shared successfully!</h3>
+                </div>
+                <button type="button" class="btn-close" @click="closeResult"></button>
+            </div>
+
+            <div class="modal-body">
+                <div v-if="resultType === 'ticket'">
+                    <div style="text-align:center; margin-bottom:12px;">
+                        <i class="fa-regular fa-check-circle" style="color:#10b981;margin-bottom: 15px;font-size: 45px;"></i>
+                        <p style="margin:0">Ticket <strong style="color:#2563eb">{{ resultData.ticketCode }}</strong> created successfully!</p>
+                    </div>
+
+                    <div class="card" style="padding:16px; border:1px solid #e6eef8;">
+                        <p style="margin:0 0 8px 0">Dear <strong style="color:#2563eb">{{ resultData.recipient }}</strong>,</p>
+                        <p style="margin:0 0 12px 0">An access ticket has been created for you to listen to specific audio records on NT Audio Search.</p>
+                        <div style="border:1px dashed #e6eef8; padding:12px; margin-bottom:12px;">
+                            <div class="detail-file-share"><strong class="strong-title">Ticket Code:</strong> <span style="color:#2563eb">{{ resultData.ticketCode }}</span></div>
+                            <div class="detail-file-share"><strong class="strong-title">Password:</strong> <code style="background:#f3f4f6; padding:4px 8px; border-radius:4px">{{ resultData.password }}</code></div>
+                            <div class="detail-file-share"><strong class="strong-title">Valid Start:</strong> {{ resultData.validStart }}</div>
+                            <div class="detail-file-share"><strong class="strong-title">Valid Expire:</strong> {{ resultData.validExpiry }}</div>
+                        </div>
+                        <p style="margin:0 0 8px 0">Please visit our portal to login using the credentials above.</p>
+                        <div style="margin-bottom:12px;"><a href="/login">https://192.168.1.95/login</a></div>
+                        <div>
+                            Best regards,<br>
+                            <b>NT Audio Search Team</b>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else>
+                    <div style="text-align:center; margin-bottom:12px;">
+                        <i class="fa-regular fa-check-circle" style="color:#10b981;margin-bottom: 15px;font-size: 45px;"></i>
+                        <p style="margin:0">User <strong style="color:#2563eb">{{ resultData.recipient }}</strong> created successfully!</p>
+                    </div>
+                    <div class="card" style="padding:16px; border:1px solid #e6eef8;">
+                        <p>Dear {{ resultData.recipient }},</p>
+                        <p>Files are shared so you can listen to specific audio records on <br> NT Audio Search.</p>
+                        <div style="border:1px dashed #e6eef8; padding:12px; margin-bottom:12px;">
+                            <div><strong>Valid Start:</strong> {{ resultData.validStart }}</div>
+                            <div><strong>Valid Expire:</strong> {{ resultData.validExpiry }}</div>
+                        </div>
+                        <p>You can find it in the ticket menu.</p>
+                        <div style="margin-bottom:12px;"><a href="/login">https://192.168.1.95/ticket</a></div>
+                        <div>
+                            Best regards,<br>
+                            <b>NT Audio Search Team</b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer btn-file-share" style="justify-content: space-between;">
+                <button class="btn-role btn-secondary" @click="() => { navigator.clipboard && navigator.clipboard.writeText(JSON.stringify(resultData)); }"><i class="fa-regular fa-envelope" style="font-size: 12px;"></i>Send email</button>
+                <button class="btn-role btn-primary" @click="closeResult">OK</button>
             </div>
         </div>
     </div>
@@ -127,12 +195,58 @@ const emailTicket = ref('')
 const start = ref('')
 const expiry = ref('')
 
+const showResult = ref(false)
+const resultType = ref('')
+const resultData = ref({})
+
+function genTicketCode() {
+    const n = Math.floor(Math.random() * 900000) + 100000
+    return `TKT-${n}`
+}
+
+function genPassword() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+    let out = ''
+    for (let i = 0; i < 6; i++) out += chars[Math.floor(Math.random() * chars.length)]
+    return out
+}
+
 function close() { emit('update:modelValue', false) }
 
-function onShare() {
+function onCreate() {
     const targetValue = selectionType.value === 'user' ? shareUser.value : emailTicket.value
+    // emit for parent/backend
     emit('share', { files: props.files, targetType: selectionType.value, target: targetValue, start: start.value, expiry: expiry.value })
-    close()
+
+    // prepare result modal
+    const validStart = start.value || new Date().toISOString().slice(0,16)
+    const validExpiry = expiry.value || new Date(Date.now()).toISOString().slice(0,16)
+
+    if (selectionType.value === 'ticket') {
+        resultType.value = 'ticket'
+        resultData.value = {
+            recipient: emailTicket.value,
+            ticketCode: genTicketCode(),
+            password: genPassword(),
+            validStart: formatDate(validStart),
+            validExpiry: formatDate(validExpiry)
+        }
+    } else {
+        resultType.value = 'user'
+        resultData.value = {
+            recipient: shareUser.value,
+            validStart: formatDate(validStart),
+            validExpiry: formatDate(validExpiry)
+        }
+    }
+
+    // close share input modal and open result
+    emit('update:modelValue', false)
+    showResult.value = true
+}
+
+function closeResult() {
+    showResult.value = false
 }
 
 onMounted(() => {
@@ -159,5 +273,37 @@ font-size: 10px;
 }
 .group-card-desc {
     font-size: 8px;
+}
+.detail-file-share {
+    margin-bottom: 4px;
+}
+
+strong {
+    font-weight: 500;
+}
+
+.strong-title{
+    margin-right: 4px;
+    font-weight: 500;
+}
+</style>
+
+<style scoped>
+/* Make modal footer buttons sit on the same row and fill available width */
+.btn-file-share {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px;
+    padding: 12px 16px;
+}
+.btn-role {
+    border-radius: 25px;
+}
+.btn-file-share .btn-role {
+    flex: 1 1 0;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>

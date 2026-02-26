@@ -204,7 +204,7 @@
     </div>
   </MainLayout>
   <ModalHome v-if="authStore.hasPermission('My Favorite Search')" v-model="showFavoriteModal" :favorites="favoriteSearchAll" :mainDbOptions="mainDbOptions" :agentOptions="agentOptions" @apply="applyFavorite" @edit="editFavorite" @delete="deleteFavorite" />
-  <ModalFileShare v-model="showShareModal" :files="selectedFiles" @share="onShare" />
+  <ModalFileShare v-model="showShareModal" :files="selectedFiles" @share="onCreate" />
   <AudioPlayer v-model="showAudioModal" :src="audioSrc" :metadata="audioMetadata" />
 </template>
 
@@ -290,11 +290,10 @@ const showShareModal = ref(false)
 
 function openShare() { showShareModal.value = true }
 
-function onShare(payload) { console.log('Share requested', payload) }
+function onCreate(payload) { console.log('Share requested', payload) }
 </script>
 <style scoped src="../assets/css/home.css"></style>
 <style scoped>
-/* Share count badge: circular and lifted above the button */
 #shareBtn { position: relative; }
 .badge.badge-danger {
   position: absolute;

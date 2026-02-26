@@ -162,6 +162,7 @@ import CustomSelect from './CustomSelect.vue'
 import { API_GET_USER_ALL } from '../api/paths'
 import { getCsrfToken } from '../api/csrf'
 import '../assets/css/modal-favorite.css'
+import { showToast, confirmDelete, notify } from '../assets/js/function-all'
 
 const props = defineProps({ modelValue: { type: Boolean, default: false }, files: { type: Array, default: () => [] } })
 const emit = defineEmits(['update:modelValue', 'share'])
@@ -280,13 +281,16 @@ async function sendResultByEmail() {
         })
         const j = await res.json().catch(() => ({}))
         if (res.ok && j.ok) {
-            alert('Email sent')
+            await notify('Success!', 'Email sent successfully.', 'success')
+            closeResult()
         } else {
-            alert('Failed to send email: ' + (j.error || res.statusText || 'unknown'))
+            await notify('Failed to send email', 'Email not found', 'error')
+            closeResult()
         }
     } catch (e) {
         console.error('sendResultByEmail error', e)
-        alert('Failed to send email: ' + e.message)
+        await notify('Failed to send email', e.message, 'error')
+        closeResult()
     }
 }
 

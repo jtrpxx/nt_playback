@@ -260,6 +260,10 @@ const {
   startItem,
   endItem,
   pagesToShow,
+  selectedFiles,
+  selectedCount,
+  selectAllChecked,
+  showShareModal,
   onTyping,
   clearSearchQuery,
   setPerPage,
@@ -280,17 +284,11 @@ const {
   onRowDelete,
   onSortChange,
   toggleRowSelection,
-  selectedFiles,
-  selectedCount,
-  selectAllChecked,
   toggleSelectAll,
+  onCreate,
+  openShare
 } = useHome()
 
-const showShareModal = ref(false)
-
-function openShare() { showShareModal.value = true }
-
-function onCreate(payload) { console.log('Share requested', payload) }
 </script>
 <style scoped src="../assets/css/home.css"></style>
 <style scoped>
@@ -307,5 +305,10 @@ function onCreate(payload) { console.log('Share requested', payload) }
   justify-content: center;
   font-size: 8px;
   line-height: 1;
+}
+.form-check-input {
+  width: 13px;
+  height: 13px;
+
 }
 </style>

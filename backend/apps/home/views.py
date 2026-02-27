@@ -16,12 +16,14 @@ from django.utils import timezone
 from datetime import timedelta
 from django.middleware.csrf import get_token
 from django.conf import settings
-from apps.core.utils.function import create_user_log, get_user_os_browser_architecture
+from apps.core.utils.function import create_user_log
 
 from apps.core.utils.permissions import get_user_actions, require_action
 # models
-from apps.core.model.authorize.models import UserAuth,MainDatabase,SetAudio,UserLog,UserProfile,Agent
+from apps.core.model.authorize.models import UserAuth,MainDatabase,SetAudio,UserProfile,Agent,UserFileShare
 from apps.core.model.audio.models import AudioInfo
+from django.contrib.auth.models import User
+from django.db import transaction
 from .models import FavoriteSearch, SetColumnAudioRecord, ConfigKey
 from .serializers import FavoriteSearchSerializer
 
@@ -467,7 +469,7 @@ def ApiGetAudioList(request):
             "agent": agent_display,
             "full_name": full_name,
             "file_path": audio.audiofile.file_path if getattr(audio, 'audiofile', None) else None,
-            # "file_id": audio.audiofile.id if getattr(audio, 'audiofile', None) else None,
+            "file_id": audio.audiofile.id if getattr(audio, 'audiofile', None) else None,
             "set_audio": set_audio.audio_path if set_audio else None,
             "custom_field_1": custom_field
         })
@@ -624,32 +626,16 @@ def ApiGetCredentials(request):
     try:
         # ดึงข้อมูลโดยใช้ 'type' เพื่อระบุว่าเป็น username หรือ password
         config_key = ConfigKey.objects.get(type='player_connect')
-        info = get_user_os_browser_architecture(request)
-
         credentials = {
             "username": encrypt_credential(config_key.key_username),
             "password": encrypt_credential(config_key.key_password)
         }
         return JsonResponse(credentials)
     except ConfigKey.DoesNotExist:
-        UserLog.objects.create(
-            user=request.user,
-            action="Credentials",
-            detail={"error": "Credentials not configured. Please create 'niceplayer_username' and 'niceplayer_password' types in ConfigKey."},
-            status="error",
-            client_type=f"{info['os']} / {info['browser']}",
-            ip_address=server_ip,  
-        )
+        create_user_log(user=request.user, action="Credentials", detail={"error": "Credentials not configured. Please create 'niceplayer_username' and 'niceplayer_password' types in ConfigKey."}, status="error", request=request)
         return JsonResponse({"error": "Credentials not configured. Please create 'niceplayer_username' and 'niceplayer_password' types in ConfigKey."}, status=500)
     except Exception as e:
-        UserLog.objects.create(
-            user=request.user,
-            action="Credentials",
-            detail={"error": str(e)},
-            status="error",
-            client_type=f"{info['os']} / {info['browser']}",
-            ip_address=server_ip,  
-        )
+        create_user_log(user=request.user, action="Credentials",  detail={"error": str(e)}, status="error", request=request)
         return JsonResponse({"error": str(e)}, status=500)
     
 @login_required
@@ -660,28 +646,12 @@ def ApiLogPlayAudio(request):
     API endpoint สำหรับรับ Log การเล่นไฟล์เสียงจาก Frontend
     """
     try:
-        info = get_user_os_browser_architecture(request)
         data = json.loads(request.body)
-
-        UserLog.objects.create(
-            user=request.user,
-            action="Playback Audio",
-            detail=data.get('detail', ''),
-            status=data.get('status', ''),
-            client_type=f"{info['os']} / {info['browser']}",
-            ip_address=server_ip,  
-        )
+        create_user_log(user=request.user, action="Playback Audio", detail=data.get('detail', ''), status=data.get('status', ''), request=request)
 
         return JsonResponse({"message": "Log received"}, status=201)
     except Exception as e:
-        UserLog.objects.create(
-            user=request.user,
-            action="Playback Audio",
-            detail={"error": str(e)},
-            status="error",
-            client_type=f"{info['os']} / {info['browser']}",
-            ip_address=server_ip,  
-        )
+        create_user_log(user=request.user, action="Playback Audio", detail={"error": str(e)}, status="error", request=request)
         
         return JsonResponse({"error": str(e)}, status=400)
 
@@ -692,28 +662,138 @@ def ApiLogSaveFile(request):
     try:
         data = json.loads(request.body)
         detail = data.get('detail', '')
-        info = get_user_os_browser_architecture(request)
-        UserLog.objects.create(
-            user=request.user,
-            action="Save file",
-            detail=detail,
-            status="success",
-            client_type=f"{info['os']} / {info['browser']}",
-            ip_address=server_ip
-        )
+        create_user_log(user=request.user, action="Save file", detail=detail, status="success", request=request)
         return JsonResponse({"status": "ok"})
     except Exception as e:
         try:
-            info = get_user_os_browser_architecture(request)
-            UserLog.objects.create(
-                user=request.user,
-                action="Save file",
-                detail={"error": str(e)},
-                status="error",
-                client_type=f"{info['os']} / {info['browser']}",
-                ip_address=server_ip
-            )
+            create_user_log(user=request.user, action="Save file", detail={"error": str(e)}, status="error", request=request)
         except Exception:
             # swallow secondary errors when logging fails
             pass
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
+    
+@login_required
+@require_POST
+def ApiCreateFileShare(request):
+    try:
+        body = request.body.decode('utf-8') or '{}'
+        data = json.loads(body)
+
+        files = data.get('files', [])
+        target_type = data.get('targetType') or data.get('type')
+        target = data.get('target')
+        start_raw = data.get('start')
+        expire_raw = data.get('expire')
+        download = data.get('download', False)
+
+        if not target_type or not target:
+            return JsonResponse({'ok': False, 'message': 'Incomplete information (targetType/target)'}, status=400)
+
+        def parse_dt(s):
+            if not s:
+                return None
+            try:
+                dt = datetime.strptime(s, '%Y-%m-%d %H:%M')
+            except Exception:
+                try:
+                    dt = datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+                except Exception:
+                    try:
+                        dt = datetime.fromisoformat(s)
+                    except Exception:
+                        return None
+            try:
+                if timezone.is_naive(dt):
+                    dt = timezone.make_aware(dt)
+            except Exception:
+                pass
+            return dt
+
+        start_dt = parse_dt(start_raw)
+        expire_dt = parse_dt(expire_raw)
+
+        audio_ids = []
+        for f in files:
+            try:
+                fid = f.get('file_id') if isinstance(f, dict) else f
+                audio_ids.append(int(fid))
+            except Exception:
+                continue
+
+        audio_ids_str = "{" + ",".join([f'"{aid}"' for aid in audio_ids]) + "}"
+
+        if target_type == 'user':
+            auth_user = User.objects.filter(username=target).first()
+            if not auth_user:
+                return JsonResponse({'ok': False, 'message': 'No user found in the system.'}, status=404)
+
+            with transaction.atomic():
+                UserFileShare.objects.create(
+                    user=auth_user,
+                    type='user',
+                    code='',
+                    audiofile_id=audio_ids_str,
+                    start_at=start_dt or timezone.now(),
+                    expire_at=expire_dt or (timezone.now() + timedelta(days=1)),
+                    status=1,
+                    dowload=bool(download),
+                    create_by=request.user
+                )
+
+            create_user_log(user=request.user, action="Create File Share", detail=f"Create File Share successfully: {target} | Type={target_type} | file_id = {audio_ids_str} | start={start_raw} | exp={expire_raw}", status="success", request=request)
+
+            return JsonResponse({'ok': True, 'message': 'The file has been successfully shared with the users.'})
+
+        if target_type == 'ticket':
+            ticket_code = data.get('ticketCode') or data.get('code')
+            password = data.get('password')
+            if not ticket_code or not password:
+                return JsonResponse({'ok': False, 'message': 'Ticket information is incomplete. (ticketCode/password)'}, status=400)
+
+            with transaction.atomic():
+                new_user = User.objects.create(
+                    username=ticket_code,
+                    first_name=ticket_code,
+                    last_name=ticket_code,
+                    email=target or '',
+                    is_active=True,
+                    is_staff=False,
+                    is_superuser=False
+                )
+                new_user.set_password(password)
+                new_user.save()
+
+                main_dbs = list(MainDatabase.objects.only('id').order_by('id'))
+                user_auths = []
+                for db in main_dbs:
+                    user_auths.append(UserAuth(
+                        user=new_user,
+                        maindatabase=db,
+                        allow=False,
+                        user_permission="4"
+                    ))
+                if user_auths:
+                    UserAuth.objects.bulk_create(user_auths)
+
+                UserFileShare.objects.create(
+                    user=new_user,
+                    type='ticket',
+                    code=ticket_code,
+                    audiofile_id=audio_ids_str,
+                    start_at=start_dt or timezone.now(),
+                    expire_at=expire_dt or (timezone.now() + timedelta(days=1)),
+                    status=True,
+                    dowload=bool(download),
+                    create_by=request.user
+                )
+
+            create_user_log(user=request.user, action="Create File Share", detail=f"Create File Share successfully: {target} | Type={target_type} | file_id = {audio_ids_str} | start={start_raw} | exp={expire_raw}", status="success", request=request)
+
+            return JsonResponse({'ok': True, 'message': 'Ticket created and file shared successfully.', 'ticketCode': ticket_code, 'password': password})
+
+        create_user_log(user=request.user, action="Create File Share", detail=f"Failed to create file share: Invalid targetType {target_type}", status="error", request=request)
+        return JsonResponse({'ok': False, 'message': 'targetType incorrect'}, status=400)
+    except Exception as e:
+        create_user_log(user=request.user, action="Create File Share", detail=f"Error creating file share: {str(e)}", status="error", request=request)
+        return JsonResponse({'ok': False, 'message': f'error: {str(e)}'}, status=500)
+    

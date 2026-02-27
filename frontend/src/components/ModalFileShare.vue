@@ -62,12 +62,26 @@
                         <div v-show="errors.period" class="validate"><i class="fa-solid fa-circle-exclamation"></i> This field is required.</div>
                     </div>
                 </div>
+
+                <div class="mt-3">
+                    <label class="form-label">Download</label>
+
+                    <div class="d-flex align-items-center" style="gap:12px; margin-top:6px;">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" id="permissionsYesDownload" value="true" v-model="permissions">
+                            <label class="form-check-label" for="permissionsYesDownload">Yes</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" id="permissionsNoDownload" value="false" v-model="permissions">
+                            <label class="form-check-label" for="permissionsNoDownload">No</label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-footer">
                 <button class="btn-role btn-secondary" @click="close"><i class="fas fa-times"></i> Cancel</button>
-                <button class="btn-role btn-primary" :disabled="files.length === 0" @click="onCreate"><i
-                        class="fa-solid fa-plus"></i> Create</button>
+                <button class="btn-role btn-primary" :disabled="files.length === 0" @click="onCreate"><i class="fa-solid fa-plus"></i> Create</button>
             </div>
         </div>
 
@@ -149,17 +163,19 @@
 
             <div class="modal-footer btn-file-share" style="justify-content: space-between;">
                 <button class="btn-role btn-secondary" @click="sendResultByEmail"><i class="fa-regular fa-envelope" style="font-size: 12px;"></i>Send email</button>
-                <button class="btn-role btn-primary" @click="closeResult">OK</button>
+                <!-- <button class="btn-role btn-primary" @click="closeResult">OK</button> -->
             </div>
         </div>
     </div>
+
+    <!-- Modal Share error  -->
 </template>
 
 
 <script setup>
 import { defineProps, defineEmits, ref, reactive, onMounted, watch, nextTick } from 'vue'
 import CustomSelect from './CustomSelect.vue'
-import { API_GET_USER_ALL } from '../api/paths'
+import { API_GET_USER_ALL, API_CREATE_FILE_SHARE } from '../api/paths'
 import { getCsrfToken } from '../api/csrf'
 import '../assets/css/modal-favorite.css'
 import { showToast, confirmDelete, notify } from '../assets/js/function-all'
@@ -170,6 +186,7 @@ const emit = defineEmits(['update:modelValue', 'share'])
 const selectionType = ref('user')
 const shareUser = ref('')
 const userOptions = ref([])
+const permissions = ref('false')
 // fetch users to populate select
 const fetchUsers = async () => {
     try {
@@ -223,37 +240,80 @@ function genPassword() {
 
 function close() { emit('update:modelValue', false) }
 
-function onCreate() {
+async function onCreate() {
     const targetValue = selectionType.value === 'user' ? shareUser.value : emailTicket.value
-    // emit for parent/backend
+    
+    if (!targetValue) {
+        showToast('Please specify a target.', 'warning')
+        return
+    }
+    if (!exp.period_start || !exp.period_end) {
+        errors.period = true
+        return
+    }
 
     const validStartRaw = exp.period_start 
     const validExpireRaw = exp.period_end 
 
-    emit('share', { files: props.files, targetType: selectionType.value, target: targetValue, start: validStartRaw, expire: validExpireRaw })
-
+    let tCode = ''
+    let tPass = ''
 
     if (selectionType.value === 'ticket') {
-        resultType.value = 'ticket'
-        resultData.value = {
-            recipient: emailTicket.value,
-            ticketCode: genTicketCode(),
-            password: genPassword(),
-            validStart: formatDateOnly(validStartRaw),
-            validExpire: formatDateOnly(validExpireRaw)
-        }
-    } else {
-        resultType.value = 'user'
-        resultData.value = {
-            recipient: shareUser.value,
-            validStart: formatDateOnly(validStartRaw),
-            validExpire: formatDateOnly(validExpireRaw)
-        }
+        tCode = genTicketCode()
+        tPass = genPassword()
     }
 
-    // close share input modal and open result
-    emit('update:modelValue', false)
-    showResult.value = true
+    const payload = {
+        files: props.files,
+        type: selectionType.value,
+        target: targetValue,
+        start: validStartRaw,
+        expire: validExpireRaw,
+        ticketCode: tCode,
+        password: tPass,
+        download: permissions.value === 'true'
+    }
+
+    try {
+        const res = await fetch(API_CREATE_FILE_SHARE(), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken() || ''
+            },
+            body: JSON.stringify(payload)
+        })
+        const json = await res.json()
+
+        if (res.ok && json.ok) {
+            if (selectionType.value === 'ticket') {
+                resultType.value = 'ticket'
+                resultData.value = {
+                    recipient: emailTicket.value,
+                    ticketCode: tCode,
+                    password: tPass,
+                    validStart: formatDateOnly(validStartRaw),
+                    validExpire: formatDateOnly(validExpireRaw)
+                }
+            } else {
+                resultType.value = 'user'
+                resultData.value = {
+                    recipient: shareUser.value,
+                    validStart: formatDateOnly(validStartRaw),
+                    validExpire: formatDateOnly(validExpireRaw)
+                }
+            }
+            
+            emit('share', payload)
+            emit('update:modelValue', false)
+            showResult.value = true
+        } else {
+            showToast(json.message || 'Failed to share files', 'error')
+        }
+    } catch (e) {
+        console.error('onCreate share error', e)
+        showToast('An error occurred while sharing', 'error')
+    }
 }
 
 function closeResult() {

@@ -1,7 +1,7 @@
 import { reactive, ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useAuthStore } from '../stores/auth.store'
 import { registerRequest } from '../utils/pageLoad'
-import { API_AUDIO_LIST, API_HOME_INDEX, API_LOG_PLAY_AUDIO, API_GET_CREDENTIALS, API_LOG_SAVE_FILE, API_GET_COLUMN_AUDIO_RECORD, getApiBase } from '../api/paths'
+import { API_AUDIO_LIST, API_HOME_INDEX, API_LOG_PLAY_AUDIO, API_GET_CREDENTIALS, API_LOG_SAVE_FILE, API_GET_COLUMN_AUDIO_RECORD, getApiBase, API_CREATE_FILE_SHARE } from '../api/paths'
 import { ensureCsrf, getCsrfToken } from '../api/csrf'
 import '../assets/js/jspdf.umd.min.js'
 import '../assets/js/jspdf.plugin.autotable.min.js'
@@ -1027,6 +1027,14 @@ export function useHome() {
     try { if (saveLogsInterval) clearInterval(saveLogsInterval) } catch (e) {}
   })
 
+  const showShareModal = ref(false)
+
+  const openShare = () => { showShareModal.value = true }
+
+  const onCreate = (payload) => { 
+    console.log('Share requested', payload) 
+  }
+
   const state = {
     authStore,
     filters,
@@ -1066,11 +1074,11 @@ export function useHome() {
     paginatedRecords,
     startItem,
     endItem,
-    pagesToShow
-    ,
+    pagesToShow,
     selectedFiles,
     selectedCount,
-    selectAllChecked
+    selectAllChecked,
+    showShareModal,
   }
 
   const actions = {
@@ -1092,10 +1100,11 @@ export function useHome() {
     onRowDblClick,
     onRowEdit,
     onRowDelete,
-    onSortChange
-    ,
+    onSortChange,
     toggleRowSelection,
-    toggleSelectAll
+    toggleSelectAll,
+    openShare,
+    onCreate,
   }
 
   return {

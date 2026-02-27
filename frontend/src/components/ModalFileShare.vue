@@ -161,10 +161,17 @@
                 </div>
             </div>
 
-            <div class="modal-footer btn-file-share" style="justify-content: space-between;">
-                <button class="btn-role btn-secondary" @click="sendResultByEmail"><i class="fa-regular fa-envelope" style="font-size: 12px;"></i>Send email</button>
-                <!-- <button class="btn-role btn-primary" @click="closeResult">OK</button> -->
+            <div v-if="resultType === 'ticket'">
+                <div class="modal-footer btn-file-share" style="justify-content: space-between;">
+                    <button class="btn-role btn-secondary" @click="sendResultByEmail"><i class="fa-regular fa-envelope" style="font-size: 12px;"></i>Send email</button>
+                </div>
             </div>
+            <div v-else>
+                <div class="modal-footer btn-file-share" style="justify-content: space-between;">
+                    <button class="btn-role btn-primary" @click="closeResult">OK</button>
+                </div>
+            </div>
+            
         </div>
     </div>
 

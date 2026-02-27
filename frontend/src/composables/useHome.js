@@ -18,7 +18,8 @@ export function useHome() {
     fileName: '',
     callDirection: '',
     customerNumber: '',
-    agent: ''
+    agent: '',
+    file_share: ''
   })
 
   const searchQuery = ref('')
@@ -391,6 +392,10 @@ export function useHome() {
       } else if (filters.agent && String(filters.agent) !== 'all') {
         params.set('agent_id', filters.agent)
       }
+      if (filters.file_share === 'true') {
+        params.set('file_share', 'true')
+      }
+
       if (filters.from) params.set('start_date', filters.from)
       if (filters.to) params.set('end_date', filters.to)
 
@@ -593,6 +598,7 @@ export function useHome() {
       filters.fullName = ''
       filters.customField = ''
       filters.extension = ''
+      filters.file_share = ''
       sortColumn.value = ''
       sortDirection.value = ''
       searchQuery.value = ''

@@ -26,6 +26,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from .models import FavoriteSearch, SetColumnAudioRecord, ConfigKey
 from .serializers import FavoriteSearchSerializer
+from apps.configuration.models import UserPermission
 
 #serializer
 from apps.core.model.authorize.serializers import MainDatabaseSerializer
@@ -124,7 +125,7 @@ def ApiIndexHome(request):
     })
     
 @login_required(login_url='/login')
-@require_action('Query Audio')
+@require_action('Playback Audio')
 def ApiGetAudioList(request):
     draw = int(request.GET.get("draw", 1))
     start = int(request.GET.get("start", 0))
@@ -144,10 +145,13 @@ def ApiGetAudioList(request):
     set_audio = SetAudio.objects.filter(user=request.user).first()
     main_db_id = UserAuth.objects.filter(user=request.user, allow=True).values_list("maindatabase_id", flat=True)
 
-    audio_list = AudioInfo.objects.select_related("audiofile", "agent", "customer") \
-        .filter(main_db__in=main_db_id)
+    # Check for file_share parameter or ticket user
+    is_ticket = UserFileShare.objects.filter(user=request.user, type='ticket').exists()
     
-    # audio_list = ViewAudio.objects.all()
+    if is_ticket :
+        audio_list = AudioInfo.objects.filter()
+    else :
+        audio_list = AudioInfo.objects.select_related("audiofile", "agent", "customer").filter(main_db__in=main_db_id)
 
     # ฟิลเตอร์จาก request.form หรือ request.GET
     database_name = request.POST.get("database_name") or request.GET.get("database_name")  
@@ -166,6 +170,33 @@ def ApiGetAudioList(request):
     agent_name = request.POST.get("agent") or request.GET.get("agent")
     full_name = request.POST.get("full_name") or request.GET.get("full_name")
     custom_field = request.POST.get("custom_field") or request.GET.get("custom_field")
+    
+
+
+    if is_ticket or (request.POST.get("file_share") == 'true' or request.GET.get("file_share") == 'true'):
+        try:
+            valid_shares = UserFileShare.objects.filter(user=request.user, expire_at__gte=timezone.now())
+            shared_ids = []
+            
+            for share in valid_shares:
+                if share.audiofile_id:
+                    try:
+                        # Convert {"1","2"} to ["1","2"] for json.loads
+                        json_str = share.audiofile_id.replace('{', '[').replace('}', ']')
+                        ids = json.loads(json_str)
+                        shared_ids.extend(ids)
+                    except Exception:
+                        continue
+            
+            if shared_ids:
+                print("shared_ids:", shared_ids)
+                audio_list = audio_list.filter(audiofile__id__in=shared_ids)
+            else:
+                audio_list = audio_list.none()
+                
+            print("audio_list:", audio_list.query)    
+        except Exception:
+            audio_list = audio_list.none()
     
     now = datetime.now()
     if time_type:
@@ -765,12 +796,13 @@ def ApiCreateFileShare(request):
 
                 main_dbs = list(MainDatabase.objects.only('id').order_by('id'))
                 user_auths = []
+                permission = UserPermission.objects.get(id=4)
                 for db in main_dbs:
                     user_auths.append(UserAuth(
                         user=new_user,
                         maindatabase=db,
                         allow=False,
-                        user_permission="4"
+                        user_permission=permission
                     ))
                 if user_auths:
                     UserAuth.objects.bulk_create(user_auths)

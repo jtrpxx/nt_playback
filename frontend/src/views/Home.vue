@@ -90,11 +90,16 @@
                   <div class="card-body" style="padding: 8px;">
 
                     <div class="d-flex justify-content-center" v-if="authStore.hasPermission('My Favorite Search')">
-                      <button class="btn btn-light" type="button" id="addFavorite" @click="showFavoriteModal = true"
-                        style="width: 100%;text-align: left;font-size: 12px;margin-bottom: 4px;">
+                      <button class="btn btn-light" type="button" id="addFavorite" @click="showFavoriteModal = true" style="width: 100%;text-align: left;font-size: 12px;margin-bottom: 4px;">
                         <i class="fa-regular fa-bookmark"></i> My Favorite Search
                       </button>
                     </div>
+
+                     <div class="d-flex justify-content-center" v-if="authStore.hasPermission('My Favorite Search')">
+                        <button class="btn btn-light" type="button" id="fileShare" @click="onFileShareClick" style="width: 100%;text-align: left;font-size: 12px;margin-bottom: 4px;">
+                        <i class="fa-solid fa-share-nodes"></i> File Share
+                      </button>
+                     </div>
 
                     <div class="dropup d-flex justify-content-center" ref="recentWrap">
                       <button class="btn btn-light" type="button" @click.stop="toggleRecent" :aria-expanded="recentOpen" style="width: 100%;font-size: 12px;margin-bottom: 4px;">
@@ -288,6 +293,11 @@ const {
   onCreate,
   openShare
 } = useHome()
+
+function onFileShareClick() {
+  filters.file_share = 'true'
+  onSearch()
+}
 
 </script>
 <style scoped src="../assets/css/home.css"></style>
